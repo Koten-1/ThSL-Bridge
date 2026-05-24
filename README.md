@@ -49,6 +49,7 @@ Webcam → MediaPipe (Hand Keypoints) → LSTM Model → Typhoon LLM → gTTS (V
 │      ▼                                              │
 │  🔊 gTTS Voice Output                               │
 └─────────────────────────────────────────────────────┘
+```
 ---
 
 ## Scripts
