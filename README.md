@@ -28,20 +28,26 @@ Webcam → MediaPipe (Hand Keypoints) → LSTM Model → Typhoon LLM → gTTS (V
 ---
 
 ## สถาปัตยกรรมระบบ | System Architecture
+```text
 ┌─────────────────────────────────────────────────────┐
-│                    ThSL Bridge                       │
+│                     ThSL Bridge                     │
 ├─────────────────────────────────────────────────────┤
-│  📷 Webcam Input                                     │
-│      ↓                                               │
+│  📷 Webcam Input                                    │
+│      │                                              │
+│      ▼                                              │
 │  🖐 MediaPipe Hand Landmark Detection (21 pts/hand)  │
-│      ↓                                               │
-│  📊 Keypoint Sequence (30 frames × 126 values)       │
-│      ↓                                               │
-│  🧠 2-Layer LSTM Classifier (10 signs, 89% acc)      │
-│      ↓                                               │
-│  💬 Typhoon v2.5 LLM (Natural Thai Grammar)          │
-│      ↓                                               │
-│  🔊 gTTS Voice Output                                │
+│      │                                              │
+│      ▼                                              │
+│  📊 Keypoint Sequence (30 frames × 126 values)      │
+│      │                                              │
+│      ▼                                              │
+│  🧠 2-Layer LSTM Classifier (10 signs, 89% acc)     │
+│      │                                              │
+│      ▼                                              │
+│  💬 Typhoon v2.5 LLM (Natural Thai Grammar)        │
+│      │                                              │
+│      ▼                                              │
+│  🔊 gTTS Voice Output                               │
 └─────────────────────────────────────────────────────┘
 ---
 
