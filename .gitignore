@@ -1,0 +1,25 @@
+# Data files - too large for GitHub
+data/raw/
+data/processed/
+data/augmented/
+temp/
+
+# Model weights
+models/*.h5
+models/*.keras
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Conda/pip
+*.egg-info/
+
+# VS Code
+.vscode/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# ignore YOLO , failed version
