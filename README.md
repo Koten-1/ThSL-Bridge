@@ -18,6 +18,23 @@ ThSL Bridge is an AI-powered system that translates Thai Sign Language (ThSL) in
 Webcam → MediaPipe (Hand Keypoints) → LSTM Model → Typhoon LLM → gTTS (Voice)
 
 ---
+## คำศัพท์ที่รองรับ | Supported Signs (v1.0)
+
+| # | ภาษามือไทย | ความหมาย |
+|---|-----------|---------|
+| 1 | คนหูหนวก | Deaf person |
+| 2 | คุณ | You |
+| 3 | ช่วย | Help |
+| 4 | ขอบคุณ | Thank you |
+| 5 | คำถาม | Question |
+| 6 | ฉัน | I / Me |
+| 7 | ต้องการ | Want / Need |
+| 8 | เข้าใจ | Understand |
+| 9 | ไม่ | No |
+| 10 | ถาม | Ask |
+
+> 🎯 เป้าหมาย v2.0: ขยายเป็น 20+ คำครอบคลุมการสื่อสารพื้นฐาน
+---
 
 ## ผลลัพธ์ | Results
 - 10 คำศัพท์ภาษามือไทย | 10 Thai Sign Language words
