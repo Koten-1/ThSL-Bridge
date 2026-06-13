@@ -15,13 +15,15 @@ Typhoon API key:  put it in either
 Used by predict_stream.py:  import postprocess; postprocess.process(word_buffer)
 """
 import os
+import time
+import glob
 import json
 import urllib.request
 
 TYPHOON_URL   = "https://api.opentyphoon.ai/v1/chat/completions"
 TYPHOON_MODEL = "typhoon-v2.1-12b-instruct"   # current Typhoon instruct model
 KEY_FILE      = os.path.join(os.path.dirname(__file__), "typhoon_key.txt")
-TTS_MP3       = "D:/KachornThSL/temp/tts_output.mp3"
+TTS_DIR       = "D:/KachornThSL/temp"
 
 
 def _get_key():
@@ -90,13 +92,27 @@ def _play(mp3_path):
         print(f"[play] could not play audio: {e}")
 
 
+def _cleanup_old_tts(keep_latest=3):
+    """Delete old tts mp3s that are no longer locked (best-effort)."""
+    files = sorted(glob.glob(os.path.join(TTS_DIR, "tts_*.mp3")))
+    for old in files[:-keep_latest]:
+        try:
+            os.remove(old)
+        except OSError:
+            pass  # still locked by a player — leave it
+
+
 def speak(text):
-    """Speak Thai text aloud via Google TTS."""
+    """Speak Thai text aloud via Google TTS.
+    Uses a unique filename per utterance so a still-open player from the
+    previous sentence can't lock the next save (fixes Permission denied)."""
     try:
         from gtts import gTTS
-        os.makedirs(os.path.dirname(TTS_MP3), exist_ok=True)
-        gTTS(text=text, lang="th").save(TTS_MP3)
-        _play(TTS_MP3)
+        os.makedirs(TTS_DIR, exist_ok=True)
+        mp3 = os.path.join(TTS_DIR, f"tts_{int(time.time()*1000)}.mp3")
+        gTTS(text=text, lang="th").save(mp3)
+        _play(mp3)
+        _cleanup_old_tts()
     except Exception as e:
         print(f"[gtts] failed: {e}")
 
