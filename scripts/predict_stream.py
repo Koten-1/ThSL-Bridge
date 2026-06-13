@@ -10,12 +10,15 @@ os.makedirs("D:/KachornThSL/tmp", exist_ok=True)
 import numpy as np
 import time
 import json
+import threading
+from collections import deque
+import postprocess   # Typhoon LLM + gTTS (same scripts/ dir)
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 
 TARGET_SIGNS = [
     "คนหูหนวก", "คุณ", "ช่วย", "ขอบคุณ",
-    "คำถาม", "ฉัน", "ต้องการ", "เข้าใจ", "ไม่", "ถาม", "none"
+    "ฉัน", "ต้องการ", "เข้าใจ", "ไม่", "ถาม", "บอก", "finish", "none"
 ]
 
 # English labels for terminal display (PowerShell can't show Thai)
@@ -24,42 +27,46 @@ SIGN_EN = {
     "คุณ":      "you",
     "ช่วย":     "help",
     "ขอบคุณ":   "thank-you",
-    "คำถาม":    "question",
     "ฉัน":      "I/me",
     "ต้องการ":  "want",
     "เข้าใจ":   "understand",
     "ไม่":      "no/not",
     "ถาม":      "ask",
+    "บอก":      "tell",
+    "finish":   "finish",
     "none":     "none",
 }
 
 SIGN_THRESHOLDS = {
-    # gap=0.86 — safe, set comfortably above wrong_conf (0.00)
-    "คนหูหนวก": 0.82,
-    # gap=-0.01 — BROKEN: wrong is MORE confident than correct, set very high to at least reduce false positives
-    "คุณ":      0.97,
-    # gap=0.98 — perfect, easy
-    "ช่วย":     0.92,
-    # gap=1.00 — perfect
-    "ขอบคุณ":   0.92,
-    # gap=0.61 — good: 0.32 + 0.61*0.6 = 0.69
-    "คำถาม":    0.69,
-    # gap=0.43 — decent: 0.49 + 0.43*0.6 = 0.75
+    # correct=0.96, wrong=0.00 → safe low threshold
+    "คนหูหนวก": 0.70,
+    # correct=0.69, wrong=0.71 → BROKEN (wrong > correct), set below correct_conf
+    "คุณ":      0.60,
+    # correct=0.80, wrong=0.91 → BROKEN (wrong > correct), threshold can't fix this
+    "ช่วย":     0.65,
+    # correct=1.00, wrong=0.00 → perfect
+    "ขอบคุณ":   0.80,
+    # correct=0.88, wrong=0.59 → decent gap
     "ฉัน":      0.75,
-    # gap=0.32 — moderate: 0.64 + 0.32*0.6 = 0.83
-    "ต้องการ":  0.83,
-    # gap=0.37 — moderate: 0.61 + 0.37*0.6 = 0.83
-    "เข้าใจ":   0.83,
-    # gap=0.00 — BROKEN: no separation, set at correct_conf as best we can do
-    "ไม่":      0.73,
-    # gap=0.02 — nearly broken: set just above wrong_conf
-    "ถาม":      0.76,
-    # gap=0.99 — perfect
-    "none":     0.95,
+    # correct=0.85, wrong=0.70 → OK gap
+    "ต้องการ":  0.78,
+    # correct=0.94, wrong=0.77 → good gap
+    "เข้าใจ":   0.85,
+    # correct=0.75, wrong=0.00 → FIXED (was broken before retrain)
+    "ไม่":      0.65,
+    # correct=0.74, wrong=0.69 → tiny gap (0.05), marginal
+    "ถาม":      0.70,
+    # NEW sign — placeholder, recalibrate with check_thresholds.py after retrain
+    "บอก":      0.75,
+    # NEW finish class — triggers sentence output, recalibrate after retrain
+    "finish":   0.70,
+    # none is never confirmed as a word — threshold doesn't matter in practice
+    "none":     0.80,
 }
 
-VOTE_WINDOW = 8   # look at last N predictions
-VOTE_NEEDED = 5   # sign must appear this many times in that window to confirm
+VOTE_WINDOW = 3   # look at last N predictions
+VOTE_NEEDED = 1   # one confident prediction confirms — keypoint_stream now sends one
+                  # complete sign per gesture, so multi-vote agreement is unnecessary
 KEYPOINTS_PATH = "D:/KachornThSL/temp/keypoints.npy"
 FINISH_PATH    = "D:/KachornThSL/temp/finish.txt"
 RESULT_PATH    = "D:/KachornThSL/temp/result.txt"
@@ -71,10 +78,10 @@ model = Sequential([
     LSTM(32),
     Dropout(0.5),
     Dense(16, activation='relu'),
-    Dense(11, activation='softmax')
+    Dense(12, activation='softmax')
 ])
 
-model.load_weights("D:/KachornThSL/models/thsl_model_v5.weights.h5")
+model.load_weights("D:/KachornThSL/models/thsl_model_v6c.weights.h5")
 print("Model loaded!")
 print("Waiting for signs...")
 
@@ -119,6 +126,9 @@ while True:
                 print(f"\nFinish — sentence: {' > '.join(en_buf)}")
                 with open(RESULT_PATH, "w", encoding="utf-8") as f:
                     f.write(f">> {sentence}")
+                # Typhoon → natural sentence → gTTS speech (background, non-blocking)
+                threading.Thread(target=postprocess.process,
+                                 args=(list(word_buffer),), daemon=True).start()
                 word_buffer = []
                 recent_predictions.clear()
             else:
@@ -165,7 +175,25 @@ while True:
                 recent_predictions.clear()   # reset window after confirmation
                 conf_en = SIGN_EN.get(top_sign, top_sign)
 
-                if not word_buffer or word_buffer[-1] != top_sign:
+                # ── "finish" is a learned class: end the sentence, don't add as a word ──
+                if top_sign == "finish":
+                    if word_buffer:
+                        sentence = " ".join(word_buffer)
+                        en_buf   = [SIGN_EN.get(s, s) for s in word_buffer]
+                        print(f"\nFinish (sign) — sentence: {' > '.join(en_buf)}")
+                        with open(RESULT_PATH, "w", encoding="utf-8") as f:
+                            f.write(f">> {sentence}")
+                        # Typhoon → natural sentence → gTTS speech (background)
+                        threading.Thread(target=postprocess.process,
+                                         args=(list(word_buffer),), daemon=True).start()
+                        word_buffer = []
+                    else:
+                        print("Finish (sign) — buffer empty")
+                        with open(RESULT_PATH, "w", encoding="utf-8") as f:
+                            f.write("...")
+                    write_topn(prediction[0], confirmed=top_sign)
+
+                elif not word_buffer or word_buffer[-1] != top_sign:
                     word_buffer.append(top_sign)
                     result = f"{top_sign} ({confidence:.0%})"
                     print(f"  CONFIRMED: {conf_en} ({confidence:.0%}) | buffer: {[SIGN_EN.get(s,s) for s in word_buffer]}")

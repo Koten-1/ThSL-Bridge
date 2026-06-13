@@ -10,9 +10,12 @@ import json
 TEMP_DIR = Path("D:/KachornThSL/temp")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
-COLLECT_FRAMES   = 30    # exactly 30 frames sent to model (matches training)
-IDLE_WARMUP      = 3     # hands must appear for 3 frames before collecting starts
+IDLE_WARMUP      = 4     # hands must appear for 4 frames before collecting starts
 FINISH_THRESHOLD = 0.35  # wrist y-position to trigger finish gesture
+STILL_THRESHOLD  = 0.03  # mean keypoint delta below this = stillness
+STILL_FRAMES     = 6     # consecutive still frames to end the sign (~0.2s at 30fps)
+MIN_COLLECT      = 10    # minimum frames before stillness can trigger a send
+MAX_COLLECT      = 150   # safety cap — send after 5s regardless
 
 FONT_PATH      = "D:/KachornThSL/assests/Sarabun-Regular.ttf"
 KEYPOINTS_PATH = "D:/KachornThSL/temp/keypoints.npy"
@@ -100,21 +103,54 @@ hands = mp_hands.Hands(
     min_detection_confidence=0.5
 )
 
-cap = cv2.VideoCapture(1)
-print("Webcam opened. Press Q to quit.")
+# ── Source: set to 0/1 for webcam, or a file path string for a video file ──
+# Examples:
+#   SOURCE = 0                        ← default webcam
+#   SOURCE = 1                        ← second webcam
+#   SOURCE = "data/raw/ช่วย/ช่วย_1.mp4"  ← video file for debugging
+SOURCE = 0
+
+IS_FILE = isinstance(SOURCE, str)
+# Windows: force DirectShow backend for webcams — the default MSMF backend
+# often opens the device but fails to grab frames (error -1072875772).
+if IS_FILE:
+    cap = cv2.VideoCapture(SOURCE)
+else:
+    cap = cv2.VideoCapture(SOURCE, cv2.CAP_DSHOW)
+
+if IS_FILE:
+    fps_source = cap.get(cv2.CAP_PROP_FPS) or 30
+    FRAME_DELAY = max(1, int(1000 / fps_source))  # delay per frame in ms to match real speed
+    print(f"Video file mode: {SOURCE}  ({fps_source:.0f} fps)")
+else:
+    FRAME_DELAY = 1
+    print("Webcam opened. Press Q to quit.")
 
 # ── State machine ──
 STATE_IDLE       = "IDLE"
 STATE_COLLECTING = "COLLECTING"
 
-state        = STATE_IDLE
-idle_counter = 0          # counts consecutive frames with hands while IDLE
-collected    = []         # frames gathered during COLLECTING
+state           = STATE_IDLE
+idle_counter    = 0    # consecutive frames with hands while IDLE
+collected       = []   # frames gathered during COLLECTING
+still_counter   = 0    # consecutive still frames while COLLECTING
+missing_counter = 0    # consecutive frames with NO hand while COLLECTING
+prev_kp         = None # previous frame's keypoints for delta comparison
+
+MISSING_TOLERANCE = 8  # hands must vanish this many frames to count as "gone"
 
 while True:
     ret, frame = cap.read()
     if not ret:
-        break
+        if IS_FILE:
+            # Video ended — pause on last frame so you can see the result
+            print("Video ended. Press Q to quit.")
+            while True:
+                if cv2.waitKey(100) & 0xFF == ord('q'):
+                    break
+            break
+        else:
+            break
 
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     results   = hands.process(frame_rgb)
@@ -167,20 +203,60 @@ while True:
             if idle_counter >= IDLE_WARMUP:
                 state = STATE_COLLECTING
                 collected = []
+                still_counter = 0
+                missing_counter = 0
+                prev_kp = None
                 print("Hands detected — collecting...")
         else:
             idle_counter = 0
 
     elif state == STATE_COLLECTING:
-        collected.append(keypoints_row)
+        # Only collect frames where a hand is present — matches extract_keypoints.py.
+        # Zero-frames (MediaPipe flicker) destroy accuracy: model never saw them in training.
+        trigger = False
+        if hand_present:
+            missing_counter = 0
+            collected.append(keypoints_row)
 
-        if len(collected) == COLLECT_FRAMES:
-            keypoints = np.array(collected)          # shape: (30, 126)
+            # Stillness detection — compare to previous hand-present frame
+            if prev_kp is not None and len(collected) >= MIN_COLLECT:
+                delta = np.mean(np.abs(keypoints_row - prev_kp))
+                if delta < STILL_THRESHOLD:
+                    still_counter += 1
+                else:
+                    still_counter = 0
+                if still_counter >= STILL_FRAMES:
+                    trigger = True
+                    print(f"Still detected after {len(collected)} frames")
+            prev_kp = keypoints_row
+        else:
+            missing_counter += 1  # flicker-tolerant — don't end on a single dropped frame
+
+        # Also trigger if hands truly gone or safety cap reached
+        if missing_counter >= MISSING_TOLERANCE or len(collected) >= MAX_COLLECT:
+            if len(collected) >= MIN_COLLECT:
+                trigger = True
+            else:
+                # Too short — discard and reset
+                state = STATE_IDLE
+                idle_counter = 0
+                collected = []
+                still_counter = 0
+                missing_counter = 0
+                prev_kp = None
+
+        if trigger:
+            arr = np.array(collected)
+            indices = np.linspace(0, len(arr) - 1, 30, dtype=int)
+            keypoints = arr[indices]
             np.save(KEYPOINTS_PATH, keypoints)
-            print(f"Sent {COLLECT_FRAMES} frames to model")
+            print(f"Sent {len(arr)} frames → resampled to 30")
             state = STATE_IDLE
             idle_counter = 0
             collected = []
+            still_counter = 0
+            missing_counter = 0
+            prev_kp = None
 
     # ── Read result + top-N from predict_stream ──
     result_text = "..."
@@ -207,7 +283,8 @@ while True:
     else:
         dot_color  = (0, 255, 0)     # green — collecting
         progress   = len(collected)
-        state_text = f"บันทึก {progress}/{COLLECT_FRAMES}" if thai_ok else f"REC {progress}/{COLLECT_FRAMES}"
+        progress   = len(collected)
+        state_text = f"บันทึก {progress}" if thai_ok else f"REC {progress}"
 
     cv2.circle(frame, (w - 30, 38), 12, dot_color, -1)
 
@@ -230,7 +307,7 @@ while True:
         frame = draw_topn(frame, topn_data, None)
 
     cv2.imshow("ThSL Bridge", frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(FRAME_DELAY) & 0xFF == ord('q'):
         break
 
 cap.release()

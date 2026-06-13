@@ -23,3 +23,11 @@ __pycache__/
 .ipynb_checkpoints/
 
 # ignore YOLO , failed version
+scripts/yolov8n.pt
+scripts/*.pt
+scripts/typhoon_key.txt
+
+# Large media and dev scratch — not for the repo
+reference video/
+scripts/debuggin/
+scripts/unused/

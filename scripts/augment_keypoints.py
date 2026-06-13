@@ -50,8 +50,8 @@ for sign_dir in RAW_DIR.iterdir():
         for i in range(NUM_AUGMENTS):
             augmented_sequence = sequence.copy()
 
-            if RNG.random() > 0.5:
-                augmented_sequence = augment_flip(augmented_sequence)
+            # NOTE: flip (horizontal mirror) is intentionally disabled — it corrupts
+            # directional signs like คุณ (point away) vs ฉัน (point at self).
             if RNG.random() > 0.5:
                 augmented_sequence = augment_rotate(augmented_sequence)
             if RNG.random() > 0.5:

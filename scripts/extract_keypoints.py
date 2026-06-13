@@ -41,6 +41,8 @@ for sign_dir in signs:
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = hands.process(frame_rgb)
 
+            # Only keep frames where at least one hand is detected
+            # This matches the live pipeline which collects only during hand presence
             if results.multi_hand_landmarks:
                 lh = np.zeros(63)
                 rh = np.zeros(63)
@@ -50,23 +52,21 @@ for sign_dir in signs:
                         lh = coords
                     else:
                         rh = coords
-            else:
-                lh = np.zeros(63)
-                rh = np.zeros(63)
-
-            frames_keypoints.append(np.concatenate([lh, rh]))
+                frames_keypoints.append(np.concatenate([lh, rh]))
 
         cap.release()
-        
-        arr = np.array(frames_keypoints)  
 
+        MIN_HAND_FRAMES = 15
+        if len(frames_keypoints) < MIN_HAND_FRAMES:
+            print(f"    [skip] only {len(frames_keypoints)} hand frames — bad recording, need at least {MIN_HAND_FRAMES}")
+            continue
+
+        arr = np.array(frames_keypoints)
 
         NUM_FRAMES = 30
         indices = np.linspace(0, len(arr) - 1, NUM_FRAMES, dtype=int)
         arr = arr[indices]  # shape: (30, 126)
 
-
         out_path.parent.mkdir(parents=True, exist_ok=True)
         np.save(str(out_path), arr)
-        print(f"    saved: {arr.shape}")
-        print(f"    frames: {len(frames_keypoints)}")
+        print(f"    saved: {arr.shape}  ({len(frames_keypoints)} hand frames → resampled to 30)")
