@@ -21,7 +21,7 @@ import json
 import urllib.request
 
 TYPHOON_URL   = "https://api.opentyphoon.ai/v1/chat/completions"
-TYPHOON_MODEL = "typhoon-v2.1-12b-instruct"   # current Typhoon instruct model
+TYPHOON_MODEL = "typhoon-v2.5-30b-a3b-instruct"   # current Typhoon instruct model
 KEY_FILE      = os.path.join(os.path.dirname(__file__), "typhoon_key.txt")
 TTS_DIR       = "D:/KachornThSL/temp"
 

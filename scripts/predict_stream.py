@@ -38,7 +38,7 @@ SIGN_EN = {
 }
 
 SIGN_THRESHOLDS = {
-    # correct=0.96, wrong=0.00 → safe low threshold
+    # correct=0.96, wrong=0.00 → safe low threshold , maybe lower conf_thre  cause inference were too high confidence even when right bruv
     "คนหูหนวก": 0.70,
     # correct=0.69, wrong=0.71 → BROKEN (wrong > correct), set below correct_conf
     "คุณ":      0.60,

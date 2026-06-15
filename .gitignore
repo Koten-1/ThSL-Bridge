@@ -3,6 +3,8 @@ data/raw/
 data/processed/
 data/augmented/
 temp/
+*.7z
+*.zip
 
 # Model weights
 models/*.h5
@@ -29,5 +31,5 @@ scripts/typhoon_key.txt
 
 # Large media and dev scratch — not for the repo
 reference video/
-scripts/debuggin/
 scripts/unused/
+# NOTE: scripts/debuggin/ is intentionally tracked — inspection tools referenced in the blog
