@@ -201,9 +201,298 @@ model = Sequential([
 ---
 
 ## TODO — ไฟล์ที่ยังไม่ได้ทำโน้ต
-- [ ] keypoint_stream.py (state machine, stillness, DirectShow)
-- [ ] predict_stream.py (vote window, threshold, finish handling)
-- [ ] postprocess.py (Typhoon + gTTS, graceful degradation)
-- [ ] augment_keypoints.py (scale/translate/rotate, ทำไมปิด flip)
-- [ ] check_thresholds.py
+- [x] keypoint_stream.py (state machine, stillness, DirectShow)
+- [x] predict_stream.py (vote window, threshold, finish handling)
+- [x] postprocess.py (Typhoon + gTTS, graceful degradation)
+- [x] augment_keypoints.py (scale/translate/rotate, ทำไมปิด flip)
+- [x] check_thresholds.py
+
+---
+
+## 9. keypoint_stream.py — State Machine + Stillness
+
+### State Machine: 2 สถานะ
+
 ```
+IDLE ──── (มือปรากฏ IDLE_WARMUP=4 เฟรมติดกัน) ────► COLLECTING
+COLLECTING ── (stillness / มือหาย / ครบ MAX_COLLECT) ──► IDLE
+```
+
+- **IDLE_WARMUP = 4** กันทริกเกอร์จากมือผ่านจอเฉย ๆ
+- **COLLECTING** เก็บเฉพาะเฟรมที่มีมือ (ตรงกับ extract_keypoints.py — แก้ปัญหา train/serve mismatch)
+
+### Stillness Detection — "รู้ว่าท่าจบแล้ว"
+
+```python
+delta = np.mean(np.abs(keypoints_row - prev_kp))
+if delta < STILL_THRESHOLD:   # 0.03
+    still_counter += 1
+else:
+    still_counter = 0
+if still_counter >= STILL_FRAMES:   # 6 เฟรมติดกัน ≈ 0.2s
+    trigger = True
+```
+
+| พารามิเตอร์ | ค่า | ความหมาย |
+|---|---|---|
+| STILL_THRESHOLD | 0.03 | delta ต่ำกว่านี้ = นิ่ง |
+| STILL_FRAMES | 6 | ต้องนิ่งติดกัน 6 เฟรม |
+| MIN_COLLECT | 10 | เริ่มเช็ค stillness หลังได้ 10 เฟรม |
+| MAX_COLLECT | 150 | safety cap — ส่งเลยหลัง 5 วินาที |
+| MISSING_TOLERANCE | 8 | ทนมือหายได้ 8 เฟรม (กัน flicker) |
+
+### Resampling — ปรับความเร็วให้ตรงตอนเทรน
+
+```python
+indices  = np.linspace(0, len(arr) - 1, 30, dtype=int)
+keypoints = arr[indices]   # ดึง 30 index กระจายเท่ากัน
+```
+
+ทำท่าช้าหรือเร็วแค่ไหน → ก็ได้ 30 เฟรมเสมอ = ตรงกับ input shape โมเดล
+
+### Finish Gesture — ยกมือทั้งสองข้างขึ้นสูง
+
+```python
+if lh_wrist_y < FINISH_THRESHOLD and rh_wrist_y < FINISH_THRESHOLD:
+    # FINISH_THRESHOLD = 0.35 (y = 0 คือบนสุด, 1 คือล่างสุด)
+    # ยก wrist ขึ้นสูงกว่า 35% จากบนจอ = trigger finish
+```
+
+เขียน `finish.txt` → predict_stream.py อ่านแล้วส่ง sentence ออก
+
+### DirectShow Backend — ทำไมต้อง CAP_DSHOW
+
+```python
+cap = cv2.VideoCapture(SOURCE, cv2.CAP_DSHOW)
+```
+
+Windows ค่าเริ่มต้นใช้ MSMF backend → เปิดกล้องได้แต่ดึงเฟรมไม่ออก (error `-1072875772`)
+DirectShow แก้ปัญหานี้ได้ ใช้เฉพาะ webcam — ไฟล์วิดีโอไม่ต้องการ
+
+### IPC ระหว่าง 2 โปรเซส (ผ่าน temp files)
+
+| ไฟล์ | ทิศทาง | ข้อมูล |
+|---|---|---|
+| `keypoints.npy` | stream → predict | 30×126 keypoints |
+| `finish.txt` | stream → predict | สัญญาณจบประโยค |
+| `result.txt` | predict → stream | ผลลัพธ์แสดงบนหน้าจอ |
+| `topn.json` | predict → stream | top-5 scores สำหรับ UI bars |
+
+---
+
+## 10. predict_stream.py — Vote Window + Threshold + Finish
+
+### SIGN_THRESHOLDS — Confidence แต่ละคำไม่เท่ากัน
+
+```python
+SIGN_THRESHOLDS = {
+    "คนหูหนวก": 0.70,   # correct=0.96 — safe ลด threshold ได้
+    "คุณ":      0.60,   # BROKEN: wrong > correct (0.71 > 0.69) — ลด threshold กันค้าง
+    "ช่วย":     0.65,   # BROKEN: wrong > correct (0.91 > 0.80) — threshold แก้ไม่ได้ 100%
+    "ขอบคุณ":   0.80,   # perfect: correct=1.00, wrong=0.00
+    ...
+}
+```
+
+> **กฎ:** threshold ควรอยู่ระหว่าง `wrong_conf` กับ `correct_conf`
+> ถ้า `wrong > correct` (BROKEN) → threshold ช่วยลดได้บ้างแต่ไม่ได้แก้รากเหง้า → ต้องเก็บข้อมูลเพิ่ม / retrain
+
+### Vote Window Logic
+
+```python
+VOTE_WINDOW = 3   # เก็บ prediction ล่าสุด 3 ครั้ง (deque)
+VOTE_NEEDED = 1   # ยืนยันได้ทันทีหากมั่นใจ 1 ครั้ง
+```
+
+**ทำไม VOTE_NEEDED = 1?** keypoint_stream.py ส่งครั้งละ 1 ท่าที่สมบูรณ์แล้ว → ไม่ต้องรอ vote หลายครั้ง
+(ก่อนหน้านี้ต้องรอ 3 ครั้ง ตอนที่ stream ส่งทีละเฟรม)
+
+```python
+vote_entry = sign if (confidence >= threshold and sign != "none") else "none"
+recent_predictions.append(vote_entry)
+
+non_none = [s for s in recent_predictions if s != "none"]
+top_sign  = max(set(non_none), key=non_none.count)
+top_count = non_none.count(top_sign)
+
+if top_count >= VOTE_NEEDED:   # → CONFIRMED
+elif top_count > 0:             # → BUILDING
+else:                           # → none (ทั้งหมดคือ none)
+```
+
+### 3 สถานะผลลัพธ์
+
+| สถานะ | ความหมาย | แสดงบน UI |
+|---|---|---|
+| CONFIRMED | top_count ≥ VOTE_NEEDED | `คำ (95%)` + เพิ่ม buffer |
+| BUILDING | top_count > 0 แต่ยังไม่ถึง | `? คำ (80%) [1/3]` |
+| none | confidence ต่ำกว่า threshold | `...` |
+
+### Finish Handling — 2 วิธี
+
+```
+1. finish.txt  (gesture: ยกมือ 2 ข้าง) — keypoint_stream เขียน
+2. "finish" class — โมเดลทาย finish เอง
+```
+
+ทั้ง 2 วิธีทำเหมือนกัน: ส่ง word_buffer ไป postprocess.process() ใน background thread แล้ว clear buffer
+
+### Duplicate Prevention
+
+```python
+elif not word_buffer or word_buffer[-1] != top_sign:
+    word_buffer.append(top_sign)   # เพิ่มเฉพาะถ้าต่างจากคำก่อน
+else:
+    print(f"  dup: {conf_en}")     # คำซ้ำ — ไม่เพิ่ม
+```
+
+---
+
+## 11. postprocess.py — Typhoon LLM + gTTS + Graceful Degradation
+
+### Pipeline
+
+```
+word_buffer → build_sentence() → speak()
+               (Typhoon API)      (gTTS → mp3 → เล่นเสียง)
+```
+
+### Graceful Degradation — ล้มไม่พัง
+
+| เหตุการณ์ | ผลลัพธ์ |
+|---|---|
+| ไม่มี API key / ไม่มีเน็ต | ใช้คำดิบ join ด้วยเว้นวรรค |
+| Typhoon timeout/error | ใช้คำดิบ (fallback เดียวกัน) |
+| gTTS ล้มเหลว | print แทน — โปรแกรมไม่หยุด |
+
+### Typhoon — Thai LLM เรียบเรียงประโยค
+
+```python
+prompt = (
+    "คุณเป็นผู้ช่วยแปลงคำจากภาษามือไทยให้เป็นประโยคภาษาไทยที่เป็นธรรมชาติ "
+    "ตอบกลับเฉพาะประโยคเท่านั้น ห้ามอธิบายเพิ่ม\n"
+    f"คำ: {raw}"
+)
+# model: typhoon-v2.5-30b-a3b-instruct
+# max_tokens: 100, temperature: 0.3 (ตอบตรง ไม่สร้างสรรค์เกินไป)
+```
+
+### ทำไมใช้ timestamp ในชื่อไฟล์ mp3
+
+```python
+mp3 = os.path.join(TTS_DIR, f"tts_{int(time.time()*1000)}.mp3")
+```
+
+**ปัญหา:** ถ้าใช้ชื่อเดิมซ้ำ แล้ว media player ยังเปิดค้างอยู่ → `Permission denied`
+**แก้:** ชื่อใหม่ทุกครั้ง → player เก่ายังเล่นไฟล์เก่าอยู่ ไม่กระทบไฟล์ใหม่
+
+```python
+def _cleanup_old_tts(keep_latest=3):
+    # ลบไฟล์เก่า เก็บแค่ 3 อัน (best-effort — ข้าม locked files)
+```
+
+### วิธีหา API Key (2 แหล่ง, ลำดับ)
+
+```
+1. os.environ.get("TYPHOON_API_KEY")   ← env var
+2. scripts/typhoon_key.txt             ← ไฟล์ text (1 บรรทัด)
+```
+
+---
+
+## 12. augment_keypoints.py — Scale / Translate / Rotate (ปิด Flip)
+
+### 3 Augmentation (random 50% chance แต่ละอัน)
+
+```python
+# Rotate ±15°: หมุน x,y ด้วย rotation matrix
+rotated[:, 0::3] = cos_a * x - sin_a * y   # x ใหม่
+rotated[:, 1::3] = sin_a * x + cos_a * y   # y ใหม่
+
+# Scale ×0.85 ถึง ×1.15: ยืด/หดทั้งท่า (มือใกล้/ไกลกล้อง)
+return np.clip(sequence * scale, 0.0, 1.0)
+
+# Translate ±10%: เลื่อนซ้าย-ขวา-บน-ล่าง (ตำแหน่งมือในเฟรม)
+return np.clip(sequence + shift, 0.0, 1.0)
+```
+
+### ทำไม **ปิด** augment_flip?
+
+```python
+# augment_flip ถูก define แต่ไม่ถูกเรียก — ตั้งใจปิด
+flipped[:, 0::3] = 1 - flipped[:, 0::3]   # สะท้อนแกน x
+```
+
+**เหตุผล:** ภาษามือมีทิศทาง
+
+```
+คุณ  = ชี้ออกจากตัว → mirror → ชี้เข้าหาตัว = ฉัน ← คนละความหมาย!
+```
+
+flip จะสับสน label: `คุณ` กลายเป็นหน้าตาคล้าย `ฉัน` แต่ยังติด label `คุณ` → โมเดลงง
+
+> **กฎ:** rotate/scale/translate ปลอดภัย (ไม่เปลี่ยนทิศทางสัมพัทธ์ของมือ)
+> flip ไม่ปลอดภัยสำหรับ directional signs
+
+### ผลลัพธ์ที่ได้
+
+```
+1 ต้นฉบับ × 5 augments = 6 ไฟล์ต่อคลิป
+444 ต้นฉบับ × 5 = 2,220 augmented
+รวม 2,664 (ตรงกับตัวเลขใน section 6)
+```
+
+- `seed=42` → reproducible — run ซ้ำได้ผลเดิม
+- Skip ถ้าไฟล์มีอยู่แล้ว (idempotent — run ซ้ำปลอดภัย)
+
+---
+
+## 13. check_thresholds.py — เครื่องมือ Calibrate หลัง Retrain
+
+### วัตถุประสงค์
+
+หลัง retrain โมเดลทุกครั้ง → run สคริปต์นี้ → ได้ตาราง → อัปเดต `SIGN_THRESHOLDS` ใน predict_stream.py
+
+### วิธีทำงาน
+
+```python
+for sign in TARGET_SIGNS:
+    files = list(folder.glob('*.npy'))[:20]   # ทดสอบ 20 ไฟล์แรก
+    for f in files:
+        pred = model.predict(...)
+        idx  = np.argmax(pred[0])
+        conf = float(pred[0][idx])
+        if predicted == sign and conf >= threshold:
+            above += 1   # ผ่าน threshold
+```
+
+### Output ที่ได้
+
+```
+Sign           Thr   Pass%   AvgConf   MaxConf  Status
+--------------------------------------------------------------
+คนหูหนวก     0.70    100%      0.96      0.99  OK
+คุณ           0.60     40%      0.68      0.82  LOW
+ช่วย          0.65     30%      0.72      0.91  LOW
+ขอบคุณ        0.80    100%      1.00      1.00  OK
+...
+```
+
+| Status | เงื่อนไข | ความหมาย |
+|---|---|---|
+| OK | pass% ≥ 50% | threshold ใช้ได้ |
+| LOW | 0% < pass% < 50% | threshold สูงเกิน หรือโมเดลยังอ่อน |
+| BLOCKED | pass% = 0% | threshold ปิดคำนั้นทั้งหมด — ต้องลด |
+
+### Workflow หลัง Retrain
+
+```
+1. เทรนโมเดลใหม่ → บันทึก .weights.h5
+2. run check_thresholds.py → ดู Pass% และ AvgConf ของแต่ละ sign
+3. ปรับ SIGN_THRESHOLDS ใน predict_stream.py ให้ Pass% ≥ 70-80%
+4. test live ด้วย keypoint_stream + predict_stream
+```
+
+> **หลักการตั้ง threshold:** ตั้งให้ `wrong_conf < threshold < correct_conf`
+> ถ้า wrong_conf ≥ correct_conf (BROKEN) → threshold ช่วยได้จำกัด → ต้องเก็บข้อมูลเพิ่ม/retrain ใหม่
+
