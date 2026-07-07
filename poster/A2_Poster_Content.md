@@ -1,7 +1,7 @@
 # ThSL Bridge — A2 Poster Content
 ### ระบบแปลภาษามือไทยสู่ภาษาพูดแบบเรียลไทม์ | Real-time Thai Sign Language Translation System
 
-> Content drafted for 3 poster sections: **Abstract, Materials & Methods, Results**.
+> Content drafted for 4 poster sections: **Abstract, Introduction & Motivation, Materials & Methods, Results**.
 > Each section is given in English (poster-ready, concise) with a short Thai gloss below key lines for the presenter.
 
 ---
@@ -13,6 +13,26 @@ ThSL Bridge is an AI-powered system that translates isolated Thai Sign Language 
 *ThSL Bridge คือระบบ AI ที่แปลภาษามือไทยแบบ isolated เป็นเสียงพูดภาษาไทยธรรมชาติแบบเรียลไทม์ ผ่านกล้องเว็บแคมทั่วไป โดยไม่ต้องใช้อุปกรณ์พิเศษ*
 
 **Keywords:** Thai Sign Language, LSTM, MediaPipe, Assistive Technology, Real-time Recognition, Deaf Communication
+
+---
+
+## Introduction & Motivation
+
+### The communication gap
+Thailand is home to a large Deaf and hard-of-hearing community, yet Thai Sign Language (ThSL) interpreters remain scarce and hearing Thais rarely learn ThSL. This leaves everyday interactions — asking for help, answering a question, saying thank you — dependent on writing notes, typing on a phone, or the presence of a trained interpreter. That gap is exactly what this project targets: turning a hand gesture, captured by an ordinary webcam, directly into a spoken Thai sentence, with no interpreter and no specialized hardware required.
+
+*ประเทศไทยมีชุมชนผู้พิการทางการได้ยินจำนวนมาก แต่ล่ามภาษามือมีจำกัด และคนหูดีส่วนใหญ่ไม่เข้าใจภาษามือไทย ทำให้การสื่อสารในชีวิตประจำวันเป็นอุปสรรค*
+
+### Why this is a hard problem
+- **Sign language is not a static image problem, it is a sequence problem.** A single sign unfolds as a short *movement* over time, so a system must model temporal structure, not just recognize a single frame.
+- **No pre-trained models exist for this input type.** ThSL has far less public data than spoken/written Thai NLP, and existing image-classification models (trained on photos, not hand-keypoint sequences) do not transfer — the recognizer had to be built from scratch.
+- **Public ThSL reference data is unreliable for computer vision.** The team's own inspection tooling found that clips scraped from the official th-sl.com database were only detectable by hand-tracking 29–62% of the time (motion blur, occlusion, camera angle), versus ~100% for purpose-recorded clips — meaning a naive "just scrape more data" approach would have quietly poisoned the model.
+
+### Project goals
+1. Recognize a first set of **10 common ThSL signs** (e.g. "help", "thank you", "understand", "want") from live webcam video, in real time.
+2. Go beyond isolated word recognition: assemble recognized signs into a **grammatically natural spoken Thai sentence**, not just a word-by-word gloss.
+3. Build and validate the system as a genuinely **deployable tool** — including a zero-install, browser-based demo — rather than a lab-only accuracy benchmark.
+4. Practice and demonstrate a **rigorous ML workflow**: questioning suspiciously high accuracy, checking for data leakage, and verifying train/inference consistency, rather than accepting the first good-looking number.
 
 ---
 
