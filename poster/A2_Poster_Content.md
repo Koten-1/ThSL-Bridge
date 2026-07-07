@@ -51,8 +51,24 @@ Webcam → MediaPipe (Hand Keypoints) → LSTM Classifier → Typhoon LLM (gramm
 ### 3. Data collection
 - Primary source considered: **th-sl.com** (NADT's official ThSL reference database), scraped via `00_Scraper.ipynb`
 - Data-quality check with a custom tool (`inspect_sign.py`) measuring **hand-detection rate**: scraped clips only reached **29–62%** hand-detection (MediaPipe frequently failed to find hands), vs. **100%** for self-recorded clips → scraped data was rejected as unusable, and the team recorded its own clips instead
+- **Recording setup:** 1080p, 30 fps, 40 clips per sign word
+  - 10 clips/sign recorded with a handheld smartphone camera
+  - 30 clips/sign recorded with a Logitech BRIO 300 webcam
 - Final dataset: **10 target signs** + `none` + `finish` = 12 classes
-  - 444 original clips → ×5 augmentation (scale / translate / rotate) → 2,664 total samples
+  - Original clips split **before** augmentation (group-aware, 80/20): **255 original clips → train**, **89 original clips → held-out test**
+  - Augmentation applied only to the 255 training originals → **1,775 augmented clips**
+  - Train set = 255 + 1,775 = **2,030 sequences**; Test set = **89 sequences** (100% original, unaugmented, never seen during training)
+
+#### `extract_keypoints.py` — turning raw video into training data
+This script is the bridge between a raw recorded video and a usable training sample, and its correctness is what everything downstream depends on:
+1. Runs **MediaPipe Hands** (`max_num_hands=2, min_detection_confidence=0.5`) over the clip frame by frame.
+2. For each frame, builds a **126-value vector**: 63 values for the left hand + 63 for the right hand (21 landmarks × x, y, z each).
+3. **Keeps a frame only if at least one hand was actually detected** (`if results.multi_hand_landmarks:`) — frames with no hand present are dropped entirely rather than saved as all-zero rows. This was a deliberate fix: an earlier version appended *every* frame regardless of hand presence, polluting the data with "empty" frames and teaching the model to over-predict certain signs whenever no hand was visible.
+4. Clips with fewer than **15 valid hand-frames** are rejected outright as unusable recordings (`MIN_HAND_FRAMES = 15`).
+5. The remaining hand-frames (count varies clip to clip, since gestures take different amounts of time) are **resampled to a fixed 30 frames** using `np.linspace` indices — so every saved sequence has the same shape **(30, 126)**, matching what the LSTM expects.
+6. Output: one `.npy` file per clip in `data/processed/<sign>/`, ready to feed directly into training.
+
+**Why it matters:** this "only real hand frames, then resample to 30" rule is re-implemented identically in the live `keypoint_stream.py` used for webcam inference — guaranteeing **train/serve consistency**, one of the project's key lessons (see Discussion).
 
 ### 4. Feature extraction
 - **MediaPipe Hands**: 21 landmarks/hand × 2 hands × 3 coords = **126 values per frame**
