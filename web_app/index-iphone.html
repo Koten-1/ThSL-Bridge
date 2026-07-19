@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThSL Bridge (iPhone) — แปลภาษามือไทย</title>
+<style>
+  :root { --bg:#0f1115; --accent:#2ecc71; --gold:#f1c40f; --red:#e74c3c; --text:#e8eaed; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text);
+         display:flex; flex-direction:column; align-items:center; min-height:100vh; padding-bottom:30px; }
+  h1 { margin:14px 0 2px; font-size:1.5rem; }
+  .sub { color:#9aa0a6; font-size:.85rem; margin-bottom:14px; }
+  .hidden { display:none !important; }
+
+  /* menu */
+  #menu { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:10px; }
+  .modeBtns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
+  .modeCard { background:#1a1d24; border:2px solid #2a2e38; border-radius:16px; padding:22px 28px;
+              width:240px; cursor:pointer; transition:.15s; text-align:center; }
+  .modeCard:hover { border-color:var(--accent); transform:translateY(-3px); }
+  .modeCard .emoji { font-size:2.6rem; }
+  .modeCard .t { font-size:1.2rem; font-weight:700; margin:8px 0 4px; }
+  .modeCard .d { font-size:.82rem; color:#9aa0a6; line-height:1.4; }
+
+  .stage { position:relative; width:960px; max-width:97vw; }
+  video, canvas { width:100%; border-radius:16px; display:block; }
+  canvas { position:absolute; top:0; left:0; }
+  #status { position:absolute; top:12px; left:12px; background:rgba(0,0,0,.5);
+            backdrop-filter:blur(6px); padding:7px 14px; border-radius:10px; font-size:.95rem; }
+  #big { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+         font-size:9rem; font-weight:800; color:var(--gold); text-shadow:0 6px 30px rgba(0,0,0,.8); }
+
+  /* game HUD */
+  #gameHud { position:absolute; top:10px; left:50%; transform:translateX(-50%);
+             display:flex; gap:20px; align-items:center; background:rgba(0,0,0,.5);
+             backdrop-filter:blur(8px); padding:8px 22px; border-radius:14px; }
+  #timer { font-size:1.5rem; font-weight:800; color:var(--gold); }
+  #score { font-size:1.5rem; font-weight:800; color:var(--accent); }
+  #target { position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,.5); backdrop-filter:blur(8px); padding:12px 36px; border-radius:16px;
+            font-size:2.4rem; font-weight:800; }
+  #target b { color:var(--gold); }
+  #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%);
+           font-size:6rem; font-weight:900; opacity:0; transition:opacity .1s; pointer-events:none; }
+
+  /* test overlays */
+  #result { position:absolute; bottom:58px; left:50%; transform:translateX(-50%);
+            background:rgba(0,0,0,.45); backdrop-filter:blur(6px); padding:10px 30px; border-radius:14px;
+            font-size:2.6rem; font-weight:800; color:var(--gold); white-space:nowrap; }
+  #sentence { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+              background:rgba(0,0,0,.4); backdrop-filter:blur(4px); padding:5px 18px; border-radius:10px;
+              font-size:1.05rem; color:#fff; white-space:nowrap; }
+  .bars { position:absolute; right:12px; top:50%; transform:translateY(-50%);
+          width:230px; background:rgba(15,17,21,.55); backdrop-filter:blur(8px);
+          padding:14px; border-radius:14px; }
+  .bar-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .bar-label { width:74px; text-align:right; font-size:.85rem; }
+  .bar-track { flex:1; background:rgba(255,255,255,.12); border-radius:6px; height:16px; overflow:hidden; }
+  .bar-fill { height:100%; background:var(--accent); width:0%; transition:width .15s; }
+  .bar-pct { width:38px; font-size:.8rem; text-align:right; }
+
+  /* gameover */
+  #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; }
+  #finalScore { font-size:3rem; font-weight:900; color:var(--gold); }
+  input { background:#1a1d24; border:2px solid #2a2e38; color:#fff; padding:10px 16px;
+          border-radius:10px; font-size:1rem; text-align:center; }
+  .lb { background:#1a1d24; border-radius:14px; padding:14px 20px; min-width:320px; }
+  .lb h3 { margin:0 0 8px; text-align:center; }
+  .lb-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #2a2e38; }
+  .lb-row .rank { color:var(--gold); font-weight:700; width:30px; }
+  .lb-row .nm { flex:1; }
+  .lb-row .sc { font-weight:700; color:var(--accent); }
+
+  button { background:var(--accent); color:#08160d; border:none; padding:12px 30px;
+           border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; }
+  .ghost { background:transparent; color:#9aa0a6; border:1px solid #2a2e38; }
+  .hint { color:#9aa0a6; font-size:.82rem; max-width:680px; text-align:center; line-height:1.5; margin:8px 14px; }
+</style>
+</head>
+<body>
+  <h1>🤟 ThSL Bridge</h1>
+  <div class="sub">แปลภาษามือไทยเรียลไทม์ในเบราว์เซอร์ • MediaPipe + LSTM (iPhone build)</div>
+
+  <!-- MENU -->
+  <div id="menu">
+    <div class="modeBtns">
+      <div class="modeCard" id="cardTest">
+        <div class="emoji">🧪</div><div class="t">โหมดทดสอบ</div>
+        <div class="d">ทำท่าอิสระ ดูว่าโมเดลทายเป็นคำไหน สร้างประโยคได้</div>
+      </div>
+      <div class="modeCard" id="cardGame">
+        <div class="emoji">🎮</div><div class="t">Sign Speed Test</div>
+        <div class="d">ทำท่าตามคำที่สุ่มให้ ภายใน 45 วินาที ทำได้กี่คำ?</div>
+      </div>
+    </div>
+    <div class="lb" id="menuLb"></div>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="hidden">
+    <div class="stage">
+      <video id="video" autoplay playsinline webkit-playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="status">กำลังโหลด...</div>
+      <div id="diag" style="position:absolute;bottom:12px;left:12px;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);padding:5px 10px;border-radius:8px;font-size:.72rem;color:#9aa0a6;"></div>
+      <div id="big"></div>
+      <!-- game -->
+      <div id="gameHud" class="hidden"><span>⏱️ <span id="timer">45</span></span><span>🏆 <span id="score">0</span></span></div>
+      <div id="target" class="hidden"></div>
+      <div id="flash"></div>
+      <!-- test -->
+      <div class="bars hidden" id="bars"></div>
+      <div id="result" class="hidden">—</div>
+      <div id="sentence" class="hidden"></div>
+    </div>
+    <p class="hint" id="appHint"></p>
+    <button class="ghost" id="backBtn">← กลับเมนู</button>
+  </div>
+
+  <!-- GAMEOVER -->
+  <div id="gameover" class="hidden">
+    <div>หมดเวลา! คุณทำได้</div>
+    <div id="finalScore">0</div>
+    <div>คำ</div>
+    <input id="nameInput" placeholder="ใส่ชื่อของคุณ" maxlength="16">
+    <button id="saveBtn">บันทึกคะแนน</button>
+    <div class="lb" id="overLb"></div>
+    <button class="ghost" id="againBtn">เล่นอีกครั้ง</button>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+const TARGET_SIGNS = ["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่","ถาม","บอก","finish","none"];
+const GAME_WORDS = ["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่","ถาม","บอก"];
+const THRESH = {"คนหูหนวก":0.70,"คุณ":0.60,"ช่วย":0.65,"ขอบคุณ":0.80,"ฉัน":0.75,"ต้องการ":0.78,
+  "เข้าใจ":0.85,"ไม่":0.65,"ถาม":0.70,"บอก":0.75,"finish":0.70,"none":0.80};
+const COLLECT_FRAMES=30, STILL_THRESHOLD=0.03;
+// Timing gates use wall-clock milliseconds, not frame counts — the Python live pipeline's
+// frame-count constants (STILL_FRAMES=6, MIN_COLLECT=10, ...) implicitly assumed ~30fps.
+// The browser's requestAnimationFrame loop often runs faster (60fps+), so the same frame
+// counts here represented less real time than in training/live-Python, causing signs to
+// get cut short. Converted at 30fps: frames/30*1000 = ms.
+// MIN_COLLECT_MS raised from 333ms — phone detection often runs at a lower, less
+// stable fps than desktop, so the same window collects fewer real keypoint frames.
+// A longer floor guarantees more samples go into the 30-frame resample regardless
+// of how slow a given phone's inference is.
+const IDLE_WARMUP_MS=133, STILL_MS=200, MIN_COLLECT_MS=500, MAX_COLLECT_MS=5000, MISSING_TOL_MS=267;
+const GAME_DURATION=45;
+
+const $=id=>document.getElementById(id);
+const video=$("video"), overlay=$("overlay"), ctx=overlay.getContext("2d");
+const statusEl=$("status"), bigEl=$("big"), barsEl=$("bars"), resultEl=$("result"), sentenceEl=$("sentence");
+const gameHud=$("gameHud"), timerEl=$("timer"), scoreEl=$("score"), targetEl=$("target"), flashEl=$("flash");
+const diagEl=$("diag");
+let fpsPrevTs=0, fpsSmoothed=0, lastSignFrameCount=0;
+
+let handLandmarker=null, model=null, started=false;
+let mode="test", state="IDLE", collected=[], prevKp=null, countdownStart=0;
+let idleStart=null, stillStart=null, missStart=null, collectStart=0;
+let wordBuffer=[];
+let gameActive=false, score=0, timeLeft=GAME_DURATION, targetWord="", gameTimer=null, starting=false;
+
+function buildBars(){ for(let i=0;i<5;i++){ const r=document.createElement("div"); r.className="bar-row";
+  r.innerHTML=`<div class="bar-label" id="bl${i}"></div><div class="bar-track"><div class="bar-fill" id="bf${i}"></div></div><div class="bar-pct" id="bp${i}"></div>`; barsEl.appendChild(r);} }
+buildBars();
+
+// ---- leaderboard (localStorage) ----
+function getLB(){ try{return JSON.parse(localStorage.getItem("thsl_lb")||"[]");}catch{return[];} }
+function saveLB(name,sc){ const lb=getLB(); lb.push({name,score:sc}); lb.sort((a,b)=>b.score-a.score); localStorage.setItem("thsl_lb",JSON.stringify(lb.slice(0,10))); }
+function renderLB(el){ const lb=getLB(); el.innerHTML="<h3>🏆 Leaderboard</h3>"+(lb.length?lb.map((r,i)=>
+  `<div class="lb-row"><span class="rank">#${i+1}</span><span class="nm">${r.name}</span><span class="sc">${r.score}</span></div>`).join("")
+  :"<div style='text-align:center;color:#9aa0a6'>ยังไม่มีคะแนน</div>"); }
+renderLB($("menuLb"));
+
+// ---- model + camera ----
+async function init(){
+  statusEl.textContent="โหลดโมเดล...";
+  // Force WebGL backend explicitly — iOS Safari doesn't always auto-select the fast
+  // backend, and a silent fallback to CPU makes inference (and detection) far slower,
+  // which starves the collection window of real frames.
+  try{ await tf.setBackend("webgl"); }catch(e){ console.warn("webgl backend failed, using default", e); }
+  await tf.ready();
+  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+  handLandmarker=await HandLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},
+    runningMode:"VIDEO", numHands:2 });
+  model=tf.sequential();
+  model.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
+  model.add(tf.layers.dropout({rate:0.5}));
+  model.add(tf.layers.lstm({units:32}));
+  model.add(tf.layers.dropout({rate:0.5}));
+  model.add(tf.layers.dense({units:16, activation:"relu"}));
+  model.add(tf.layers.dense({units:12, activation:"softmax"}));
+  const wjson=await (await fetch("weights.json")).json();
+  model.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
+  statusEl.textContent="พร้อม! (backend: "+tf.getBackend()+")";
+}
+
+async function startCamera(){
+  if(started) return; started=true;
+  await init();
+  // "ideal" (not hard) constraints — iOS Safari can throw OverconstrainedError and
+  // fail to open the camera at all if an exact width/height isn't supported.
+  // facingMode:"user" explicitly asks for the front camera instead of leaving it
+  // to the browser's default, which is inconsistent across iPhone models.
+  const stream=await navigator.mediaDevices.getUserMedia({
+    video:{ facingMode:"user", width:{ideal:1280}, height:{ideal:720} }
+  });
+  video.srcObject=stream;
+  video.onloadedmetadata=()=>{ overlay.width=video.videoWidth; overlay.height=video.videoHeight; loop(); };
+}
+
+// ---- mode selection ----
+function showApp(m){
+  mode=m; $("menu").classList.add("hidden"); $("gameover").classList.add("hidden"); $("app").classList.remove("hidden");
+  const isGame=(m==="game");
+  gameHud.classList.toggle("hidden",!isGame); targetEl.classList.toggle("hidden",!isGame);
+  barsEl.classList.toggle("hidden",isGame); resultEl.classList.toggle("hidden",isGame); sentenceEl.classList.toggle("hidden",isGame);
+  $("appHint").textContent=isGame?"ทำท่าตามคำที่ขึ้น ให้เร็วที่สุด! ยืนใกล้กล้องพอให้เห็นมือเต็ม":"ยกมือ → รอนับ 3-2-1 → ทำท่า → ค้างนิ่ง • รองรับ 10 คำ";
+  state="IDLE"; collected=[]; wordBuffer=[];
+  startCamera().then(()=>{ if(isGame) beginGame(); });
+}
+$("cardTest").onclick=()=>showApp("test");
+$("cardGame").onclick=()=>showApp("game");
+$("backBtn").onclick=()=>{ endGameCleanup(); $("app").classList.add("hidden"); $("menu").classList.remove("hidden"); renderLB($("menuLb")); };
+
+// ---- game flow ----
+function newTarget(){ let w; do{ w=GAME_WORDS[Math.floor(Math.random()*GAME_WORDS.length)]; }while(w===targetWord); targetWord=w; targetEl.innerHTML="ทำท่า: <b>"+w+"</b>"; }
+function beginGame(){
+  starting=true; let c=3; bigEl.textContent=c; statusEl.textContent="เตรียมตัว...";
+  const iv=setInterval(()=>{ c--; if(c>0){bigEl.textContent=c;} else { clearInterval(iv); bigEl.textContent=""; starting=false; runGame(); } },1000);
+}
+function runGame(){
+  gameActive=true; score=0; timeLeft=GAME_DURATION; scoreEl.textContent="0"; timerEl.textContent=GAME_DURATION;
+  newTarget(); statusEl.textContent="🟢 เริ่ม!";
+  gameTimer=setInterval(()=>{ timeLeft--; timerEl.textContent=timeLeft; if(timeLeft<=0) endGame(); },1000);
+}
+function flash(txt,color){ flashEl.textContent=txt; flashEl.style.color=color; flashEl.style.opacity="1"; setTimeout(()=>flashEl.style.opacity="0",350); }
+function endGame(){
+  gameActive=false; clearInterval(gameTimer); gameTimer=null;
+  $("finalScore").textContent=score; $("nameInput").value=""; renderLB($("overLb"));
+  $("app").classList.add("hidden"); $("gameover").classList.remove("hidden");
+}
+function endGameCleanup(){ gameActive=false; if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
+$("saveBtn").onclick=()=>{ const n=($("nameInput").value.trim()||"ไม่ระบุ"); saveLB(n,score); renderLB($("overLb")); $("saveBtn").textContent="บันทึกแล้ว ✓"; $("saveBtn").disabled=true; };
+$("againBtn").onclick=()=>{ $("saveBtn").textContent="บันทึกคะแนน"; $("saveBtn").disabled=false; showApp("game"); };
+
+// ---- inference ----
+function extractKeypoints(res){
+  const lh=new Float32Array(63), rh=new Float32Array(63); let present=false;
+  if(res.landmarks && res.landmarks.length>0){ present=true;
+    for(let h=0;h<res.landmarks.length;h++){ const lm=res.landmarks[h];
+      const t=(res.handednesses[h][0].categoryName==="Left")?lh:rh;
+      for(let i=0;i<21;i++){ t[i*3]=lm[i].x; t[i*3+1]=lm[i].y; t[i*3+2]=lm[i].z; } } }
+  const row=new Float32Array(126); row.set(lh,0); row.set(rh,63); return {row,present};
+}
+function meanAbsDelta(a,b){ let s=0; for(let i=0;i<126;i++) s+=Math.abs(a[i]-b[i]); return s/126; }
+function resample30(f){ const n=f.length,o=[]; for(let i=0;i<COLLECT_FRAMES;i++) o.push(f[Math.round(i*(n-1)/(COLLECT_FRAMES-1))]); return o; }
+async function predict(seq){ const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
+  const inp=tf.tensor(flat,[1,30,126]); const out=model.predict(inp); const d=await out.data(); inp.dispose(); out.dispose(); return d; }
+function showBars(probs){ const r=[...probs.keys()].sort((a,b)=>probs[b]-probs[a]).slice(0,5);
+  r.forEach((idx,i)=>{ const s=TARGET_SIGNS[idx]; $("bl"+i).textContent=(s==="none"?"—":s);
+    $("bf"+i).style.width=(probs[idx]*100)+"%"; $("bp"+i).textContent=Math.round(probs[idx]*100)+"%"; }); }
+
+async function onComplete(seq){
+  const probs=await predict(seq);
+  let best=0; for(let i=1;i<12;i++) if(probs[i]>probs[best]) best=i;
+  const sign=TARGET_SIGNS[best], conf=probs[best];
+
+  if(mode==="game"){
+    if(!gameActive) return;
+    if(sign===targetWord){ score++; scoreEl.textContent=score; flash("✓","#2ecc71"); newTarget(); }
+    else { flash("✗","#e74c3c"); }
+    return;
+  }
+  // test mode
+  showBars(probs);
+  if(sign==="finish"){ if(wordBuffer.length){ sentenceEl.textContent="ประโยค: "+wordBuffer.join(" "); wordBuffer=[]; } resultEl.textContent="✓ จบประโยค"; return; }
+  if(sign!=="none" && conf>=(THRESH[sign]||0.8)){
+    if(!wordBuffer.length || wordBuffer[wordBuffer.length-1]!==sign){
+      wordBuffer.push(sign); resultEl.textContent=sign+" "+Math.round(conf*100)+"%"; sentenceEl.textContent="กำลังสร้าง: "+wordBuffer.join(" "); }
+  } else resultEl.textContent="—";
+}
+
+function drawHands(res){ ctx.clearRect(0,0,overlay.width,overlay.height); if(!res.landmarks) return;
+  ctx.fillStyle="#2ecc71"; for(const lm of res.landmarks) for(const p of lm){ ctx.beginPath(); ctx.arc(p.x*overlay.width,p.y*overlay.height,5,0,2*Math.PI); ctx.fill(); } }
+
+let lastTs=-1;
+async function loop(){
+  if(handLandmarker && video.readyState>=2){
+    const ts=performance.now();
+    if(ts!==lastTs){
+      if(fpsPrevTs){ const inst=1000/(ts-fpsPrevTs); fpsSmoothed=fpsSmoothed?fpsSmoothed*0.8+inst*0.2:inst; }
+      fpsPrevTs=ts; lastTs=ts;
+      if(diagEl) diagEl.textContent="~"+Math.round(fpsSmoothed)+" fps | last sign: "+lastSignFrameCount+" frames";
+      const res=handLandmarker.detectForVideo(video,ts); drawHands(res);
+      const {row,present}=extractKeypoints(res);
+      const gameBlock=(mode==="game" && (!gameActive || starting)); // don't collect before/after game
+
+      if(!gameBlock){
+        if(state==="IDLE"){
+          if(present){
+            if(idleStart===null) idleStart=ts;
+            if(mode!=="game") statusEl.textContent="✋ จับมือได้แล้ว...";
+            if(ts-idleStart>=IDLE_WARMUP_MS){
+              if(mode==="game"){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; }
+              else { state="COUNTDOWN"; countdownStart=performance.now(); }
+            }
+          } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
+        } else if(state==="COUNTDOWN"){
+          if(!present){ state="IDLE"; idleStart=null; bigEl.textContent=""; statusEl.textContent="พร้อม"; }
+          else { const r=3-(performance.now()-countdownStart)/1000;
+            if(r<=0){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; bigEl.textContent=""; statusEl.textContent="🟢 ทำท่าเลย!"; }
+            else { bigEl.textContent=Math.ceil(r); statusEl.textContent="เตรียมตัว..."; } }
+        } else { // COLLECTING
+          let trig=false;
+          if(present){
+            missStart=null;
+            collected.push(row);
+            if(prevKp && (ts-collectStart)>=MIN_COLLECT_MS){
+              const d=meanAbsDelta(row,prevKp);
+              if(d<STILL_THRESHOLD){ if(stillStart===null) stillStart=ts; } else stillStart=null;
+              if(stillStart!==null && (ts-stillStart)>=STILL_MS) trig=true;
+            }
+            prevKp=row;
+          } else {
+            if(missStart===null) missStart=ts;
+          }
+          const missElapsed=(missStart!==null)?(ts-missStart):0;
+          if(missElapsed>=MISSING_TOL_MS || (ts-collectStart)>=MAX_COLLECT_MS){
+            if((ts-collectStart)>=MIN_COLLECT_MS) trig=true;
+            else { state="IDLE"; idleStart=null; collected=[]; }
+          }
+          if(trig){ lastSignFrameCount=collected.length; onComplete(resample30(collected)); state="IDLE"; idleStart=null; collected=[]; prevKp=null; }
+        }
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
