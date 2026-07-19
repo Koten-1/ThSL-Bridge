@@ -136,7 +136,13 @@ const TARGET_SIGNS = ["คนหูหนวก","คุณ","ช่วย","ข
 const GAME_WORDS = ["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่","ถาม","บอก"];
 const THRESH = {"คนหูหนวก":0.70,"คุณ":0.60,"ช่วย":0.65,"ขอบคุณ":0.80,"ฉัน":0.75,"ต้องการ":0.78,
   "เข้าใจ":0.85,"ไม่":0.65,"ถาม":0.70,"บอก":0.75,"finish":0.70,"none":0.80};
-const COLLECT_FRAMES=30, STILL_THRESHOLD=0.03, STILL_FRAMES=6, MIN_COLLECT=10, MAX_COLLECT=150, IDLE_WARMUP=4, MISSING_TOL=8;
+const COLLECT_FRAMES=30, STILL_THRESHOLD=0.03;
+// Timing gates use wall-clock milliseconds, not frame counts — the Python live pipeline's
+// frame-count constants (STILL_FRAMES=6, MIN_COLLECT=10, ...) implicitly assumed ~30fps.
+// The browser's requestAnimationFrame loop often runs faster (60fps+), so the same frame
+// counts here represented less real time than in training/live-Python, causing signs to
+// get cut short. Converted at 30fps: frames/30*1000 = ms.
+const IDLE_WARMUP_MS=133, STILL_MS=200, MIN_COLLECT_MS=333, MAX_COLLECT_MS=5000, MISSING_TOL_MS=267;
 const GAME_DURATION=45;
 
 const $=id=>document.getElementById(id);
@@ -145,7 +151,8 @@ const statusEl=$("status"), bigEl=$("big"), barsEl=$("bars"), resultEl=$("result
 const gameHud=$("gameHud"), timerEl=$("timer"), scoreEl=$("score"), targetEl=$("target"), flashEl=$("flash");
 
 let handLandmarker=null, model=null, started=false;
-let mode="test", state="IDLE", idleC=0, stillC=0, missC=0, collected=[], prevKp=null, countdownStart=0;
+let mode="test", state="IDLE", collected=[], prevKp=null, countdownStart=0;
+let idleStart=null, stillStart=null, missStart=null, collectStart=0;
 let wordBuffer=[];
 let gameActive=false, score=0, timeLeft=GAME_DURATION, targetWord="", gameTimer=null, starting=false;
 
@@ -274,23 +281,39 @@ async function loop(){
 
       if(!gameBlock){
         if(state==="IDLE"){
-          if(present){ idleC++; if(mode!=="game") statusEl.textContent="✋ จับมือได้แล้ว...";
-            if(idleC>=IDLE_WARMUP){ if(mode==="game"){ state="COLLECTING"; collected=[]; stillC=0; missC=0; prevKp=null; } else { state="COUNTDOWN"; countdownStart=performance.now(); } } }
-          else { idleC=0; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
+          if(present){
+            if(idleStart===null) idleStart=ts;
+            if(mode!=="game") statusEl.textContent="✋ จับมือได้แล้ว...";
+            if(ts-idleStart>=IDLE_WARMUP_MS){
+              if(mode==="game"){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; }
+              else { state="COUNTDOWN"; countdownStart=performance.now(); }
+            }
+          } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
         } else if(state==="COUNTDOWN"){
-          if(!present){ state="IDLE"; idleC=0; bigEl.textContent=""; statusEl.textContent="พร้อม"; }
+          if(!present){ state="IDLE"; idleStart=null; bigEl.textContent=""; statusEl.textContent="พร้อม"; }
           else { const r=3-(performance.now()-countdownStart)/1000;
-            if(r<=0){ state="COLLECTING"; collected=[]; stillC=0; missC=0; prevKp=null; bigEl.textContent=""; statusEl.textContent="🟢 ทำท่าเลย!"; }
+            if(r<=0){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; bigEl.textContent=""; statusEl.textContent="🟢 ทำท่าเลย!"; }
             else { bigEl.textContent=Math.ceil(r); statusEl.textContent="เตรียมตัว..."; } }
         } else { // COLLECTING
           let trig=false;
-          if(present){ missC=0; collected.push(row);
-            if(prevKp && collected.length>=MIN_COLLECT){ const d=meanAbsDelta(row,prevKp);
-              if(d<STILL_THRESHOLD) stillC++; else stillC=0; if(stillC>=STILL_FRAMES) trig=true; }
+          if(present){
+            missStart=null;
+            collected.push(row);
+            if(prevKp && (ts-collectStart)>=MIN_COLLECT_MS){
+              const d=meanAbsDelta(row,prevKp);
+              if(d<STILL_THRESHOLD){ if(stillStart===null) stillStart=ts; } else stillStart=null;
+              if(stillStart!==null && (ts-stillStart)>=STILL_MS) trig=true;
+            }
             prevKp=row;
-          } else missC++;
-          if(missC>=MISSING_TOL || collected.length>=MAX_COLLECT){ if(collected.length>=MIN_COLLECT) trig=true; else { state="IDLE"; idleC=0; collected=[]; } }
-          if(trig){ onComplete(resample30(collected)); state="IDLE"; idleC=0; collected=[]; stillC=0; missC=0; prevKp=null; }
+          } else {
+            if(missStart===null) missStart=ts;
+          }
+          const missElapsed=(missStart!==null)?(ts-missStart):0;
+          if(missElapsed>=MISSING_TOL_MS || (ts-collectStart)>=MAX_COLLECT_MS){
+            if((ts-collectStart)>=MIN_COLLECT_MS) trig=true;
+            else { state="IDLE"; idleStart=null; collected=[]; }
+          }
+          if(trig){ onComplete(resample30(collected)); state="IDLE"; idleStart=null; collected=[]; prevKp=null; }
         }
       }
     }
