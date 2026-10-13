@@ -120,12 +120,16 @@
   <p class="foot">
     The CSV holds numbers only (brow scores and head angles), no images or video.
     Question cue is any marked brow (raised or furrowed) and negative is a head shake. Both are placeholders until the club confirms
-    which movements ThSL actually uses. Open this file in Chrome. If the camera is blocked, run <code>python3 -m http.server 8000</code> in this folder and open <code>localhost:8000/face_test.html</code>.
+    which movements ThSL actually uses.<br>
+    To run it: keep <code>face_test.html</code> and <code>face_tone.js</code> in the same folder, then double-click <code>face_test.html</code>
+    (Chrome or Edge) and allow the camera. No server or install needed. If the camera prompt never appears, open the folder in VS Code
+    and use the Live Server extension instead.
   </p>
 </div>
 
-<script type="module">
-import { ToneRules, createFaceTracker, meanOf, DEFAULTS } from "./face_tone.js";
+<script src="face_tone.js"></script>
+<script>
+const { ToneRules, createFaceTracker, meanOf } = FaceTone;
 
 const $ = id => document.getElementById(id);
 const rules = new ToneRules();
