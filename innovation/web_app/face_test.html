@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Face tone test | ThSL Bridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#f7f7f8; --surface:#fff; --muted:#f0f1f3; --border:#e4e5e9; --text:#16181d; --text2:#6b7076; --faint:#9a9ea5;
+          --accent:#0f9d63; --accent2:#0b7c4e; --soft:#e4f7ee; --warn:#b7791f; --warnsoft:#fbf0dc; --danger:#d1433a; --dangersoft:#fbe9e7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Inter','Noto Sans Thai',-apple-system,sans-serif; background:var(--bg); color:var(--text); padding:0 16px 40px; }
+  .wrap { max-width:1060px; margin:0 auto; }
+  h1 { font-size:1.3rem; margin:26px 0 4px; font-weight:800; }
+  .sub { color:var(--text2); font-size:.86rem; margin:0 0 16px; line-height:1.5; }
+  .grid { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:16px; align-items:start; }
+  @media (max-width:820px) { .grid { grid-template-columns:1fr; } }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(20,20,25,.05); }
+  .panel + .panel { margin-top:16px; }
+  h2 { font-size:.9rem; margin:0 0 10px; }
+  .stage { position:relative; background:var(--muted); border-radius:12px; aspect-ratio:4/3; overflow:hidden; }
+  video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); display:block; }
+  .gate { position:absolute; inset:0; display:flex; flex-direction:column; gap:8px; align-items:center; justify-content:center; background:var(--muted); text-align:center; padding:16px; }
+  .hidden { display:none !important; }
+  button { font-family:inherit; border:none; border-radius:10px; font-weight:700; font-size:.88rem; padding:10px 16px; cursor:pointer; background:var(--accent); color:#fff; }
+  button:hover { background:var(--accent2); }
+  button.ghost { background:transparent; color:var(--text2); border:1px solid #d7d9de; }
+  button.ghost:hover { background:var(--muted); color:var(--text); }
+  button:disabled { opacity:.5; cursor:default; }
+  .verdicts { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .verdict { border-radius:12px; padding:12px 14px; background:var(--muted); }
+  .verdict .k { font-size:.7rem; color:var(--faint); text-transform:uppercase; letter-spacing:.04em; }
+  .verdict .v { font-size:1.25rem; font-weight:800; margin-top:2px; }
+  .verdict .why { font-size:.75rem; color:var(--text2); min-height:1.1em; }
+  .verdict.q { background:var(--warnsoft); } .verdict.q .v { color:var(--warn); }
+  .verdict.neg { background:var(--dangersoft); } .verdict.neg .v { color:var(--danger); }
+  .verdict.pos { background:var(--soft); } .verdict.pos .v { color:var(--accent2); }
+  .meter { margin:10px 0; }
+  .meter .top { display:flex; justify-content:space-between; font-size:.8rem; color:var(--text2); }
+  .meter .bar { position:relative; height:10px; background:var(--muted); border-radius:6px; margin-top:4px; overflow:visible; }
+  .meter .fill { height:100%; background:var(--accent); border-radius:6px; width:0; }
+  .meter .tick { position:absolute; top:-3px; width:2px; height:16px; background:var(--danger); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  label.s { display:block; font-size:.8rem; color:var(--text2); margin-top:10px; }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  input[type=text], select { font-family:inherit; border:1px solid #d7d9de; border-radius:8px; padding:8px 10px; font-size:.85rem; background:#fff; }
+  .status { font-size:.82rem; color:var(--text2); margin-top:8px; min-height:1.2em; }
+  .foot { font-size:.74rem; color:var(--faint); margin-top:14px; line-height:1.5; }
+  code { background:var(--muted); padding:1px 5px; border-radius:4px; font-size:.78rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Face tone test</h1>
+  <p class="sub">Is the signer asking or telling, and is it a yes or a no? Uses MediaPipe's pretrained face model, nothing is trained.
+    The rules are provisional: use this page to tune them on real faces before trusting them.</p>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <div class="stage">
+          <video id="video" autoplay playsinline muted></video>
+          <div class="gate" id="gate">
+            <button id="start">Start camera</button>
+            <div class="sub" style="margin:0">Runs in your browser. Nothing is uploaded.</div>
+          </div>
+        </div>
+        <div class="status" id="status">Camera is off.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Record labeled samples</h2>
+        <div class="row">
+          <input type="text" id="signer" placeholder="signer code (S01)" size="14">
+          <select id="label">
+            <option value="statement">statement (telling)</option>
+            <option value="question">question (asking)</option>
+            <option value="negative">negative (head shake / no)</option>
+            <option value="positive">positive (nod / yes)</option>
+          </select>
+          <button id="rec" disabled>Record 3 s</button>
+          <button class="ghost" id="dl" disabled>Download CSV</button>
+        </div>
+        <div class="status" id="recStatus">0 samples recorded. Calibrate the neutral face first, then act the label for 3 seconds.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <div class="verdicts">
+          <div class="verdict" id="vTone"><div class="k">Sentence type</div><div class="v" id="toneV">-</div><div class="why" id="toneWhy"></div></div>
+          <div class="verdict" id="vPol"><div class="k">Meaning</div><div class="v" id="polV">-</div><div class="why" id="polWhy"></div></div>
+        </div>
+
+        <div class="meter"><div class="top"><span>Brow raise (above neutral)</span><b id="raiseN">0.00</b></div>
+          <div class="bar"><div class="fill" id="raiseF"></div><div class="tick" id="raiseT"></div></div></div>
+        <div class="meter"><div class="top"><span>Brow furrow (above neutral)</span><b id="furrowN">0.00</b></div>
+          <div class="bar"><div class="fill" id="furrowF"></div><div class="tick" id="furrowT"></div></div></div>
+        <div class="meter"><div class="top"><span>Head turn (yaw) / swings in 1.5 s</span><b id="yawN">0&deg; / 0</b></div></div>
+        <div class="meter"><div class="top"><span>Head nod (pitch) / swings in 1.5 s</span><b id="pitchN">0&deg; / 0</b></div></div>
+
+        <div class="row" style="margin-top:12px">
+          <button id="calib" disabled>Set neutral face (hold still 2 s)</button>
+        </div>
+        <div class="status" id="calibStatus">Not calibrated yet. Everyone's resting brows are different, so do this per person.</div>
+      </div>
+
+      <div class="panel">
+        <h2>Thresholds</h2>
+        <label class="s">Brow raise counts as marked above <b id="raiseTV"></b><input type="range" id="raiseT_in" min="0.05" max="0.8" step="0.01"></label>
+        <label class="s">Brow furrow counts as marked above <b id="furrowTV"></b><input type="range" id="furrowT_in" min="0.05" max="0.8" step="0.01"></label>
+        <label class="s">Head shake swing, degrees each way <b id="shakeTV"></b><input type="range" id="shakeT_in" min="2" max="20" step="0.5"></label>
+        <label class="s">Nod swing, degrees each way <b id="nodTV"></b><input type="range" id="nodT_in" min="2" max="20" step="0.5"></label>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">
+    The CSV holds numbers only (brow scores and head angles), no images or video.
+    Question cue is any marked brow (raised or furrowed) and negative is a head shake. Both are placeholders until the club confirms
+    which movements ThSL actually uses. Open this file in Chrome. If the camera is blocked, run <code>python3 -m http.server 8000</code> in this folder and open <code>localhost:8000/face_test.html</code>.
+  </p>
+</div>
+
+<script type="module">
+import { ToneRules, createFaceTracker, meanOf, DEFAULTS } from "./face_tone.js";
+
+const $ = id => document.getElementById(id);
+const rules = new ToneRules();
+let tracker = null, running = false, calibrating = null, recording = null, samples = [];
+
+// thresholds <-> sliders
+const sliders = [["raiseT_in","raiseThresh","raiseTV"],["furrowT_in","furrowThresh","furrowTV"],["shakeT_in","shakeSwingDeg","shakeTV"],["nodT_in","nodSwingDeg","nodTV"]];
+for (const [inputId, key, labelId] of sliders) {
+  $(inputId).value = rules.o[key]; $(labelId).textContent = rules.o[key];
+  $(inputId).addEventListener("input", e => {
+    rules.o[key] = Number(e.target.value); $(labelId).textContent = e.target.value; placeTicks();
+  });
+}
+function placeTicks() {
+  $("raiseT").style.left = Math.min(100, rules.o.raiseThresh * 100) + "%";
+  $("furrowT").style.left = Math.min(100, rules.o.furrowThresh * 100) + "%";
+}
+placeTicks();
+
+$("start").onclick = async () => {
+  $("start").disabled = true; $("status").textContent = "Loading face model...";
+  try {
+    tracker = await createFaceTracker();
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    $("video").srcObject = stream;
+    await new Promise(r => $("video").onloadedmetadata = r);
+    $("gate").classList.add("hidden");
+    $("calib").disabled = false; $("rec").disabled = false;
+    $("status").textContent = "Face model ready.";
+    running = true; requestAnimationFrame(frame);
+  } catch (e) {
+    $("start").disabled = false;
+    $("status").textContent = "Could not start: " + (e.message || e);
+    console.error(e);
+  }
+};
+
+$("calib").onclick = () => {
+  rules.reset();
+  calibrating = { until: performance.now() + 2000, rows: [] };
+  $("calibStatus").textContent = "Hold a relaxed, neutral face...";
+};
+
+$("rec").onclick = () => {
+  const label = $("label").value, signer = $("signer").value.trim() || "unknown";
+  recording = { until: performance.now() + 3000, start: performance.now(), label, signer, rows: [] };
+  $("rec").disabled = true; $("recStatus").textContent = `Recording "${label}" for 3 s: act it now.`;
+};
+
+$("dl").onclick = () => {
+  const cols = ["signer","label","t_ms","browRaise","browFurrow","mouthFrown","yaw","pitch","roll","baseRaise","baseFurrow"];
+  const csv = [cols.join(",")].concat(samples.map(r => cols.map(c => typeof r[c] === "number" ? r[c].toFixed(4) : r[c]).join(","))).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = "face_tone_samples.csv"; a.click();
+};
+
+function setMeter(fillId, numId, v) {
+  $(fillId).style.width = Math.max(0, Math.min(1, v)) * 100 + "%";
+  $(numId).textContent = v.toFixed(2);
+}
+
+function frame() {
+  if (!running) return;
+  const t = performance.now();
+  const video = $("video");
+  if (video.readyState >= 2) {
+    const f = tracker.detect(video, t);
+    if (!f) {
+      $("status").textContent = "No face found. Look at the camera.";
+    } else {
+      const st = rules.push(f, t);
+      if (calibrating) {
+        calibrating.rows.push(f);
+        if (t >= calibrating.until) {
+          rules.setBaseline({ browRaise: meanOf(calibrating.rows, "browRaise"), browFurrow: meanOf(calibrating.rows, "browFurrow") });
+          $("calibStatus").textContent = `Neutral set (raise ${rules.base.browRaise.toFixed(2)}, furrow ${rules.base.browFurrow.toFixed(2)}).`;
+          calibrating = null;
+        }
+      }
+      if (recording) {
+        recording.rows.push({ signer: recording.signer, label: recording.label, t_ms: t - recording.start, ...f,
+          baseRaise: rules.base.browRaise, baseFurrow: rules.base.browFurrow });
+        if (t >= recording.until) {
+          samples.push(...recording.rows);
+          $("recStatus").textContent = `${samples.length} samples recorded (${recording.rows.length} frames added).`;
+          $("rec").disabled = false; $("dl").disabled = false; recording = null;
+        }
+      }
+      $("status").textContent = calibrating ? "Calibrating..." : "Tracking.";
+      render(st, f);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function render(st, f) {
+  $("toneV").textContent = st.tone === "question" ? "Question" : "Statement";
+  $("toneWhy").textContent = st.cue ? "cue: " + st.cue : "neutral brows";
+  $("vTone").className = "verdict " + (st.tone === "question" ? "q" : "");
+  $("polV").textContent = st.polarity === "negative" ? "Negative" : "Positive";
+  $("polWhy").textContent = st.shake ? "head shake" : (st.nod ? "nod" : "no head movement");
+  $("vPol").className = "verdict " + (st.polarity === "negative" ? "neg" : "pos");
+  setMeter("raiseF", "raiseN", st.raise);
+  setMeter("furrowF", "furrowN", st.furrow);
+  $("yawN").innerHTML = `${f.yaw.toFixed(0)}&deg; / ${st.yawRev}`;
+  $("pitchN").innerHTML = `${f.pitch.toFixed(0)}&deg; / ${st.pitchRev}`;
+}
+</script>
+</body>
+</html>
