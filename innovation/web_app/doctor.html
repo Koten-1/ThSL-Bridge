@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>มุมมองแพทย์ (ต้นแบบ) | ThSL Bridge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f7f8; --surface:#ffffff; --surface-muted:#f0f1f3;
+    --border:#e4e5e9; --border-strong:#d7d9de;
+    --text:#16181d; --text-muted:#6b7076; --text-faint:#9a9ea5;
+    --accent:#0f9d63; --accent-strong:#0b7c4e; --accent-soft:#e4f7ee;
+    --warn:#b7791f; --warn-soft:#fbf0dc;
+    --danger:#d1433a; --danger-soft:#fbe9e7;
+    --radius-lg:18px; --shadow-sm:0 1px 2px rgba(20,20,25,.05);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Inter','Noto Sans Thai',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+         background:var(--bg); color:var(--text); padding:0 16px 48px; }
+  .wrap { max-width:1100px; margin:0 auto; }
+  .ic { width:1em; height:1em; vertical-align:-.15em; flex-shrink:0; }
+  header { padding:28px 0 6px; display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+  h1 { font-size:1.35rem; margin:0; font-weight:800; letter-spacing:-.01em; }
+  .tag { display:inline-block; background:var(--warn-soft); color:var(--warn); font-size:.72rem; font-weight:800;
+         padding:3px 10px; border-radius:999px; margin-left:8px; vertical-align:middle; }
+  .sub { color:var(--text-muted); font-size:.86rem; margin:4px 0 0; }
+  .notice { background:var(--warn-soft); border:1px solid var(--warn); color:#6b4a0c; border-radius:12px;
+            padding:10px 14px; font-size:.84rem; margin:14px 0 18px; line-height:1.5; }
+  .grid { display:grid; grid-template-columns:330px 1fr; gap:18px; align-items:start; }
+  @media (max-width:840px) { .grid { grid-template-columns:1fr; } }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+           box-shadow:var(--shadow-sm); padding:18px; }
+  .panel h2 { font-size:.95rem; margin:0 0 4px; }
+  .panel .hint { color:var(--text-faint); font-size:.76rem; margin:0 0 12px; line-height:1.45; }
+  .sec { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .lbl { font-size:.72rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+
+  button { font-family:inherit; cursor:pointer; border:none; border-radius:10px; font-weight:700; font-size:.88rem; padding:10px 16px; }
+  .primary { background:var(--accent); color:#fff; }
+  .primary:hover { background:var(--accent-strong); }
+  .ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border-strong); }
+  .ghost:hover { background:var(--surface-muted); color:var(--text); }
+  .small { padding:7px 12px; font-size:.8rem; }
+
+  .signBtn { width:100%; text-align:left; background:var(--surface-muted); border:1px solid var(--border); color:var(--text);
+             padding:10px 14px; margin-bottom:8px; }
+  .signBtn:hover { border-color:var(--accent); }
+  .signBtn .id { display:block; font-weight:700; font-size:.9rem; }
+  .signBtn .from { display:block; font-weight:400; font-size:.74rem; color:var(--text-faint); margin-top:2px; }
+  .seg { display:flex; background:var(--surface-muted); border-radius:10px; padding:3px; margin-bottom:10px; }
+  .seg button { flex:1; background:transparent; color:var(--text-muted); padding:8px 6px; font-size:.82rem; }
+  .seg button.on { background:var(--surface); color:var(--text); box-shadow:var(--shadow-sm); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .confRow { display:flex; justify-content:space-between; font-size:.82rem; color:var(--text-muted); }
+
+  .chips { display:flex; flex-wrap:wrap; gap:6px; min-height:30px; }
+  .chip { background:var(--surface-muted); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:.8rem; }
+  .chip small { color:var(--text-faint); margin-left:4px; }
+  .chip.low { border-color:var(--warn); background:var(--warn-soft); }
+  .empty { color:var(--text-faint); font-size:.86rem; padding:8px 0; }
+  .btnRow { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+
+  .queueHead { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .counts { display:flex; gap:8px; flex-wrap:wrap; }
+  .count { background:var(--surface); border:1px solid var(--border); border-radius:999px; padding:5px 12px; font-size:.8rem; color:var(--text-muted); }
+  .count b { color:var(--text); }
+  .count.urg b { color:var(--danger); }
+
+  .case { background:var(--surface); border:1px solid var(--border); border-left:5px solid var(--border-strong);
+          border-radius:14px; box-shadow:var(--shadow-sm); padding:14px 16px; margin-bottom:12px; }
+  .case.urgent { border-left-color:var(--danger); }
+  .case.confirmed, .case.corrected { border-left-color:var(--accent); }
+  .caseTop { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .pid { font-weight:800; }
+  .time { color:var(--text-faint); font-size:.78rem; margin-left:auto; }
+  .badge { font-size:.72rem; font-weight:800; padding:3px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:4px; }
+  .badge.urgent { background:var(--danger-soft); color:var(--danger); }
+  .badge.pending { background:var(--warn-soft); color:var(--warn); }
+  .badge.confirmed, .badge.corrected { background:var(--accent-soft); color:var(--accent-strong); }
+  .badge.redo { background:var(--surface-muted); color:var(--text-muted); }
+  .summary { font-size:.9rem; margin:10px 0 4px; font-weight:600; }
+  .summary small { display:block; color:var(--text-faint); font-weight:400; font-size:.72rem; margin-top:2px; }
+  .finding { display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid var(--border); flex-wrap:wrap; }
+  .finding .what { font-weight:700; min-width:150px; }
+  .mean { font-size:.8rem; font-weight:800; padding:3px 10px; border-radius:8px; }
+  .mean.yes { background:var(--danger-soft); color:var(--danger); }
+  .mean.no { background:var(--accent-soft); color:var(--accent-strong); }
+  .mean.ask { background:var(--surface-muted); color:var(--text); }
+  .mean.unclear { background:var(--warn-soft); color:var(--warn); }
+  .flag { font-size:.72rem; color:var(--warn); background:var(--warn-soft); padding:2px 8px; border-radius:6px; }
+  .src { color:var(--text-faint); font-size:.74rem; margin-left:auto; }
+  .redoBanner { background:var(--surface-muted); border-radius:10px; padding:8px 12px; font-size:.82rem; color:var(--text-muted); margin-top:8px; }
+  details.raw { margin-top:8px; font-size:.8rem; color:var(--text-muted); }
+  details.raw summary { cursor:pointer; }
+  .actions { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>มุมมองแพทย์ <span class="tag">ต้นแบบ</span></h1>
+      <p class="sub">ดูว่าแพทย์เห็นอะไรเมื่อผู้ป่วยทำท่าภาษามือ และพยาบาลยืนยันข้อมูลได้อย่างไร</p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="ghost small" id="loadSamples">โหลดตัวอย่าง 4 กรณี</button>
+      <button class="ghost small" id="clearAll">ล้างทั้งหมด</button>
+    </div>
+  </header>
+
+  <div class="notice">
+    หน้านี้ใช้ท่าที่ระบบรู้อยู่แล้ว 3 ท่า แทนอาการจริง เพื่อทดสอบหน้าตาและลำดับการทำงานก่อน
+    ยังไม่ใช่ข้อมูลทางการแพทย์ และ test_symptom_03 ถูกตั้งเป็นเร่งด่วนเพื่อดูการเรียงคิวเท่านั้น
+    ส่วนสีหน้าตอนนี้เลือกด้วยมือ ในระบบจริงจะมาจากกล้อง
+  </div>
+
+  <div class="grid">
+    <!-- patient simulator -->
+    <section class="panel">
+      <h2>จำลองผู้ป่วย</h2>
+      <p class="hint">ส่วนนี้ใช้ทดสอบเท่านั้น ไม่ใช่หน้าที่แพทย์เห็น</p>
+
+      <div class="lbl">1. ท่าที่ผู้ป่วยทำ</div>
+      <div id="signBtns"></div>
+
+      <div class="sec">
+        <div class="lbl">2. สีหน้าตอนทำท่า</div>
+        <div class="seg" data-group="tone">
+          <button data-val="statement" class="on">บอกเล่า</button>
+          <button data-val="question">ถาม</button>
+        </div>
+        <div class="seg" data-group="polarity">
+          <button data-val="positive" class="on">ทางบวก (ใช่)</button>
+          <button data-val="negative">ทางลบ (ไม่ใช่)</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <div class="lbl">3. ความมั่นใจของโมเดล</div>
+        <input type="range" id="conf" min="30" max="100" value="90">
+        <div class="confRow"><span>ต่ำ</span><b id="confVal">90%</b><span>สูง</span></div>
+      </div>
+
+      <div class="sec">
+        <div class="lbl">ลำดับท่าของผู้ป่วยคนนี้</div>
+        <div class="chips" id="draft"></div>
+        <div class="btnRow">
+          <button class="primary" id="submitCase">ส่งให้แพทย์</button>
+          <button class="ghost" id="clearDraft">ล้างลำดับ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- doctor queue -->
+    <section>
+      <div class="queueHead">
+        <h2 style="margin:0; font-size:1.05rem;">คิวผู้ป่วย</h2>
+        <div class="counts" id="counts"></div>
+      </div>
+      <div id="queue"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STORE = "thsl_doctor_cases_v1";
+
+// The 3 signs the current model already knows, shown under placeholder symptom
+// names. Display remap only -- the data and model classes keep their real names,
+// so nothing in training breaks. Replace this list with the real vocabulary file.
+const PROFILE = [
+  { sign:"คุณ",     id:"test_symptom_01", urgent:false },
+  { sign:"ต้องการ", id:"test_symptom_02", urgent:false },
+  { sign:"ขอบคุณ",  id:"test_symptom_03", urgent:true  },
+];
+const byId = Object.fromEntries(PROFILE.map(p => [p.id, p]));
+const bySign = Object.fromEntries(PROFILE.map(p => [p.sign, p]));
+
+const STATUS_LABEL = { pending:"รอยืนยัน", confirmed:"ยืนยันแล้ว", corrected:"แก้ไขแล้ว", redo:"รอทำท่าใหม่" };
+const STATUS_RANK = { pending:0, redo:1, corrected:2, confirmed:2 };
+
+const ICON_PATHS = {
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  alert: '<path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 16.5h.01"/>',
+  redo: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>',
+  swap: '<path d="M7 4 3 8l4 4"/><path d="M3 8h14"/><path d="M17 20l4-4-4-4"/><path d="M21 16H7"/>',
+};
+const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[n]}</svg>`;
+
+let cases = loadCases();
+let draft = [];
+let face = { tone:"statement", polarity:"positive" };
+let conf = 0.9;
+
+function loadCases(){ try { return JSON.parse(localStorage.getItem(STORE) || "[]"); } catch { return []; } }
+function saveCases(){ try { localStorage.setItem(STORE, JSON.stringify(cases)); } catch {} }
+function nextN(){ return cases.reduce((m, c) => Math.max(m, c.n), 0) + 1; }
+
+// ---- rules (deterministic, no AI): what a sign + face means, and when a human must check ----
+function meaning(s){
+  if (s.tone === "statement") return s.polarity === "positive" ? { text:"มี", kind:"yes" } : { text:"ไม่มี", kind:"no" };
+  return s.polarity === "positive" ? { text:"ถามเรื่อง", kind:"ask" } : { text:"ถามว่าไม่ใช่หรือไม่", kind:"unclear" };
+}
+function flagsOf(s){
+  const f = [];
+  if (s.conf < 0.85) f.push("ความมั่นใจต่ำ");
+  if (s.tone === "statement" && s.polarity === "negative") f.push("ปฏิเสธ ควรยืนยัน");
+  if (s.tone === "question" && s.polarity === "negative") f.push("ความหมายไม่ชัด ควรยืนยัน");
+  return f;
+}
+// A sign the patient clearly denies is not urgent; anything else touching an urgent sign is.
+function isUrgent(c){ return c.signs.some(s => byId[s.id].urgent && !(s.tone === "statement" && s.polarity === "negative")); }
+function summaryOf(c){ return "ผู้ป่วยแจ้ง: " + c.signs.map(s => `${meaning(s).text} ${s.id}`).join(", "); }
+
+// ---- entry point the camera pipeline will call later ----
+function addSign(sign, confidence, tone, polarity){
+  const p = bySign[sign];
+  if (!p) return false;
+  draft.push({ id:p.id, conf:confidence, tone, polarity });
+  render();
+  return true;
+}
+window.ThSLDoctor = { addSign, submitCase };
+
+function submitCase(){
+  if (!draft.length) return;
+  cases.push({ n:nextN(), t:Date.now(), status:"pending", signs:draft.map(s => ({ ...s })) });
+  draft = [];
+  saveCases(); render();
+}
+
+// ---- rendering ----
+const TONE_LABEL = { statement:"บอกเล่า", question:"ถาม" };
+const POL_LABEL = { positive:"ทางบวก", negative:"ทางลบ" };
+
+function renderSimulator(){
+  $("signBtns").innerHTML = PROFILE.map(p =>
+    `<button class="signBtn" data-sign="${p.sign}"><span class="id">${p.id}${p.urgent ? " (เร่งด่วนในการทดสอบ)" : ""}</span><span class="from">ท่าจริงในโมเดล: ${p.sign}</span></button>`
+  ).join("");
+  $("draft").innerHTML = draft.length
+    ? draft.map(s => `<span class="chip ${s.conf < 0.85 ? "low" : ""}">${s.id}<small>${TONE_LABEL[s.tone]} / ${POL_LABEL[s.polarity]} / ${Math.round(s.conf * 100)}%</small></span>`).join("")
+    : '<span class="empty">ยังไม่มีท่า กดท่าด้านบนเพื่อเพิ่ม</span>';
+}
+
+function caseHtml(c){
+  const urgent = isUrgent(c);
+  const time = new Date(c.t).toLocaleTimeString("th-TH", { hour:"2-digit", minute:"2-digit" });
+  const findings = c.signs.map((s, i) => {
+    const m = meaning(s);
+    const flags = flagsOf(s).map(f => `<span class="flag">${f}</span>`).join("");
+    return `<div class="finding">
+      <span class="what">${s.id}</span>
+      <span class="mean ${m.kind}">${m.text}</span>${flags}
+      <span class="src">ท่า ${byId[s.id].sign} ${Math.round(s.conf * 100)}%</span>
+      <button class="ghost small" data-act="flip" data-n="${c.n}" data-i="${i}">${ic("swap")} สลับใช่/ไม่ใช่</button>
+    </div>`;
+  }).join("");
+  const raw = c.signs.map(s => `${s.id} (${TONE_LABEL[s.tone]}, ${POL_LABEL[s.polarity]}, ${Math.round(s.conf * 100)}%)`).join(" , ");
+  return `<article class="case ${urgent ? "urgent" : c.status}">
+    <div class="caseTop">
+      ${urgent ? `<span class="badge urgent">${ic("alert")} เร่งด่วน</span>` : ""}
+      <span class="pid">P-${String(c.n).padStart(3, "0")}</span>
+      <span class="badge ${c.status}">${c.status === "confirmed" || c.status === "corrected" ? ic("check") : ""}${STATUS_LABEL[c.status]}</span>
+      <span class="time">${time}</span>
+    </div>
+    <div class="summary">${summaryOf(c)}<small>สร้างจากกฎ ไม่ใช่ AI</small></div>
+    ${findings}
+    ${c.status === "redo" ? '<div class="redoBanner">ขอให้ผู้ป่วยทำท่าใหม่แล้ว รอข้อมูลใหม่</div>' : ""}
+    <details class="raw"><summary>ลำดับท่าที่ตรวจจับ (ตรวจสอบได้)</summary><div style="margin-top:6px;">${raw}</div></details>
+    <div class="actions">
+      <button class="primary small" data-act="confirm" data-n="${c.n}">${ic("check")} ยืนยันข้อมูล</button>
+      <button class="ghost small" data-act="redo" data-n="${c.n}">${ic("redo")} ขอให้ทำท่าใหม่</button>
+    </div>
+  </article>`;
+}
+
+function renderQueue(){
+  const sorted = [...cases].sort((a, b) =>
+    (isUrgent(b) - isUrgent(a)) || (STATUS_RANK[a.status] - STATUS_RANK[b.status]) || (b.n - a.n));
+  $("queue").innerHTML = sorted.length
+    ? sorted.map(caseHtml).join("")
+    : '<div class="panel empty">ยังไม่มีผู้ป่วยในคิว จำลองทางซ้าย หรือกด "โหลดตัวอย่าง 4 กรณี"</div>';
+  const urg = cases.filter(isUrgent).length;
+  const pend = cases.filter(c => c.status === "pending").length;
+  $("counts").innerHTML =
+    `<span class="count">ทั้งหมด <b>${cases.length}</b></span>` +
+    `<span class="count urg">เร่งด่วน <b>${urg}</b></span>` +
+    `<span class="count">รอยืนยัน <b>${pend}</b></span>`;
+}
+function render(){ renderSimulator(); renderQueue(); }
+
+// ---- events ----
+document.addEventListener("click", e => {
+  const signBtn = e.target.closest(".signBtn");
+  if (signBtn) { addSign(signBtn.dataset.sign, conf, face.tone, face.polarity); return; }
+
+  const segBtn = e.target.closest(".seg button");
+  if (segBtn) {
+    const group = segBtn.parentElement.dataset.group;
+    face[group] = segBtn.dataset.val;
+    segBtn.parentElement.querySelectorAll("button").forEach(b => b.classList.toggle("on", b === segBtn));
+    return;
+  }
+
+  const act = e.target.closest("[data-act]");
+  if (act) {
+    const c = cases.find(x => x.n === Number(act.dataset.n));
+    if (!c) return;
+    if (act.dataset.act === "confirm") c.status = "confirmed";
+    if (act.dataset.act === "redo") c.status = "redo";
+    if (act.dataset.act === "flip") {
+      const s = c.signs[Number(act.dataset.i)];
+      s.polarity = s.polarity === "positive" ? "negative" : "positive";
+      c.status = "corrected";
+    }
+    saveCases(); render();
+  }
+});
+
+$("conf").addEventListener("input", e => { conf = Number(e.target.value) / 100; $("confVal").textContent = e.target.value + "%"; });
+$("submitCase").onclick = submitCase;
+$("clearDraft").onclick = () => { draft = []; render(); };
+$("clearAll").onclick = () => { cases = []; draft = []; saveCases(); render(); };
+$("loadSamples").onclick = () => {
+  const now = Date.now();
+  const samples = [
+    [{ id:"test_symptom_01", conf:0.95, tone:"statement", polarity:"positive" }],
+    [{ id:"test_symptom_02", conf:0.92, tone:"statement", polarity:"negative" }],
+    [{ id:"test_symptom_03", conf:0.9, tone:"statement", polarity:"positive" }],
+    [{ id:"test_symptom_01", conf:0.9, tone:"question", polarity:"positive" },
+     { id:"test_symptom_02", conf:0.6, tone:"statement", polarity:"positive" }],
+  ];
+  samples.forEach((signs, k) => cases.push({ n:nextN(), t:now - (4 - k) * 60000, status:"pending", signs }));
+  saveCases(); render();
+};
+
+render();
+</script>
+</body>
+</html>
