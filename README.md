@@ -16,6 +16,18 @@
 
 ---
 
+## Repository structure
+
+This project has two parallel tracks:
+
+| Folder | Contents |
+|---|---|
+| [`research/`](research/README.md) | The academic side — RQ1 (leakage audit), RQ2 (architecture comparison), RQ3 (zero-shot signer generalization + domain-adversarial training), study notes, figures |
+| [`innovation/`](innovation/README.md) | The live product — the web app + game (GitHub Pages), Streamlit deployments, the real-time webcam→speech pipeline |
+| `scripts/` | Shared data pipeline (`extract_keypoints.py`, `augment_keypoints.py`) used by both tracks |
+
+---
+
 ## ภาพรวมโครงงาน | Project Overview
 
 **ภาษาไทย:**
@@ -84,37 +96,55 @@ Webcam → MediaPipe (Hand Keypoints) → LSTM Model → Typhoon LLM → gTTS (V
 ## Scripts
 | ไฟล์ | คำอธิบาย | Description |
 |------|----------|-------------|
-| `00_Scraper.ipynb` | ดึงข้อมูลจาก th-sl.com | Scrapes ThSL database |
-| `extract_keypoints.py` | สกัด Hand Keypoints ด้วย MediaPipe | Extracts hand keypoints |
-| `augment_keypoints.py` | เพิ่มข้อมูลด้วย augmentation | Data augmentation |
-| `keypoint_stream.py` | สกัด keypoints จากกล้องแบบ real-time | Real-time keypoint extraction |
-| `predict_stream.py` | ทำนายท่ามือด้วย LSTM | Real-time sign prediction |
+| `scripts/extract_keypoints.py` | สกัด Hand Keypoints ด้วย MediaPipe | Extracts hand keypoints (shared by research + product) |
+| `scripts/augment_keypoints.py` | เพิ่มข้อมูลด้วย augmentation | Data augmentation (shared by research + product) |
+| `innovation/keypoint_stream.py` | สกัด keypoints จากกล้องแบบ real-time | Real-time keypoint extraction |
+| `innovation/predict_stream.py` | ทำนายท่ามือด้วย LSTM | Real-time sign prediction |
+
+See [`innovation/README.md`](innovation/README.md) for the full pipeline and deployment details, and [`research/README.md`](research/README.md) for the RQ1/RQ2/RQ3 methodology.
 
 ---
 
 ## Setup
+Two isolated Python environments — MediaPipe and TensorFlow pull in conflicting
+dependency versions (protobuf) if installed together. Conda works too, but plain
+`venv` needs no separate installer and is what's verified working (macOS,
+Apple Silicon, Python 3.12):
+
 ```bash
 # Environment 1 - MediaPipe (keypoint extraction)
-conda create -n thsl_env python=3.10
-conda activate thsl_env
-pip install mediapipe==0.10.14 opencv-python numpy
+python3 -m venv ~/.thsl-tools/mediapipe_venv
+~/.thsl-tools/mediapipe_venv/bin/pip install mediapipe==0.10.14 opencv-python numpy pillow
 
-# Environment 2 - TensorFlow (model inference)
-conda create -n thsl_tf_env python=3.10
-conda activate thsl_tf_env
-pip install tensorflow numpy
+# Environment 2 - TensorFlow (model inference + Typhoon + gTTS)
+python3 -m venv ~/.thsl-tools/tf_venv
+~/.thsl-tools/tf_venv/bin/pip install tensorflow numpy gTTS
 ```
+
+All paths in `keypoint_stream.py`/`predict_stream.py`/`postprocess.py` are
+repo-relative (computed from each script's own location), so the repo can live
+anywhere — no path editing needed.
+
+> `mediapipe==0.10.14` is a hard pin, not a suggestion: `mediapipe>=1.0.0` dropped
+> the legacy `mp.solutions.hands` API entirely (only `Image`/`ImageFormat`/`tasks`
+> remain), which `keypoint_stream.py` uses throughout. Installing latest breaks
+> with `AttributeError: module 'mediapipe' has no attribute 'solutions'`.
+
+Typhoon API key (for sentence-forming in `postprocess.py`): put it in either
+the `TYPHOON_API_KEY` environment variable, or a file `innovation/typhoon_key.txt`
+(one line, just the key — gitignored, never commit it).
 
 ## Run
 ```bash
 # Terminal 1 - Keypoint extraction
-conda activate thsl_env
-python scripts/keypoint_stream.py
+~/.thsl-tools/mediapipe_venv/bin/python innovation/keypoint_stream.py
 
-# Terminal 2 - Sign prediction
-conda activate thsl_tf_env
-python scripts/predict_stream.py
+# Terminal 2 - Sign prediction + Typhoon + speech
+~/.thsl-tools/tf_venv/bin/python innovation/predict_stream.py
 ```
+
+macOS will prompt for camera permission the first time Terminal 1 runs —
+allow it, or enable manually under System Settings → Privacy & Security → Camera.
 
 ---
 

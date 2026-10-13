@@ -12,6 +12,6 @@ model = Sequential([
 ])
 model.load_weights("D:/KachornThSL/models/thsl_model_v6c.weights.h5")
 
-out = "D:/KachornThSL/web_app/model"
+out = "D:/KachornThSL/innovation/web_app/model"
 tfjs.converters.save_keras_model(model, out)
 print(f"saved TF.js model to: {out}")

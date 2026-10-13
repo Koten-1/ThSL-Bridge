@@ -203,7 +203,7 @@ model = Sequential([
 ## TODO — ไฟล์ที่ยังไม่ได้ทำโน้ต
 - [ ] keypoint_stream.py (state machine, stillness, DirectShow)
 - [ ] predict_stream.py (vote window, threshold, finish handling)
-- [ ] postprocess.py (Typhoon + gTTS, graceful degradation)
+- [x] postprocess.py (Typhoon + gTTS, graceful degradation) — verified end-to-end 2026-08-05 via a live webcam test on the Mac-ported desktop pipeline: a signed word sequence was recognized, `build_sentence()` returned a coherent Typhoon-formed Thai sentence (not the raw-join fallback), and `speak()` was audible via gTTS + macOS `afplay`. Exact signed words/output sentence not logged. Previously untested — the Mac port also fixed hardcoded `D:/KachornThSL` paths and the Windows-only `os.startfile` audio fallback.
 - [ ] augment_keypoints.py (scale/translate/rotate, ทำไมปิด flip)
 - [ ] check_thresholds.py
 ```

@@ -6,8 +6,11 @@ from PIL import ImageFont, ImageDraw, Image
 import time
 import os
 import json
+import platform
 
-TEMP_DIR = Path("D:/KachornThSL/temp")
+# Repo root — this file lives in innovation/, so parent.parent is the repo root.
+BASE_DIR = Path(__file__).resolve().parent.parent
+TEMP_DIR = BASE_DIR / "temp"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 IDLE_WARMUP      = 4     # hands must appear for 4 frames before collecting starts
@@ -17,9 +20,11 @@ STILL_FRAMES     = 6     # consecutive still frames to end the sign (~0.2s at 30
 MIN_COLLECT      = 10    # minimum frames before stillness can trigger a send
 MAX_COLLECT      = 150   # safety cap — send after 5s regardless
 
-FONT_PATH      = "D:/KachornThSL/assests/Sarabun-Regular.ttf"
-KEYPOINTS_PATH = "D:/KachornThSL/temp/keypoints.npy"
-TOPN_PATH      = "D:/KachornThSL/temp/topn.json"
+FONT_PATH      = str(BASE_DIR / "assests" / "Sarabun-Regular.ttf")
+KEYPOINTS_PATH = str(TEMP_DIR / "keypoints.npy")
+TOPN_PATH      = str(TEMP_DIR / "topn.json")
+FINISH_PATH    = str(TEMP_DIR / "finish.txt")
+RESULT_PATH    = str(TEMP_DIR / "result.txt")
 
 try:
     font_large = ImageFont.truetype(FONT_PATH, 32)
@@ -113,10 +118,16 @@ SOURCE = 0
 IS_FILE = isinstance(SOURCE, str)
 # Windows: force DirectShow backend for webcams — the default MSMF backend
 # often opens the device but fails to grab frames (error -1072875772).
+# macOS: force AVFoundation explicitly (also the default, but explicit avoids
+# any ambiguity — CAP_DSHOW is Windows-only and would fail outright here).
 if IS_FILE:
     cap = cv2.VideoCapture(SOURCE)
-else:
+elif platform.system() == "Windows":
     cap = cv2.VideoCapture(SOURCE, cv2.CAP_DSHOW)
+elif platform.system() == "Darwin":
+    cap = cv2.VideoCapture(SOURCE, cv2.CAP_AVFOUNDATION)
+else:
+    cap = cv2.VideoCapture(SOURCE)
 
 if IS_FILE:
     fps_source = cap.get(cv2.CAP_PROP_FPS) or 30
@@ -125,6 +136,23 @@ if IS_FILE:
 else:
     FRAME_DELAY = 1
     print("Webcam opened. Press Q to quit.")
+
+# macOS: a cv2 window launched from Terminal can open off-screen or behind
+# other windows with no indication anything failed — force a fixed position
+# and bring it to the front once at startup.
+WINDOW_NAME = "ThSL Bridge"
+cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+cv2.moveWindow(WINDOW_NAME, 50, 50)
+if platform.system() == "Darwin":
+    try:
+        import subprocess
+        subprocess.run(
+            ["osascript", "-e",
+             f'tell application "System Events" to set frontmost of the first process whose unix id is {os.getpid()} to true'],
+            capture_output=True,
+        )
+    except Exception:
+        pass
 
 # ── State machine ──
 STATE_IDLE       = "IDLE"
@@ -186,7 +214,7 @@ while True:
         # Finish gesture — both wrists raised high
         if lh_wrist_y < FINISH_THRESHOLD and rh_wrist_y < FINISH_THRESHOLD:
             print("Finish gesture — signaling T2")
-            with open("D:/KachornThSL/temp/finish.txt", "w", encoding="utf-8") as f:
+            with open(FINISH_PATH, "w", encoding="utf-8") as f:
                 f.write("TRIGGER")
             state = STATE_IDLE
             idle_counter = 0
@@ -260,8 +288,8 @@ while True:
 
     # ── Read result + top-N from predict_stream ──
     result_text = "..."
-    if os.path.exists("D:/KachornThSL/temp/result.txt"):
-        with open("D:/KachornThSL/temp/result.txt", "r", encoding="utf-8") as f:
+    if os.path.exists(RESULT_PATH):
+        with open(RESULT_PATH, "r", encoding="utf-8") as f:
             result_text = f.read()
 
     topn_data = None
@@ -306,7 +334,7 @@ while True:
     elif topn_data:
         frame = draw_topn(frame, topn_data, None)
 
-    cv2.imshow("ThSL Bridge", frame)
+    cv2.imshow(WINDOW_NAME, frame)
     if cv2.waitKey(FRAME_DELAY) & 0xFF == ord('q'):
         break
 

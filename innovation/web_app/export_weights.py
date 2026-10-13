@@ -18,7 +18,7 @@ model.load_weights("D:/KachornThSL/models/thsl_model_v6c.weights.h5")
 weights = model.get_weights()
 out = [{"shape": list(w.shape), "data": w.flatten().tolist()} for w in weights]
 
-with open("D:/KachornThSL/web_app/weights.json", "w") as f:
+with open("D:/KachornThSL/innovation/web_app/weights.json", "w") as f:
     json.dump(out, f)
 
 print(f"exported {len(weights)} weight arrays")

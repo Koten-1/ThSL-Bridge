@@ -9,6 +9,9 @@ temp/
 # Model weights
 models/*.h5
 models/*.keras
+# raw source .h5 for the web_app compare-mode JSON export — only the JSON ships
+innovation/web_app/rq3_pooled_baseline.weights.h5
+innovation/web_app/rq3_pooled_dann_signonly.weights.h5
 
 # Python cache
 __pycache__/
@@ -28,8 +31,22 @@ __pycache__/
 scripts/yolov8n.pt
 scripts/*.pt
 scripts/typhoon_key.txt
+innovation/typhoon_key.txt
+innovation/web_app/config.local.js
 
 # Large media and dev scratch — not for the repo
 reference video/
 scripts/unused/
 # NOTE: scripts/debuggin/ is intentionally tracked — inspection tools referenced in the blog
+
+# macOS
+.DS_Store
+
+# Separate nested git repo (own remote: Koten-1/ThSL-Zero-Shot-DANN) - not part of this repo
+ThSL-Zero-Shot-DANN/
+
+# Working scratch (quarantined duplicate/mislabeled raw clips found during data audit)
+_quarantine/
+
+# Large raw dataset archive - too large for GitHub, lives on Drive/Kaggle instead
+datasetmulti.rar

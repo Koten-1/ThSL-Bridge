@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThSL Bridge — แปลภาษามือไทย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f7f8; --surface:#ffffff; --surface-muted:#f0f1f3;
+    --border:#e4e5e9; --border-strong:#d7d9de;
+    --text:#16181d; --text-muted:#6b7076; --text-faint:#9a9ea5;
+    --accent:#0f9d63; --accent-strong:#0b7c4e; --accent-soft:#e4f7ee;
+    --warn:#b7791f; --warn-soft:#fbf0dc;
+    --danger:#d1433a; --danger-soft:#fbe9e7;
+    --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
+    --shadow-sm:0 1px 2px rgba(20,20,25,.05);
+    --shadow-md:0 1px 3px rgba(20,20,25,.05), 0 10px 24px -14px rgba(20,20,25,.22);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Inter','Noto Sans Thai',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+         background:var(--bg); color:var(--text);
+         display:flex; flex-direction:column; align-items:center; min-height:100vh; padding-bottom:30px; }
+  .hidden { display:none !important; }
+  .ic { width:1em; height:1em; vertical-align:-.15em; flex-shrink:0; }
+
+  /* header */
+  .appHeader { position:relative; width:960px; max-width:97vw; text-align:center; padding-top:30px; }
+  .headerGlow { position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:560px; height:240px;
+                background:radial-gradient(ellipse at center, var(--accent-soft) 0%, rgba(228,247,238,0) 70%);
+                z-index:-1; pointer-events:none; }
+  h1 { margin:0 0 2px; font-size:1.5rem; font-weight:800; letter-spacing:-.01em; }
+  .logoMark { color:var(--accent); }
+  .sub { color:var(--text-muted); font-size:.88rem; margin-bottom:16px; }
+  .archDivider { display:block; width:200px; height:14px; margin:0 auto 18px; color:var(--border-strong); }
+
+  .topNav { display:flex; gap:4px; background:var(--surface-muted); padding:4px; border-radius:999px; margin:0 auto 22px; width:fit-content; }
+  .navPill { background:transparent; border:none; padding:9px 22px; border-radius:999px; font-size:.88rem; font-weight:700;
+             color:var(--text-muted); cursor:pointer; font-family:inherit; }
+  .navPill.active { background:var(--surface); color:var(--text); box-shadow:var(--shadow-sm); }
+  #navResearch.active { color:var(--warn); }
+
+  /* direction toggle (translate screen) */
+  #viewTranslate { width:960px; max-width:97vw; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .toggleTrack { position:relative; display:flex; background:var(--surface-muted); border-radius:999px; padding:4px; width:340px; max-width:100%; }
+  .toggleThumb { position:absolute; top:4px; bottom:4px; left:4px; width:calc(50% - 4px); background:var(--accent);
+                 border-radius:999px; transition:transform .25s cubic-bezier(.4,0,.2,1); z-index:0; }
+  .toggleOpt { position:relative; z-index:1; flex:1; background:transparent; border:none; padding:11px 10px; border-radius:999px;
+               font-size:.88rem; font-weight:700; color:var(--text-muted); cursor:pointer; font-family:inherit; transition:color .2s; }
+  .toggleOpt.active { color:#fff; }
+
+  /* vocab reference drawer */
+  #vocabDrawer { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+                 box-shadow:var(--shadow-sm); padding:16px 20px; }
+  #vocabDrawer summary { cursor:pointer; font-weight:700; font-size:.92rem; display:flex; align-items:center; gap:8px; }
+  #vocabDrawer summary .ic { color:var(--accent); }
+  #vocabDrawer[open] summary { margin-bottom:14px; }
+  .vtScope { color:var(--text-muted); font-size:.82rem; margin:10px 0 14px; line-height:1.55; }
+  .vtScope .en { color:var(--text-faint); display:block; margin-top:4px; }
+  .vtGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:12px; }
+  .vtCard { background:var(--surface-muted); border:1px solid var(--border); border-radius:12px; padding:8px;
+            text-align:center; position:relative; }
+  .vtCard.vtBest { border-color:var(--warn); }
+  .vtCard video { width:100%; border-radius:8px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+  .vtCard .vtWord { font-weight:700; margin-top:6px; font-size:.92rem; color:var(--text); }
+  .vtCard .vtGloss { color:var(--text-faint); font-size:.7rem; }
+  .vtCard .vtBadge { position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+                      background:var(--warn-soft); color:var(--warn); font-size:.65rem; font-weight:800;
+                      padding:3px 9px; border-radius:8px; white-space:nowrap; border:1px solid var(--warn); }
+  .vtCard .vtBadge .ic { margin-right:2px; }
+
+  /* camera stage */
+  .stageWrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+               box-shadow:var(--shadow-md); padding:10px; width:100%; }
+  .stage { position:relative; aspect-ratio:16/9; background:var(--surface-muted); border-radius:12px; overflow:hidden; }
+  video, canvas { width:100%; height:100%; border-radius:12px; display:block; object-fit:cover; }
+  canvas { position:absolute; top:0; left:0; }
+  #cameraGate { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+                gap:10px; background:var(--surface-muted); border-radius:12px; z-index:2; }
+  #cameraGate .hint { margin:0; max-width:80%; }
+  #status { position:absolute; top:12px; left:12px; background:rgba(16,18,22,.65); color:#fff;
+            backdrop-filter:blur(8px); padding:7px 14px; border-radius:10px; font-size:.92rem;
+            border:1px solid rgba(255,255,255,.08); }
+  #big { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+         font-size:9rem; font-weight:800; color:#fff; text-shadow:0 6px 30px rgba(0,0,0,.6); }
+
+  /* game HUD */
+  #gameHud { position:absolute; top:10px; left:50%; transform:translateX(-50%);
+             display:flex; gap:20px; align-items:center; background:rgba(16,18,22,.65); color:#fff;
+             backdrop-filter:blur(10px); padding:8px 22px; border-radius:14px; border:1px solid rgba(255,255,255,.08); }
+  #gameHud .ic { color:var(--text-faint); }
+  #timer { font-size:1.5rem; font-weight:800; }
+  #score { font-size:1.5rem; font-weight:800; color:#6ee7a8; }
+  #target { position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+            background:rgba(16,18,22,.65); color:#fff; backdrop-filter:blur(10px); padding:12px 36px;
+            border-radius:16px; font-size:2.4rem; font-weight:800; border:1px solid rgba(255,255,255,.08); }
+  #target b { color:#6ee7a8; }
+  #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%);
+           font-size:6rem; opacity:0; transition:opacity .1s; pointer-events:none; }
+  #flash .ic { stroke-width:2.5; filter:drop-shadow(0 6px 20px rgba(0,0,0,.35)); }
+
+  /* test overlays */
+  #result { position:absolute; bottom:58px; left:50%; transform:translateX(-50%);
+            background:rgba(16,18,22,.6); color:#fff; backdrop-filter:blur(8px); padding:10px 30px;
+            border-radius:14px; font-size:2.2rem; font-weight:800; white-space:nowrap; border:1px solid rgba(255,255,255,.08); }
+  #sentence { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+              background:rgba(16,18,22,.55); color:#fff; backdrop-filter:blur(6px); padding:5px 18px;
+              border-radius:10px; font-size:1.02rem; white-space:nowrap; }
+  .bars { position:absolute; right:12px; top:50%; transform:translateY(-50%);
+          width:230px; background:rgba(16,18,22,.6); backdrop-filter:blur(10px); color:#fff;
+          padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.08); }
+  .bar-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
+  .bar-label { width:74px; text-align:right; font-size:.85rem; }
+  .bar-track { flex:1; background:rgba(255,255,255,.14); border-radius:6px; height:16px; overflow:hidden; }
+  .bar-fill { height:100%; background:#34d399; width:0%; transition:width .15s; }
+  .bar-pct { width:38px; font-size:.8rem; text-align:right; }
+
+  /* compare mode (RQ3: pooled-baseline vs pooled+DANN, same gesture, side by side) */
+  .barsLeft { left:12px; right:auto; }
+  .barsRight { right:12px; }
+  .barsHead { font-weight:700; text-align:center; margin-bottom:8px; font-size:.9rem; color:#6ee7a8; }
+  #barsCompareDann .barsHead { color:#fbbf6a; }
+  #compareStatus { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+                   background:rgba(16,18,22,.6); color:#fff; backdrop-filter:blur(6px); padding:6px 20px;
+                   border-radius:10px; font-size:.95rem; white-space:nowrap; text-align:center; max-width:94%; overflow-x:auto; }
+  @media (max-width: 700px) {
+    #barsCompareBaseline, #barsCompareDann { width:150px; padding:10px; }
+    #barsCompareBaseline .bar-label, #barsCompareDann .bar-label { width:44px; font-size:.72rem; }
+    #barsCompareBaseline .bar-pct, #barsCompareDann .bar-pct { width:30px; font-size:.7rem; }
+    #barsCompareBaseline .barsHead, #barsCompareDann .barsHead { font-size:.78rem; }
+  }
+
+  /* clinical summary card (schema v3) -- rule-based, not LLM-derived */
+  #clinicalCard { width:960px; max-width:97vw; background:var(--surface); border:1px solid var(--border);
+                  border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px 24px; margin-top:14px; }
+  .clinHead { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .clinHead .t { font-weight:700; font-size:1rem; }
+  .clinHead .d { color:var(--text-faint); font-size:.76rem; }
+  .clinEmpty { color:var(--text-muted); font-size:.9rem; text-align:center; padding:10px 0; }
+  .clinPriority { display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; font-weight:700;
+                  border-left:4px solid; margin-bottom:14px; }
+  .clinPriority.urgent { background:var(--danger-soft); color:var(--danger); border-left-color:var(--danger); }
+  .clinPriority.normal { background:var(--accent-soft); color:var(--accent-strong); border-left-color:var(--accent); }
+  .clinGrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; }
+  .clinLabel { font-size:.7rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+  .clinValue { font-weight:600; color:var(--text); font-size:.95rem; }
+  .clinValue.flagYes { color:var(--danger); }
+  .clinValue.empty { color:var(--text-faint); font-weight:400; }
+  .clinRaw { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .clinRawRow { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .clinSign { background:var(--surface-muted); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:.85rem; }
+  .clinSign small { color:var(--text-faint); margin-left:4px; }
+  .clinSign.lowConf { border-color:var(--warn); background:var(--warn-soft); }
+
+  /* speak -> sign (hearing person speaks, deaf person reads/watches) */
+  #speechScreen { width:100%; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .speakPanel { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+                box-shadow:var(--shadow-sm); padding:26px; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .grammarToggle { display:flex; gap:20px; font-size:.92rem; color:var(--text-muted); }
+  .grammarToggle label { display:flex; align-items:center; gap:6px; cursor:pointer; }
+  #micBtn { font-size:1.1rem; padding:16px 44px; border-radius:50px; }
+  #micBtn.listening { background:var(--danger); }
+  #micBtn.listening:hover { background:#b93a32; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(209,67,58,.45);} 50%{box-shadow:0 0 0 14px rgba(209,67,58,0);} }
+  #micBtn.listening { animation:pulse 1.4s infinite; }
+  #speakStatus { color:var(--text-muted); font-size:.9rem; min-height:1.2em; text-align:center; }
+  #speakStatus.warnText { color:var(--danger); font-weight:600; }
+  #speakStatus .ic { margin-right:4px; }
+  #speakTranscript { font-size:1.1rem; color:var(--text); min-height:1.4em; text-align:center; }
+  .speakSentence { font-size:1.05rem; color:var(--warn); text-align:center; font-weight:600; }
+  .glossRow { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px; margin-top:10px; }
+  .glossChip { background:var(--accent-soft); color:var(--accent-strong); font-weight:700; padding:6px 14px; border-radius:10px; }
+  .glossArrow { color:var(--text-faint); }
+  .glossEmpty { color:var(--text-muted); font-size:.9rem; }
+  .glossEmpty .ic { color:var(--warn); margin-right:4px; }
+  #speakClips { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; width:100%; }
+  #speakClips video { width:100%; border-radius:8px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+
+  /* research view */
+  #viewResearch { width:960px; max-width:97vw; display:flex; flex-direction:column; align-items:center; gap:18px; }
+  .researchIntro { text-align:center; max-width:560px; }
+  .researchIntro .t { font-weight:700; font-size:1.05rem; margin-bottom:4px; }
+  .researchIntro .d { color:var(--text-muted); font-size:.85rem; line-height:1.5; }
+  .modeBtns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; width:100%; }
+  .modeCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+              box-shadow:var(--shadow-sm); padding:24px 26px; width:230px; cursor:pointer;
+              transition:transform .15s, box-shadow .15s, border-color .15s; text-align:center; }
+  .modeCard:hover { border-color:var(--border-strong); box-shadow:var(--shadow-md); transform:translateY(-3px); }
+  .modeIcon { width:48px; height:48px; border-radius:14px; background:var(--warn-soft); color:var(--warn);
+              display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+  .modeIcon svg { width:23px; height:23px; }
+  .modeCard .t { font-size:1.05rem; font-weight:700; margin:0 0 4px; }
+  .modeCard .d { font-size:.82rem; color:var(--text-muted); line-height:1.45; }
+
+  /* gameover */
+  #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; }
+  #finalScore { font-size:3rem; font-weight:900; color:var(--accent); }
+  input { background:var(--surface); border:1px solid var(--border-strong); color:var(--text); padding:10px 16px;
+          border-radius:10px; font-size:1rem; text-align:center; }
+  input:focus { outline:none; border-color:var(--accent); }
+  .lb { background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm);
+        border-radius:14px; padding:14px 20px; min-width:320px; }
+  .lb h3 { margin:0 0 8px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .lb h3 .ic { color:var(--warn); }
+  .lb-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); }
+  .lb-row .rank { color:var(--warn); font-weight:700; width:30px; }
+  .lb-row .nm { flex:1; }
+  .lb-row .sc { font-weight:700; color:var(--accent); }
+
+  button { background:var(--accent); color:#fff; border:none; padding:12px 30px;
+           border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer;
+           transition:background .15s, transform .1s; font-family:inherit; }
+  button:hover { background:var(--accent-strong); }
+  button:active { transform:translateY(1px); }
+  .ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border-strong); }
+  .ghost:hover { background:var(--surface-muted); color:var(--text); }
+  .ghost .ic { margin-right:6px; }
+  .hint { color:var(--text-muted); font-size:.82rem; max-width:680px; text-align:center; line-height:1.5; margin:10px 14px; }
+</style>
+</head>
+<body>
+  <div class="appHeader">
+    <div class="headerGlow"></div>
+    <h1>
+      <svg class="ic logoMark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 16c0-4.5 2.5-8 4.5-8S9 11 12 11s4.5-3 6.5-3S21 11.5 21 16"/><path d="M3 20h18"/>
+      </svg>
+      ThSL Bridge
+    </h1>
+    <div class="sub">ผู้ช่วยสื่อสารระหว่างคนหูหนวกกับคนทั่วไป</div>
+  </div>
+  <svg class="archDivider" viewBox="0 0 200 14" preserveAspectRatio="none">
+    <path d="M0 11 Q 100 -3 200 11" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </svg>
+
+  <nav class="topNav">
+    <button class="navPill active" id="navTranslate">แปลภาษา</button>
+    <button class="navPill" id="navResearch">งานวิจัย</button>
+  </nav>
+
+  <!-- TRANSLATE (the product: two directions, one screen) -->
+  <div id="viewTranslate">
+    <div class="toggleTrack" id="toggleTrack">
+      <div class="toggleThumb" id="toggleThumb"></div>
+      <button class="toggleOpt active" id="dirSignBtn">มือ → เสียง</button>
+      <button class="toggleOpt" id="dirSpeechBtn">เสียง → มือ</button>
+    </div>
+
+    <details id="vocabDrawer">
+      <summary>
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+        </svg>
+        คำศัพท์ที่รองรับตอนนี้ (10 คำ)
+      </summary>
+      <div class="vtScope">
+        ระบบรู้จักเฉพาะ 10 คำนี้ ยังไม่ใช่ภาษามือไทยทั้งหมด ลองทำตามท่าด้านล่างดูก่อนได้
+        <span class="en">The system currently knows these 10 signs only, not all of Thai Sign Language. Try one below.</span>
+      </div>
+      <div class="vtGrid" id="vtGrid"></div>
+    </details>
+
+    <!-- camera stage: shared by sign-to-speech translate AND the research game/compare modes -->
+    <div class="stageWrap" id="appScreen">
+      <div class="stage">
+        <div id="cameraGate">
+          <button id="startCameraBtn">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 7a2 2 0 0 0-2-2h-3.17L16 3H8L6.17 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><circle cx="12" cy="13" r="4"/>
+            </svg>
+            เปิดกล้องเพื่อเริ่มแปล
+          </button>
+          <p class="hint">ต้องอนุญาตให้เว็บนี้ใช้กล้องก่อน</p>
+        </div>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="overlay"></canvas>
+        <div id="status">กำลังโหลด...</div>
+        <div id="big"></div>
+        <!-- game -->
+        <div id="gameHud" class="hidden">
+          <span>
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>
+            </svg>
+            <span id="timer">45</span>
+          </span>
+          <span>
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/>
+              <path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/>
+            </svg>
+            <span id="score">0</span>
+          </span>
+        </div>
+        <div id="target" class="hidden"></div>
+        <div id="flash"></div>
+        <!-- test (translate) -->
+        <div class="bars hidden" id="bars"></div>
+        <div id="result" class="hidden">—</div>
+        <div id="sentence" class="hidden"></div>
+        <!-- compare (RQ3: pooled-baseline vs pooled+DANN) -->
+        <div class="bars barsLeft hidden" id="barsCompareBaseline">
+          <div class="barsHead">Baseline</div>
+        </div>
+        <div class="bars barsRight hidden" id="barsCompareDann">
+          <div class="barsHead">+ DANN</div>
+        </div>
+        <div id="compareStatus" class="hidden">ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย</div>
+      </div>
+    </div>
+    <p class="hint" id="appHint"></p>
+    <button class="ghost hidden" id="backBtn">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/>
+      </svg>
+      กลับหน้างานวิจัย
+    </button>
+
+    <!-- clinical summary card (schema v3), only shown in sign-to-speech translate -->
+    <div id="clinicalCard" class="hidden">
+      <div class="clinHead">
+        <div class="t">สรุปสำหรับแพทย์</div>
+        <div class="d">สร้างจากคำที่ทำท่าโดยตรง ไม่ผ่านการสรุปของ AI</div>
+      </div>
+      <div id="clinicalBody"><div class="clinEmpty">ยังไม่มีข้อมูล ทำท่าแล้วจบประโยคเพื่อดูสรุปที่นี่</div></div>
+    </div>
+
+    <!-- speech -> sign (hearing person speaks, deaf person reads/watches) -->
+    <div id="speechScreen" class="hidden">
+      <div class="speakPanel">
+        <div class="grammarToggle">
+          <label><input type="radio" name="grammarMode" value="thsl" checked> ไวยากรณ์ภาษามือ (ThSL gloss)</label>
+          <label><input type="radio" name="grammarMode" value="normal"> ไวยากรณ์ภาษาไทยปกติ</label>
+        </div>
+        <button id="micBtn">
+          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8.5 21h7"/>
+          </svg>
+          พูด
+        </button>
+        <div id="speakStatus">กดปุ่มแล้วพูดเป็นภาษาไทย (ต้องใช้ Chrome และอนุญาตไมโครโฟน)</div>
+        <div id="speakTranscript"></div>
+        <div id="speakOutput"></div>
+        <div id="speakClips"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESEARCH (evaluation tools, not the main product) -->
+  <div id="viewResearch" class="hidden">
+    <div class="researchIntro">
+      <div class="t">เครื่องมือสำหรับงานวิจัยและประเมินผล</div>
+      <div class="d">ฟีเจอร์ในหน้านี้ใช้ทดสอบและเปรียบเทียบโมเดล ไม่ใช่ส่วนหลักของแอป</div>
+    </div>
+    <div class="modeBtns">
+      <div class="modeCard" id="cardGame">
+        <div class="modeIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="10" rx="4"/><path d="M7 10v4M5 12h4"/>
+            <circle cx="15.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="13" r="1" fill="currentColor" stroke="none"/>
+          </svg>
+        </div>
+        <div class="t">Sign Speed Test</div>
+        <div class="d">ทำท่าตามคำที่สุ่มให้ ภายใน 45 วินาที ทำได้กี่คำ</div>
+      </div>
+      <div class="modeCard" id="cardCompare">
+        <div class="modeIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 4 3 8l4 4"/><path d="M3 8h12.5a4.5 4.5 0 0 1 4.5 4.5V13"/>
+            <path d="M17 20l4-4-4-4"/><path d="M21 16H8.5A4.5 4.5 0 0 1 4 11.5V11"/>
+          </svg>
+        </div>
+        <div class="t">เปรียบเทียบโมเดล (RQ3)</div>
+        <div class="d">ทำท่าเดียว ดู Baseline กับ DANN ทายพร้อมกันแบบเรียลไทม์</div>
+      </div>
+    </div>
+    <div class="lb" id="menuLb"></div>
+  </div>
+
+  <!-- GAMEOVER -->
+  <div id="gameover" class="hidden">
+    <div>หมดเวลา คุณทำได้</div>
+    <div id="finalScore">0</div>
+    <div>คำ</div>
+    <input id="nameInput" placeholder="ใส่ชื่อของคุณ" maxlength="16">
+    <button id="saveBtn">บันทึกคะแนน</button>
+    <div class="lb" id="overLb"></div>
+    <div style="display:flex; gap:10px;">
+      <button class="ghost" id="gameoverBackBtn">กลับหน้างานวิจัย</button>
+      <button id="againBtn">เล่นอีกครั้ง</button>
+    </div>
+  </div>
+
+<!-- Local-only: config.local.js sets window.TYPHOON_API_KEY, gitignored, not committed.
+     Missing file is non-fatal -- window.TYPHOON_API_KEY just stays undefined and
+     typhoonSentence() below falls back to raw joined words, same graceful-degradation
+     philosophy as postprocess.py. See innovation/web_app/config.local.example.js. -->
+<script src="config.local.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script type="module">
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+const TARGET_SIGNS = ["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่","ถาม","บอก","finish","none"];
+const GAME_WORDS = ["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่","ถาม","บอก"];
+const THRESH = {"คนหูหนวก":0.70,"คุณ":0.60,"ช่วย":0.65,"ขอบคุณ":0.80,"ฉัน":0.75,"ต้องการ":0.78,
+  "เข้าใจ":0.85,"ไม่":0.65,"ถาม":0.70,"บอก":0.75,"finish":0.70,"none":0.80};
+const COLLECT_FRAMES=30, STILL_THRESHOLD=0.03;
+// Timing gates use wall-clock milliseconds, not frame counts — the Python live pipeline's
+// frame-count constants (STILL_FRAMES=6, MIN_COLLECT=10, ...) implicitly assumed ~30fps.
+// The browser's requestAnimationFrame loop often runs faster (60fps+), so the same frame
+// counts here represented less real time than in training/live-Python, causing signs to
+// get cut short. Converted at 30fps: frames/30*1000 = ms.
+const IDLE_WARMUP_MS=133, STILL_MS=200, MIN_COLLECT_MS=333, MAX_COLLECT_MS=5000, MISSING_TOL_MS=267;
+const GAME_DURATION=45;
+
+const $=id=>document.getElementById(id);
+
+// Small inline-SVG icon set (stroke-style, no emoji) -- each is sized via the
+// shared .ic CSS rule (width/height:1em), so an icon automatically matches the
+// font-size of whatever text it's dropped next to. See the <style> block.
+const ICONS = {
+  mic: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8.5 21h7"/></svg>',
+  stop: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  cross: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>',
+  warning: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 16.5h.01"/></svg>',
+  star: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9Z"/></svg>',
+  trophy: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/></svg>',
+};
+
+const video=$("video"), overlay=$("overlay"), ctx=overlay.getContext("2d");
+const statusEl=$("status"), bigEl=$("big"), barsEl=$("bars"), resultEl=$("result"), sentenceEl=$("sentence");
+const gameHud=$("gameHud"), timerEl=$("timer"), scoreEl=$("score"), targetEl=$("target"), flashEl=$("flash");
+const barsCompareBaselineEl=$("barsCompareBaseline"), barsCompareDannEl=$("barsCompareDann"), compareStatusEl=$("compareStatus");
+
+let handLandmarker=null, model=null, modelsLoaded=false;
+let mediaStream=null, cameraStreamActive=false, cameraEverStarted=false;
+let mode="test", state="IDLE", collected=[], prevKp=null, countdownStart=0;
+let idleStart=null, stillStart=null, missStart=null, collectStart=0;
+let wordBuffer=[]; // [{sign, conf}, ...]
+let gameActive=false, score=0, timeLeft=GAME_DURATION, targetWord="", gameTimer=null, starting=false;
+let compareBaselineModel=null, compareDannModel=null, compareLoadState="idle"; // idle|loading|ready|error
+let direction="sign"; // "sign" | "speech" -- which half of the translate toggle is showing
+
+function buildBars(containerEl, prefix){ for(let i=0;i<5;i++){ const r=document.createElement("div"); r.className="bar-row";
+  r.innerHTML=`<div class="bar-label" id="${prefix}bl${i}"></div><div class="bar-track"><div class="bar-fill" id="${prefix}bf${i}"></div></div><div class="bar-pct" id="${prefix}bp${i}"></div>`; containerEl.appendChild(r);} }
+buildBars(barsEl, "");
+buildBars(barsCompareBaselineEl, "cb");
+buildBars(barsCompareDannEl, "cd");
+
+// ---- vocabulary reference (collapsed by default -- it's a reference, not the hero) ----
+// English glosses + "try this first" pick are documentation/UX choices, not model
+// output -- BEST_FIRST_TRY is ขอบคุณ per the SIGN_THRESHOLDS confidence gap in
+// predict_stream.py (correct=1.00, wrong=0.00, "perfect"), the most reliable of the
+// 10 signs. GAME_WORDS is already the canonical 10-word vocabulary in trained order,
+// which sign_00.mp4..sign_09.mp4 (exported from data/raw/) match index-for-index.
+const SIGN_GLOSS = {"คนหูหนวก":"deaf","คุณ":"you","ช่วย":"help","ขอบคุณ":"thank-you","ฉัน":"I/me",
+  "ต้องการ":"want","เข้าใจ":"understand","ไม่":"no/not","ถาม":"ask","บอก":"tell"};
+const BEST_FIRST_TRY = "ขอบคุณ";
+function buildVocabTutorial(){
+  const grid = $("vtGrid");
+  GAME_WORDS.forEach((word, i) => {
+    const idx = String(i).padStart(2,"0");
+    const card = document.createElement("div");
+    card.className = "vtCard" + (word===BEST_FIRST_TRY ? " vtBest" : "");
+    card.innerHTML =
+      (word===BEST_FIRST_TRY ? `<div class="vtBadge">${ICONS.star} ลองก่อน</div>` : "") +
+      `<video src="tutorial_clips/sign_${idx}.mp4" autoplay loop muted playsinline></video>` +
+      `<div class="vtWord">${word}</div><div class="vtGloss">${SIGN_GLOSS[word]||""}</div>`;
+    grid.appendChild(card);
+  });
+}
+buildVocabTutorial();
+
+// ---- leaderboard (localStorage) ----
+function getLB(){ try{return JSON.parse(localStorage.getItem("thsl_lb")||"[]");}catch{return[];} }
+function saveLB(name,sc){ const lb=getLB(); lb.push({name,score:sc}); lb.sort((a,b)=>b.score-a.score); localStorage.setItem("thsl_lb",JSON.stringify(lb.slice(0,10))); }
+function renderLB(el){ const lb=getLB(); el.innerHTML=`<h3>${ICONS.trophy} Leaderboard</h3>`+(lb.length?lb.map((r,i)=>
+  `<div class="lb-row"><span class="rank">#${i+1}</span><span class="nm">${r.name}</span><span class="sc">${r.score}</span></div>`).join("")
+  :"<div style='text-align:center;color:var(--text-faint)'>ยังไม่มีคะแนน</div>"); }
+
+// ---- clinical summary (schema v3) ----
+// Deterministic, NOT LLM-derived: every field below is a plain rule over the
+// signed words themselves, specifically so nothing a doctor reads can be an LLM
+// hallucination. Typhoon only ever touches the optional spoken sentence, never
+// these fields. Categories with no matching word yet (symptom, body_part,
+// severity, duration -- pending the medical word list and NADT's review) render
+// as "not supported yet", never a guess. Add entries here the moment the medical
+// vocabulary is trained; no other code changes needed.
+const WORD_CATEGORY = {
+  "แพ้": "allergy",
+  "ช่วย": "action", "ถาม": "action", "บอก": "action", "ต้องการ": "action",
+  "ไม่": "negation",
+};
+const ACTION_LABEL = {"ช่วย":"ต้องการความช่วยเหลือ","ถาม":"มีคำถาม","บอก":"ต้องการบอกบางอย่าง","ต้องการ":"มีสิ่งที่ต้องการ"};
+const NOT_SUPPORTED = '<span class="clinValue empty">ยังไม่รองรับคำนี้</span>';
+
+function classifyClinical(words){ // words: [{sign, conf}, ...]
+  const c = {urgent:false, allergy:false, actions:[], symptoms:[], bodyParts:[], severity:[], duration:[], negated:false};
+  words.forEach(({sign}) => {
+    const cat = WORD_CATEGORY[sign];
+    if(cat==="urgent") c.urgent=true;
+    else if(cat==="allergy") c.allergy=true;
+    else if(cat==="action") c.actions.push(sign);
+    else if(cat==="negation") c.negated=true;
+    else if(cat==="symptom") c.symptoms.push(sign);
+    else if(cat==="body_part") c.bodyParts.push(sign);
+    else if(cat==="severity") c.severity.push(sign);
+    else if(cat==="duration") c.duration.push(sign);
+  });
+  return c;
+}
+function renderClinicalCard(words){
+  const c = classifyClinical(words);
+  const complaint = [...c.symptoms, ...c.bodyParts];
+  const actionText = c.actions.length ? c.actions.map(a=>ACTION_LABEL[a]||a).join(", ") : "ไม่ระบุ";
+  $("clinicalBody").innerHTML = `
+    <div class="clinPriority ${c.urgent?'urgent':'normal'}">
+      ${ICONS.warning} ${c.urgent?'เร่งด่วน':'ปกติ'}
+    </div>
+    <div class="clinGrid">
+      <div><div class="clinLabel">อาการหลัก</div>${complaint.length?`<div class="clinValue">${complaint.join(' ')}</div>`:NOT_SUPPORTED}</div>
+      <div><div class="clinLabel">ระยะเวลา</div>${c.duration.length?`<div class="clinValue">${c.duration.join(' ')}</div>`:NOT_SUPPORTED}</div>
+      <div><div class="clinLabel">ความรุนแรง</div>${c.severity.length?`<div class="clinValue">${c.severity.join(' ')}</div>`:NOT_SUPPORTED}</div>
+      <div><div class="clinLabel">ประวัติแพ้</div><div class="clinValue ${c.allergy?'flagYes':''}">${c.allergy?'มี':'ไม่ได้ระบุ'}</div></div>
+      <div><div class="clinLabel">ความต้องการ</div><div class="clinValue">${actionText}${c.negated?' (มีคำว่า "ไม่")':''}</div></div>
+    </div>
+    <div class="clinRaw">
+      <div class="clinLabel">ลำดับคำที่ทำท่า (ตรวจสอบได้)</div>
+      <div class="clinRawRow">${words.map(w=>`<span class="clinSign ${w.conf<0.85?'lowConf':''}">${w.sign} <small>${Math.round(w.conf*100)}%</small></span>`).join("")}</div>
+    </div>
+  `;
+}
+
+// ---- model + camera ----
+// Model loading happens once (ensureModelsLoaded). The camera stream itself
+// opens and closes as the user switches direction/screens, so the webcam light
+// isn't left on when nobody's using it.
+async function ensureModelsLoaded(){
+  if(modelsLoaded) return;
+  statusEl.textContent="กำลังโหลดโมเดล...";
+  const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+  handLandmarker=await HandLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},
+    runningMode:"VIDEO", numHands:2 });
+  model=tf.sequential();
+  model.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
+  model.add(tf.layers.dropout({rate:0.5}));
+  model.add(tf.layers.lstm({units:32}));
+  model.add(tf.layers.dropout({rate:0.5}));
+  model.add(tf.layers.dense({units:16, activation:"relu"}));
+  model.add(tf.layers.dense({units:12, activation:"softmax"}));
+  const wjson=await (await fetch("weights.json")).json();
+  model.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
+  modelsLoaded=true;
+}
+async function openCameraStream(){
+  $("cameraGate").classList.add("hidden");
+  if(cameraStreamActive) return;
+  await ensureModelsLoaded();
+  mediaStream=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}});
+  video.srcObject=mediaStream;
+  cameraStreamActive=true;
+  state="IDLE"; collected=[]; prevKp=null; idleStart=null; stillStart=null; missStart=null;
+  await new Promise(res=>{ video.onloadedmetadata=()=>{ overlay.width=video.videoWidth; overlay.height=video.videoHeight; res(); }; });
+  statusEl.textContent="พร้อม";
+  loop();
+}
+function stopCameraStream(){
+  if(!cameraStreamActive) return;
+  cameraStreamActive=false;
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
+  video.srcObject=null;
+}
+
+// ---- compare models (RQ3: pooled-baseline vs pooled+DANN, 10-way, no finish/none) ----
+function buildTenClassModel(){
+  const m=tf.sequential();
+  m.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
+  m.add(tf.layers.dropout({rate:0.5}));
+  m.add(tf.layers.lstm({units:32}));
+  m.add(tf.layers.dropout({rate:0.5}));
+  m.add(tf.layers.dense({units:16, activation:"relu"}));
+  m.add(tf.layers.dense({units:10, activation:"softmax"}));
+  return m;
+}
+async function loadWeightsInto(mdl, url){
+  const resp=await fetch(url);
+  if(!resp.ok) throw new Error(`${url}: HTTP ${resp.status}`);
+  const wjson=await resp.json();
+  mdl.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
+}
+async function loadCompareModels(){
+  if(compareLoadState==="ready"||compareLoadState==="loading") return;
+  compareLoadState="loading";
+  compareStatusEl.textContent="กำลังโหลดโมเดลเปรียบเทียบ...";
+  try{
+    compareBaselineModel=buildTenClassModel();
+    compareDannModel=buildTenClassModel();
+    // both files come from the RQ3_DANN.ipynb export cell -- see innovation/README.md
+    await Promise.all([
+      loadWeightsInto(compareBaselineModel, "weights_rq3_baseline.json"),
+      loadWeightsInto(compareDannModel, "weights_rq3_dann.json"),
+    ]);
+    compareLoadState="ready";
+    compareStatusEl.textContent="ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย";
+  }catch(e){
+    compareLoadState="error";
+    compareStatusEl.innerHTML=`${ICONS.warning} ยังไม่มีไฟล์โมเดลเปรียบเทียบ (weights_rq3_*.json)`;
+    console.error("compare models failed to load:", e);
+  }
+}
+
+// ---- screen / navigation control ----
+// Four top-level screens share the DOM: viewTranslate (toggle + vocab + either
+// appScreen or speechScreen), viewResearch (game/compare picker), appScreen
+// (the camera stage -- reused for translate AND for the research game/compare
+// modes), and gameover. Exactly one top-level screen is visible at a time.
+function hideAllScreens(){
+  $("viewTranslate").classList.add("hidden");
+  $("viewResearch").classList.add("hidden");
+  $("gameover").classList.add("hidden");
+}
+function setNavActive(view){
+  $("navTranslate").classList.toggle("active", view==="translate");
+  $("navResearch").classList.toggle("active", view==="research");
+}
+function configureAppUI(m){
+  const isGame=(m==="game"), isCompare=(m==="compare");
+  gameHud.classList.toggle("hidden",!isGame); targetEl.classList.toggle("hidden",!isGame);
+  barsEl.classList.toggle("hidden", isGame||isCompare);
+  resultEl.classList.toggle("hidden", isGame||isCompare);
+  sentenceEl.classList.toggle("hidden", isGame||isCompare);
+  barsCompareBaselineEl.classList.toggle("hidden", !isCompare);
+  barsCompareDannEl.classList.toggle("hidden", !isCompare);
+  compareStatusEl.classList.toggle("hidden", !isCompare);
+  $("clinicalCard").classList.toggle("hidden", m!=="test");
+  $("backBtn").classList.toggle("hidden", m==="test");
+}
+function showSignScreen(){
+  $("speechScreen").classList.add("hidden");
+  $("appScreen").classList.remove("hidden");
+  mode="test"; wordBuffer=[];
+  configureAppUI("test");
+  $("appHint").textContent = "ยกมือ รอการนับถอยหลัง แล้วทำท่า รองรับ 10 คำ";
+  if(cameraEverStarted) openCameraStream(); else $("cameraGate").classList.remove("hidden");
+}
+function showSpeechScreen(){
+  $("appScreen").classList.add("hidden");
+  stopCameraStream();
+  $("speechScreen").classList.remove("hidden");
+}
+function setDirection(d){
+  direction=d;
+  $("toggleThumb").style.transform = d==="speech" ? "translateX(100%)" : "translateX(0)";
+  $("dirSignBtn").classList.toggle("active", d==="sign");
+  $("dirSpeechBtn").classList.toggle("active", d==="speech");
+  if(d==="sign") showSignScreen(); else showSpeechScreen();
+}
+function goTranslate(){
+  endGameCleanup(); hideAllScreens();
+  $("viewTranslate").classList.remove("hidden");
+  setNavActive("translate");
+  if(direction==="sign") showSignScreen(); else showSpeechScreen();
+}
+function goResearch(){
+  endGameCleanup(); stopCameraStream(); hideAllScreens();
+  $("viewResearch").classList.remove("hidden");
+  setNavActive("research");
+  renderLB($("menuLb"));
+}
+function launchResearchMode(m){
+  hideAllScreens();
+  $("viewTranslate").classList.remove("hidden"); // appScreen lives inside viewTranslate's DOM subtree
+  $("vocabDrawer").classList.add("hidden");
+  $("toggleTrack").classList.add("hidden");
+  $("speechScreen").classList.add("hidden");
+  $("appScreen").classList.remove("hidden");
+  mode=m; wordBuffer=[];
+  configureAppUI(m);
+  $("appHint").textContent = m==="game" ? "ทำท่าตามคำที่ขึ้น ให้เร็วที่สุด ยืนใกล้กล้องพอให้เห็นมือเต็ม"
+    : "ยกมือ รอการนับถอยหลัง แล้วทำท่า ดูสองโมเดลทายพร้อมกันจากท่าเดียวกัน";
+  openCameraStream().then(()=>{ if(m==="game") beginGame(); if(m==="compare") loadCompareModels(); });
+}
+function leaveResearchMode(){
+  endGameCleanup(); stopCameraStream();
+  $("toggleTrack").classList.remove("hidden");
+  $("vocabDrawer").classList.remove("hidden");
+  goResearch();
+}
+$("navTranslate").onclick = goTranslate;
+$("navResearch").onclick = goResearch;
+$("dirSignBtn").onclick = () => setDirection("sign");
+$("dirSpeechBtn").onclick = () => setDirection("speech");
+$("startCameraBtn").onclick = () => { cameraEverStarted=true; openCameraStream(); };
+$("cardGame").onclick = () => launchResearchMode("game");
+$("cardCompare").onclick = () => launchResearchMode("compare");
+$("backBtn").onclick = leaveResearchMode;
+
+// ---- speak -> sign (path B: hearing person speaks, deaf person reads/watches) ----
+// Uses the browser's built-in Web Speech API for Thai speech-to-text -- no key, no
+// server, works offline-ish in Chrome. ThSL-gloss mode then asks Typhoon to reorder
+// the sentence into ThSL grammar, but RESTRICTED to GAME_WORDS (the 10 signs this
+// model actually knows) -- it must skip unknown words, never invent a sign for them.
+let speakRecognition=null, speakListening=false;
+function getGrammarMode(){ return document.querySelector('input[name="grammarMode"]:checked').value; }
+function setMicBtn(listening){
+  $("micBtn").innerHTML = (listening ? ICONS.stop+" หยุด" : ICONS.mic+" พูด");
+  $("micBtn").classList.toggle("listening", listening);
+}
+function setSpeakStatus(msg){ $("speakStatus").classList.remove("warnText"); $("speakStatus").textContent=msg; }
+function setSpeakWarn(msg){ $("speakStatus").classList.add("warnText"); $("speakStatus").innerHTML=`${ICONS.warning} ${msg}`; }
+
+function initSpeakRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ setSpeakWarn("เบราว์เซอร์นี้ไม่รองรับ ลองใช้ Chrome"); return null; }
+  const r = new SR();
+  r.lang = "th-TH"; r.interimResults = true; r.continuous = false;
+  r.onresult = (e) => {
+    let text=""; for(let i=0;i<e.results.length;i++) text += e.results[i][0].transcript;
+    $("speakTranscript").textContent = text;
+  };
+  r.onend = () => {
+    speakListening=false; setMicBtn(false);
+    const finalText = $("speakTranscript").textContent.trim();
+    if(finalText) handleSpeakTranscript(finalText);
+    else setSpeakWarn("ไม่ได้ยินเสียงพูด ลองใหม่อีกครั้ง");
+  };
+  r.onerror = (e) => {
+    speakListening=false; setMicBtn(false);
+    setSpeakWarn("ไม่ได้ยิน หรือไม่ได้อนุญาตไมโครโฟน ("+e.error+")");
+  };
+  return r;
+}
+$("micBtn").onclick = () => {
+  if(speakListening){ speakRecognition && speakRecognition.stop(); return; }
+  if(!speakRecognition) speakRecognition = initSpeakRecognition();
+  if(!speakRecognition) return;
+  $("speakTranscript").textContent=""; $("speakOutput").innerHTML=""; $("speakClips").innerHTML="";
+  speakListening=true; setMicBtn(true);
+  setSpeakStatus("กำลังฟัง พูดได้เลย");
+  speakRecognition.start();
+};
+
+async function handleSpeakTranscript(text){
+  setSpeakStatus("กำลังประมวลผล...");
+  if(getGrammarMode()==="normal"){
+    $("speakOutput").innerHTML = `<div class="speakSentence">"${text}"</div>`;
+    $("speakClips").innerHTML = "";
+    setSpeakStatus("พร้อม กดพูดอีกครั้งเพื่อลองใหม่");
+    return;
+  }
+  const gloss = await typhoonToGloss(text);
+  renderGlossOutput(text, gloss);
+  setSpeakStatus("พร้อม กดพูดอีกครั้งเพื่อลองใหม่");
+}
+
+// Returns an array of words, each one guaranteed to be in GAME_WORDS (double-checked
+// locally -- never trust the LLM's JSON to only contain words we actually asked for).
+async function typhoonToGloss(text){
+  const key = window.TYPHOON_API_KEY;
+  if(!key){ console.log("[typhoon] no API key -- gloss conversion needs it"); return []; }
+  const vocabList = GAME_WORDS.join(", ");
+  const prompt = "คุณเป็นผู้ช่วยแปลงประโยคภาษาไทยเป็นลำดับคำศัพท์ภาษามือไทย (ThSL gloss)\n"
+    + "ใช้ได้เฉพาะคำในรายการนี้เท่านั้น: [" + vocabList + "]\n"
+    + "จัดลำดับคำใหม่ตามไวยากรณ์ภาษามือไทย (ประธานหรือหัวข้อก่อน ตามด้วยกริยาหรืออาการ "
+    + "และวางคำปฏิเสธ 'ไม่' ไว้หลังคำที่ถูกปฏิเสธ)\n"
+    + "คำในประโยคที่ไม่มีคำตรงในรายการ ให้ข้ามไปเลย ห้ามใส่คำอื่นแทน ห้ามแต่งคำขึ้นใหม่\n"
+    + "ตอบกลับเป็น JSON array ของคำจากรายการเท่านั้น เช่น [\"ฉัน\",\"ต้องการ\",\"ช่วย\"] "
+    + "ห้ามอธิบายเพิ่ม ห้ามมีข้อความอื่นนอกเหนือจาก JSON array\n"
+    + "ประโยค: " + text;
+  try{
+    const resp = await fetch("https://api.opentyphoon.ai/v1/chat/completions", {
+      method:"POST",
+      headers:{ "Authorization":"Bearer "+key, "Content-Type":"application/json" },
+      body: JSON.stringify({
+        model:"typhoon-v2.5-30b-a3b-instruct",
+        messages:[{role:"user", content:prompt}],
+        max_tokens:100, temperature:0.1,
+      }),
+    });
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data = await resp.json();
+    const raw = ((data.choices||[])[0]||{}).message?.content?.trim() || "[]";
+    const match = raw.match(/\[[\s\S]*\]/); // tolerate stray text Typhoon might add around the array
+    const arr = JSON.parse(match ? match[0] : raw);
+    return Array.isArray(arr) ? arr.filter(w => GAME_WORDS.includes(w)) : [];
+  }catch(e){
+    console.warn("[typhoon] gloss conversion failed -- treating as no known words:", e);
+    return [];
+  }
+}
+
+function renderGlossOutput(originalText, gloss){
+  $("speakOutput").innerHTML =
+    `<div class="speakSentence">"${originalText}"</div>`
+    + `<div class="glossRow">${gloss.length
+        ? gloss.map(w => `<span class="glossChip">${w}</span>`).join('<span class="glossArrow">→</span>')
+        : `<span class="glossEmpty">${ICONS.warning} ไม่มีคำในประโยคนี้ที่โมเดลรู้จัก (รองรับแค่ 10 คำ ลองพูดประโยคที่มีคำเหล่านี้)</span>`}</div>`;
+  $("speakClips").innerHTML = gloss.map(w => {
+    const idx = String(GAME_WORDS.indexOf(w)).padStart(2, "0");
+    return `<video src="tutorial_clips/sign_${idx}.mp4" autoplay loop muted playsinline></video>`;
+  }).join("");
+}
+
+// ---- game flow ----
+function newTarget(){ let w; do{ w=GAME_WORDS[Math.floor(Math.random()*GAME_WORDS.length)]; }while(w===targetWord); targetWord=w; targetEl.innerHTML="ทำท่า: <b>"+w+"</b>"; }
+function beginGame(){
+  starting=true; let c=3; bigEl.textContent=c; statusEl.textContent="เตรียมตัว...";
+  const iv=setInterval(()=>{ c--; if(c>0){bigEl.textContent=c;} else { clearInterval(iv); bigEl.textContent=""; starting=false; runGame(); } },1000);
+}
+function runGame(){
+  gameActive=true; score=0; timeLeft=GAME_DURATION; scoreEl.textContent="0"; timerEl.textContent=GAME_DURATION;
+  newTarget(); statusEl.textContent="เริ่ม";
+  gameTimer=setInterval(()=>{ timeLeft--; timerEl.textContent=timeLeft; if(timeLeft<=0) endGame(); },1000);
+}
+function flash(iconHtml,color){ flashEl.innerHTML=iconHtml; flashEl.style.color=color; flashEl.style.opacity="1"; setTimeout(()=>flashEl.style.opacity="0",350); }
+function endGame(){
+  gameActive=false; clearInterval(gameTimer); gameTimer=null;
+  $("finalScore").textContent=score; $("nameInput").value=""; renderLB($("overLb"));
+  $("viewTranslate").classList.add("hidden"); $("gameover").classList.remove("hidden");
+}
+function endGameCleanup(){ gameActive=false; if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
+$("saveBtn").onclick=()=>{ const n=($("nameInput").value.trim()||"ไม่ระบุ"); saveLB(n,score); renderLB($("overLb")); $("saveBtn").innerHTML=ICONS.check+" บันทึกแล้ว"; $("saveBtn").disabled=true; };
+$("againBtn").onclick=()=>{ $("saveBtn").textContent="บันทึกคะแนน"; $("saveBtn").disabled=false; $("gameover").classList.add("hidden"); launchResearchMode("game"); };
+$("gameoverBackBtn").onclick=()=>{ $("gameover").classList.add("hidden"); leaveResearchMode(); };
+
+// ---- inference ----
+function extractKeypoints(res){
+  const lh=new Float32Array(63), rh=new Float32Array(63); let present=false;
+  if(res.landmarks && res.landmarks.length>0){ present=true;
+    for(let h=0;h<res.landmarks.length;h++){ const lm=res.landmarks[h];
+      const t=(res.handednesses[h][0].categoryName==="Left")?lh:rh;
+      for(let i=0;i<21;i++){ t[i*3]=lm[i].x; t[i*3+1]=lm[i].y; t[i*3+2]=lm[i].z; } } }
+  const row=new Float32Array(126); row.set(lh,0); row.set(rh,63); return {row,present};
+}
+function meanAbsDelta(a,b){ let s=0; for(let i=0;i<126;i++) s+=Math.abs(a[i]-b[i]); return s/126; }
+function resample30(f){ const n=f.length,o=[]; for(let i=0;i<COLLECT_FRAMES;i++) o.push(f[Math.round(i*(n-1)/(COLLECT_FRAMES-1))]); return o; }
+async function predict(seq, mdl){ mdl=mdl||model; const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
+  const inp=tf.tensor(flat,[1,30,126]); const out=mdl.predict(inp); const d=await out.data(); inp.dispose(); out.dispose(); return d; }
+function renderBars(probs, signList, prefix){ const r=[...probs.keys()].sort((a,b)=>probs[b]-probs[a]).slice(0,5);
+  r.forEach((idx,i)=>{ const s=signList[idx]; $(prefix+"bl"+i).textContent=(s==="none"?"—":s);
+    $(prefix+"bf"+i).style.width=(probs[idx]*100)+"%"; $(prefix+"bp"+i).textContent=Math.round(probs[idx]*100)+"%"; }); }
+function showBars(probs){ renderBars(probs, TARGET_SIGNS, ""); }
+
+// ---- Typhoon sentence-forming + TTS (local testing only -- see config.local.example.js) ----
+async function typhoonSentence(words){
+  const raw = words.join(" ");
+  const key = window.TYPHOON_API_KEY;
+  if(!key){ console.log("[typhoon] no API key (config.local.js missing) -- using raw words"); return raw; }
+  const prompt = "คุณเป็นผู้ช่วยแปลงคำจากภาษามือไทยให้เป็นประโยคภาษาไทยที่เป็นธรรมชาติ "
+    + "ฉันจะให้ลำดับคำที่ได้จากการแปลภาษามือ "
+    + "ช่วยเรียบเรียงให้เป็นประโยคสั้น ๆ ที่ถูกต้องและเป็นธรรมชาติ "
+    + "ตอบกลับเฉพาะประโยคเท่านั้น ห้ามอธิบายเพิ่ม\n"
+    + "คำ: " + raw;
+  try{
+    const resp = await fetch("https://api.opentyphoon.ai/v1/chat/completions", {
+      method:"POST",
+      headers:{ "Authorization":"Bearer "+key, "Content-Type":"application/json" },
+      body: JSON.stringify({
+        model:"typhoon-v2.5-30b-a3b-instruct",
+        messages:[{role:"user", content:prompt}],
+        max_tokens:100, temperature:0.3,
+      }),
+    });
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data = await resp.json();
+    const sentence = ((data.choices||[])[0]||{}).message?.content?.trim();
+    return sentence || raw;
+  }catch(e){
+    // Includes CORS failures -- Typhoon's API may not allow direct browser calls,
+    // in which case this always lands here. Check the console: a CORS error looks
+    // different from an HTTP error and means a backend proxy would be needed instead.
+    console.warn("[typhoon] request failed -- using raw words. Error:", e);
+    return raw;
+  }
+}
+function speakThai(text){
+  if(!text) return;
+  try{
+    // Same endpoint the Python gTTS library wraps -- no API key needed.
+    const url = "https://translate.google.com/translate_tts?ie=UTF-8&q="+encodeURIComponent(text)+"&tl=th&client=tw-ob";
+    new Audio(url).play().catch(e=>console.warn("[tts] playback failed:", e));
+  }catch(e){ console.warn("[tts] failed:", e); }
+}
+
+async function onComplete(seq){
+  if(mode==="compare"){
+    if(compareLoadState!=="ready") return;
+    // same collected keypoint sequence fed to both models -- that's the whole point of the comparison
+    const [probsBase, probsDann] = await Promise.all([
+      predict(seq, compareBaselineModel),
+      predict(seq, compareDannModel),
+    ]);
+    let bBest=0; for(let i=1;i<10;i++) if(probsBase[i]>probsBase[bBest]) bBest=i;
+    let dBest=0; for(let i=1;i<10;i++) if(probsDann[i]>probsDann[dBest]) dBest=i;
+    renderBars(probsBase, GAME_WORDS, "cb");
+    renderBars(probsDann, GAME_WORDS, "cd");
+    compareStatusEl.textContent=`Baseline: ${GAME_WORDS[bBest]} (${Math.round(probsBase[bBest]*100)}%)   |   DANN: ${GAME_WORDS[dBest]} (${Math.round(probsDann[dBest]*100)}%)`;
+    return;
+  }
+
+  const probs=await predict(seq);
+  let best=0; for(let i=1;i<12;i++) if(probs[i]>probs[best]) best=i;
+  const sign=TARGET_SIGNS[best], conf=probs[best];
+
+  if(mode==="game"){
+    if(!gameActive) return;
+    if(sign===targetWord){ score++; scoreEl.textContent=score; flash(ICONS.check,"#0f9d63"); newTarget(); }
+    else { flash(ICONS.cross,"#d1433a"); }
+    return;
+  }
+  // test mode (the translate screen)
+  showBars(probs);
+  if(sign==="finish"){
+    resultEl.textContent="จบประโยคแล้ว";
+    if(wordBuffer.length){
+      const words=wordBuffer.slice(); wordBuffer=[];
+      renderClinicalCard(words);
+      sentenceEl.textContent="กำลังเรียบเรียงประโยค...";
+      const sentence=await typhoonSentence(words.map(w=>w.sign));
+      sentenceEl.textContent="ประโยค: "+sentence;
+      speakThai(sentence);
+    }
+    return;
+  }
+  if(sign!=="none" && conf>=(THRESH[sign]||0.8)){
+    if(!wordBuffer.length || wordBuffer[wordBuffer.length-1].sign!==sign){
+      wordBuffer.push({sign, conf});
+      resultEl.textContent=sign+" "+Math.round(conf*100)+"%";
+      sentenceEl.textContent="กำลังสร้าง: "+wordBuffer.map(w=>w.sign).join(" ");
+    }
+  } else resultEl.textContent="—";
+}
+
+function drawHands(res){ ctx.clearRect(0,0,overlay.width,overlay.height); if(!res.landmarks) return;
+  ctx.fillStyle="#0f9d63"; for(const lm of res.landmarks) for(const p of lm){ ctx.beginPath(); ctx.arc(p.x*overlay.width,p.y*overlay.height,5,0,2*Math.PI); ctx.fill(); } }
+
+let lastTs=-1;
+async function loop(){
+  if(!cameraStreamActive) return; // stream was stopped (direction switched, left the mode) -- don't reschedule
+  if(handLandmarker && video.readyState>=2){
+    const ts=performance.now();
+    if(ts!==lastTs){ lastTs=ts;
+      const res=handLandmarker.detectForVideo(video,ts); drawHands(res);
+      const {row,present}=extractKeypoints(res);
+      const gameBlock=(mode==="game" && (!gameActive || starting)); // don't collect before/after game
+
+      if(!gameBlock){
+        if(state==="IDLE"){
+          if(present){
+            if(idleStart===null) idleStart=ts;
+            if(mode!=="game") statusEl.textContent="จับมือได้แล้ว...";
+            if(ts-idleStart>=IDLE_WARMUP_MS){
+              if(mode==="game"){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; }
+              else { state="COUNTDOWN"; countdownStart=performance.now(); }
+            }
+          } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
+        } else if(state==="COUNTDOWN"){
+          if(!present){ state="IDLE"; idleStart=null; bigEl.textContent=""; statusEl.textContent="พร้อม"; }
+          else { const r=3-(performance.now()-countdownStart)/1000;
+            if(r<=0){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; bigEl.textContent=""; statusEl.textContent="ทำท่าเลย"; }
+            else { bigEl.textContent=Math.ceil(r); statusEl.textContent="เตรียมตัว..."; } }
+        } else { // COLLECTING
+          let trig=false;
+          if(present){
+            missStart=null;
+            collected.push(row);
+            if(prevKp && (ts-collectStart)>=MIN_COLLECT_MS){
+              const d=meanAbsDelta(row,prevKp);
+              if(d<STILL_THRESHOLD){ if(stillStart===null) stillStart=ts; } else stillStart=null;
+              if(stillStart!==null && (ts-stillStart)>=STILL_MS) trig=true;
+            }
+            prevKp=row;
+          } else {
+            if(missStart===null) missStart=ts;
+          }
+          const missElapsed=(missStart!==null)?(ts-missStart):0;
+          if(missElapsed>=MISSING_TOL_MS || (ts-collectStart)>=MAX_COLLECT_MS){
+            if((ts-collectStart)>=MIN_COLLECT_MS) trig=true;
+            else { state="IDLE"; idleStart=null; collected=[]; }
+          }
+          if(trig){ onComplete(resample30(collected)); state="IDLE"; idleStart=null; collected=[]; prevKp=null; }
+        }
+      }
+    }
+  }
+  requestAnimationFrame(loop);
+}
+
+// ---- initial screen ----
+goTranslate();
+</script>
+</body>
+</html>

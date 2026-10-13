@@ -10,20 +10,24 @@ Designed to DEGRADE GRACEFULLY:
 
 Typhoon API key:  put it in either
   - environment variable  TYPHOON_API_KEY
-  - or a file  scripts/typhoon_key.txt  (one line, just the key)
+  - or a file  innovation/typhoon_key.txt  (same folder as this file, one line, just the key)
 
 Used by predict_stream.py:  import postprocess; postprocess.process(word_buffer)
 """
 import os
+import platform
+import subprocess
 import time
 import glob
 import json
 import urllib.request
+from pathlib import Path
 
 TYPHOON_URL   = "https://api.opentyphoon.ai/v1/chat/completions"
 TYPHOON_MODEL = "typhoon-v2.5-30b-a3b-instruct"   # current Typhoon instruct model
 KEY_FILE      = os.path.join(os.path.dirname(__file__), "typhoon_key.txt")
-TTS_DIR       = "D:/KachornThSL/temp"
+# Repo root — this file lives in innovation/, so parent.parent is the repo root.
+TTS_DIR       = str(Path(__file__).resolve().parent.parent / "temp")
 
 
 def _get_key():
@@ -79,7 +83,7 @@ def build_sentence(words):
 
 
 def _play(mp3_path):
-    """Play an mp3 file. Tries playsound, then falls back to the default player."""
+    """Play an mp3 file. Tries playsound, then falls back to a native OS player."""
     try:
         from playsound import playsound
         playsound(mp3_path)
@@ -87,7 +91,13 @@ def _play(mp3_path):
     except Exception:
         pass
     try:
-        os.startfile(mp3_path)   # Windows fallback — opens default media player
+        system = platform.system()
+        if system == "Darwin":
+            subprocess.run(["afplay", mp3_path], check=True)   # macOS native player
+        elif system == "Windows":
+            os.startfile(mp3_path)   # Windows fallback — opens default media player
+        else:
+            subprocess.run(["xdg-open", mp3_path], check=True)  # Linux fallback
     except Exception as e:
         print(f"[play] could not play audio: {e}")
 

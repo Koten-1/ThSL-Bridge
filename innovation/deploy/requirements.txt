@@ -1,0 +1,5 @@
+streamlit
+tensorflow-cpu
+mediapipe
+opencv-python-headless
+numpy
