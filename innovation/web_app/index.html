@@ -414,6 +414,9 @@ const COLLECT_FRAMES=30, STILL_THRESHOLD=0.03;
 // get cut short. Converted at 30fps: frames/30*1000 = ms.
 const IDLE_WARMUP_MS=133, STILL_MS=200, MIN_COLLECT_MS=333, MAX_COLLECT_MS=5000, MISSING_TOL_MS=267;
 const GAME_DURATION=45;
+// V.3 core is sentence building, face intention and speech to text. The hospital summary card
+// is parked as future work; set this to true to bring it back.
+const SHOW_CLINICAL_CARD=false;
 
 const $=id=>document.getElementById(id);
 
@@ -437,7 +440,7 @@ const barsCompareBaselineEl=$("barsCompareBaseline"), barsCompareDannEl=$("barsC
 
 let handLandmarker=null, model=null, modelsLoaded=false;
 let mediaStream=null, cameraStreamActive=false, cameraEverStarted=false;
-let mode="test", state="IDLE", collected=[], prevKp=null, countdownStart=0;
+let mode="test", state="IDLE", collected=[], prevKp=null;
 let idleStart=null, stillStart=null, missStart=null, collectStart=0;
 let wordBuffer=[]; // [{sign, conf}, ...]
 let gameActive=false, score=0, timeLeft=GAME_DURATION, targetWord="", gameTimer=null, starting=false;
@@ -636,7 +639,7 @@ function configureAppUI(m){
   barsCompareBaselineEl.classList.toggle("hidden", !isCompare);
   barsCompareDannEl.classList.toggle("hidden", !isCompare);
   compareStatusEl.classList.toggle("hidden", !isCompare);
-  $("clinicalCard").classList.toggle("hidden", m!=="test");
+  $("clinicalCard").classList.toggle("hidden", !(SHOW_CLINICAL_CARD && m==="test"));
   $("backBtn").classList.toggle("hidden", m==="test");
 }
 function showSignScreen(){
@@ -644,7 +647,7 @@ function showSignScreen(){
   $("appScreen").classList.remove("hidden");
   mode="test"; wordBuffer=[];
   configureAppUI("test");
-  $("appHint").textContent = "ยกมือ รอการนับถอยหลัง แล้วทำท่า รองรับ 10 คำ";
+  $("appHint").textContent = "ยกมือแล้วทำท่าได้เลย ค้างนิ่งสักครู่เพื่อให้ระบบอ่าน แล้วทำท่าถัดไป รองรับ 10 คำ";
   if(cameraEverStarted) openCameraStream(); else $("cameraGate").classList.remove("hidden");
 }
 function showSpeechScreen(){
@@ -681,7 +684,7 @@ function launchResearchMode(m){
   mode=m; wordBuffer=[];
   configureAppUI(m);
   $("appHint").textContent = m==="game" ? "ทำท่าตามคำที่ขึ้น ให้เร็วที่สุด ยืนใกล้กล้องพอให้เห็นมือเต็ม"
-    : "ยกมือ รอการนับถอยหลัง แล้วทำท่า ดูสองโมเดลทายพร้อมกันจากท่าเดียวกัน";
+    : "ยกมือแล้วทำท่า ค้างนิ่งสักครู่ ดูสองโมเดลทายพร้อมกันจากท่าเดียวกัน";
   openCameraStream().then(()=>{ if(m==="game") beginGame(); if(m==="compare") loadCompareModels(); });
 }
 function leaveResearchMode(){
@@ -918,7 +921,7 @@ async function onComplete(seq){
     resultEl.textContent="จบประโยคแล้ว";
     if(wordBuffer.length){
       const words=wordBuffer.slice(); wordBuffer=[];
-      renderClinicalCard(words);
+      if(SHOW_CLINICAL_CARD) renderClinicalCard(words);
       sentenceEl.textContent="กำลังเรียบเรียงประโยค...";
       const sentence=await typhoonSentence(words.map(w=>w.sign));
       sentenceEl.textContent="ประโยค: "+sentence;
@@ -954,15 +957,11 @@ async function loop(){
             if(idleStart===null) idleStart=ts;
             if(mode!=="game") statusEl.textContent="จับมือได้แล้ว...";
             if(ts-idleStart>=IDLE_WARMUP_MS){
-              if(mode==="game"){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; }
-              else { state="COUNTDOWN"; countdownStart=performance.now(); }
+              // no countdown in any mode: a sign starts as soon as the hand has been in view for a moment
+              state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null;
+              if(mode!=="game") statusEl.textContent="กำลังอ่านท่า...";
             }
           } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
-        } else if(state==="COUNTDOWN"){
-          if(!present){ state="IDLE"; idleStart=null; bigEl.textContent=""; statusEl.textContent="พร้อม"; }
-          else { const r=3-(performance.now()-countdownStart)/1000;
-            if(r<=0){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; bigEl.textContent=""; statusEl.textContent="ทำท่าเลย"; }
-            else { bigEl.textContent=Math.ceil(r); statusEl.textContent="เตรียมตัว..."; } }
         } else { // COLLECTING
           let trig=false;
           if(present){
