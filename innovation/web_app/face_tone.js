@@ -80,6 +80,38 @@
     reset() { this.sm = null; this.hist = []; }
   }
 
+  // Face reading for one word. samples: [{ t, raise, furrow, yaw, pitch }] taken while the face was visible
+  // (raise and furrow are already measured against the person's neutral face).
+  // Everything is judged only from the time the sign was being made (t0..t1) plus a short lead-in, so a shake or a raised
+  // brow from the previous word cannot carry over. Uses the same thresholds as ToneRules (pass toneRules.o as opts).
+  function summarize(samples, t0, t1, opts) {
+    const o = Object.assign({}, DEFAULTS, { lookbackMs: 300, minSamples: 3, questionFrac: 0.4 }, opts || {});
+    const s = samples.filter(x => x.t >= t0 - o.lookbackMs && x.t <= t1);
+    if (s.length < o.minSamples) return { seen: false, n: s.length, question: false, negative: false, nod: false };
+    const marked = s.filter(x => x.raise > o.raiseThresh || x.furrow > o.furrowThresh).length / s.length;
+    const yawRev = countReversals(s.map(x => x.yaw), o.shakeSwingDeg);
+    const pitchRev = countReversals(s.map(x => x.pitch), o.nodSwingDeg);
+    const negative = yawRev >= o.minReversals;
+    return { seen: true, n: s.length, question: marked >= o.questionFrac, negative,
+             nod: !negative && pitchRev >= o.minReversals, qFrac: marked, yawRev, pitchRev };
+  }
+
+  // The face tags decide the meaning by plain rules (no AI): a question adds the particle at the end,
+  // a head shake puts the negation word in front of that word. words: [{ sign, face }]. Returns a list of strings.
+  function applyFaceRules(words, opts) {
+    const o = Object.assign({ negation: "ไม่", question: "ไหม" }, opts || {});
+    const out = [];
+    let asked = false;
+    for (const w of words) {
+      const f = w.face;
+      if (f && f.negative && w.sign !== o.negation && out[out.length - 1] !== o.negation) out.push(o.negation);
+      out.push(w.sign);
+      if (f && f.question) asked = true;
+    }
+    if (asked) out.push(o.question);
+    return out;
+  }
+
   function meanOf(rows, key) {
     return rows.length ? rows.reduce((s, r) => s + r[key], 0) / rows.length : 0;
   }
@@ -99,35 +131,57 @@
   const MP_BUNDLE = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
   const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 
+  // Per-frame numbers for face i of a MediaPipe result, or null when the model did not output them.
+  function featuresOf(res, i) {
+    const bs = res.faceBlendshapes && res.faceBlendshapes[i];
+    const mat = res.facialTransformationMatrixes && res.facialTransformationMatrixes[i];
+    if (!bs || !mat) return null;
+    const s = {};
+    for (const c of bs.categories) s[c.categoryName] = c.score;
+    const avg = (...k) => k.reduce((sum, n) => sum + (s[n] || 0), 0) / k.length;
+    return {
+      browRaise: avg("browInnerUp", "browOuterUpLeft", "browOuterUpRight"),
+      browFurrow: avg("browDownLeft", "browDownRight"),
+      mouthFrown: avg("mouthFrownLeft", "mouthFrownRight"),
+      ...anglesFromMatrix(mat.data),
+    };
+  }
+
   // Loaded lazily so ToneRules can be used and tested without any network.
-  async function createFaceTracker() {
+  // opts.numFaces: how many faces to find (1 for the tone test, more for person focus).
+  // opts.blendshapes / opts.matrices: set false when only face boxes are needed (lighter and faster).
+  async function createFaceTracker(opts) {
+    const o = Object.assign({ numFaces: 1, blendshapes: true, matrices: true }, opts || {});
     const mp = await import(MP_BUNDLE);
     const vision = await mp.FilesetResolver.forVisionTasks(MP_BUNDLE + "/wasm");
     const landmarker = await mp.FaceLandmarker.createFromOptions(vision, {
       baseOptions: { modelAssetPath: FACE_MODEL },
       runningMode: "VIDEO",
-      numFaces: 1,
-      outputFaceBlendshapes: true,
-      outputFacialTransformationMatrixes: true,
+      numFaces: o.numFaces,
+      outputFaceBlendshapes: o.blendshapes,
+      outputFacialTransformationMatrixes: o.matrices,
     });
 
     return {
-      // Returns the raw per-frame numbers, or null when no face is visible.
+      close() { landmarker.close(); },
+      // First face's raw per-frame numbers, or null when no face is visible.
       detect(video, tMs) {
+        return featuresOf(landmarker.detectForVideo(video, tMs), 0);
+      },
+      // Every face found: [{ box: {x, y, w, h} normalized, features or null }].
+      detectFaces(video, tMs) {
         const res = landmarker.detectForVideo(video, tMs);
-        if (!res.faceBlendshapes?.length || !res.facialTransformationMatrixes?.length) return null;
-        const s = {};
-        for (const c of res.faceBlendshapes[0].categories) s[c.categoryName] = c.score;
-        const avg = (...k) => k.reduce((sum, n) => sum + (s[n] || 0), 0) / k.length;
-        return {
-          browRaise: avg("browInnerUp", "browOuterUpLeft", "browOuterUpRight"),
-          browFurrow: avg("browDownLeft", "browDownRight"),
-          mouthFrown: avg("mouthFrownLeft", "mouthFrownRight"),
-          ...anglesFromMatrix(res.facialTransformationMatrixes[0].data),
-        };
+        return (res.faceLandmarks || []).map((lm, i) => {
+          let x0 = 1, y0 = 1, x1 = 0, y1 = 0;
+          for (const p of lm) {
+            if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
+            if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
+          }
+          return { box: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 }, features: featuresOf(res, i) };
+        });
       },
     };
   }
 
-  root.FaceTone = { DEFAULTS, ToneRules, meanOf, anglesFromMatrix, createFaceTracker };
+  root.FaceTone = { DEFAULTS, ToneRules, meanOf, anglesFromMatrix, summarize, applyFaceRules, createFaceTracker };
 })(typeof window !== "undefined" ? window : globalThis);

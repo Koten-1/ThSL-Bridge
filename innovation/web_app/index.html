@@ -194,6 +194,63 @@
   .modeCard .t { font-size:1.05rem; font-weight:700; margin:0 0 4px; }
   .modeCard .d { font-size:.82rem; color:var(--text-muted); line-height:1.45; }
 
+  /* camera controls: person focus, model choice, finish button */
+  .camControls { width:100%; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center;
+                 font-size:.85rem; color:var(--text-muted); }
+  .camControls label { display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .camControls select { font-family:inherit; border:1px solid var(--border-strong); border-radius:8px; padding:6px 8px;
+                        background:var(--surface); color:var(--text); font-size:.85rem; }
+  .camControls button { padding:7px 14px; font-size:.82rem; }
+  .focusInfo { color:var(--text-faint); font-size:.78rem; }
+
+  /* word bubbles with the face reading, and the face settings panel */
+  #wordRow { width:100%; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; min-height:36px; }
+  #wordRow .wrLabel { color:var(--text-faint); font-size:.78rem; }
+  .wordBubble { display:inline-flex; align-items:baseline; gap:7px; background:var(--surface); border:1px solid var(--border-strong);
+                border-radius:14px; padding:6px 12px; font-size:.95rem; box-shadow:var(--shadow-sm); }
+  .wordBubble .n { color:var(--text-faint); font-size:.7rem; }
+  .wordBubble b { font-weight:700; }
+  .wordBubble .tag { font-size:.74rem; font-weight:700; padding:1px 8px; border-radius:999px; background:var(--surface-muted); color:var(--text-muted); }
+  .wordBubble.q { border-color:var(--warn); }
+  .wordBubble.neg { border-color:var(--danger); }
+  .wordBubble .tag.q { background:var(--warn-soft); color:var(--warn); }
+  .wordBubble .tag.neg { background:var(--danger-soft); color:var(--danger); }
+  .wordBubble .tag.yes { background:var(--accent-soft); color:var(--accent-strong); }
+  .wordBubble .tag.none { background:var(--surface-muted); color:var(--text-faint); font-weight:600; }
+  .wordBubble.old { opacity:.55; }
+  #faceChip { position:absolute; top:12px; right:12px; background:rgba(16,18,22,.65); color:#fff; backdrop-filter:blur(8px);
+              padding:7px 14px; border-radius:10px; font-size:.88rem; font-weight:700; border:1px solid rgba(255,255,255,.08); }
+  #faceChip.q { color:#fbbf6a; } #faceChip.neg { color:#ff8a80; } #faceChip.nofa { color:#b8bcc4; font-weight:600; }
+  .faceSettings { width:100%; max-width:620px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+                  box-shadow:var(--shadow-sm); padding:12px 18px; }
+  .faceSettings summary { cursor:pointer; font-weight:700; font-size:.88rem; }
+  .faceSettings[open] summary { margin-bottom:6px; }
+  .fsRow { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:10px 0; font-size:.85rem; color:var(--text-muted); }
+  .fsRow label { display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .fsRow button { padding:8px 16px; font-size:.84rem; }
+  .fsInfo { font-size:.8rem; color:var(--text-faint); }
+  .fsInfo.warn { color:var(--warn); font-weight:600; }
+  .fsRange { display:block; font-size:.82rem; color:var(--text-muted); margin-top:12px; }
+  .fsRange b { color:var(--text); margin-left:6px; }
+  .fsRange input[type=range] { width:100%; accent-color:var(--accent); }
+  .fsNote { font-size:.76rem; color:var(--text-faint); line-height:1.5; margin:10px 0 2px; }
+
+  /* volunteer study mode */
+  #studyHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(16,18,22,.65); color:#fff;
+              backdrop-filter:blur(10px); padding:8px 18px; border-radius:14px; font-size:.95rem; font-weight:700;
+              border:1px solid rgba(255,255,255,.08); white-space:nowrap; }
+  #studyPanel { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+                box-shadow:var(--shadow-sm); padding:18px 20px; }
+  .studyRow { display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:center; margin:6px 0; }
+  .studyRow label { font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+  .studyRow select, .studyRow input { font-family:inherit; font-size:.9rem; padding:8px 10px; border:1px solid var(--border-strong);
+                                      border-radius:8px; background:var(--surface); color:var(--text); text-align:left; }
+  .studyRow button { padding:9px 18px; font-size:.88rem; }
+  .studyNote { color:var(--text-faint); font-size:.78rem; text-align:center; margin:6px 0 0; line-height:1.5; }
+  .studyWarn { color:var(--danger); font-weight:600; }
+  #studySummary { text-align:center; font-size:.95rem; line-height:1.7; }
+  #studySummary b { color:var(--accent-strong); }
+
   /* gameover */
   #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; }
   #finalScore { font-size:3rem; font-weight:900; color:var(--accent); }
@@ -308,9 +365,80 @@
           <div class="barsHead">+ DANN</div>
         </div>
         <div id="compareStatus" class="hidden">ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย</div>
+        <div id="studyHud" class="hidden"></div>
+        <div id="faceChip" class="hidden"></div>
       </div>
     </div>
     <p class="hint" id="appHint"></p>
+
+    <div id="wordRow"></div>
+
+    <div class="camControls" id="camControls">
+      <label title="ใช้เฉพาะมือของคนที่หน้าใหญ่และชัดที่สุดในภาพ ไม่สนใจมือของคนอื่นที่ยืนอยู่ข้าง ๆ">
+        <input type="checkbox" id="focusToggle" checked> โฟกัสเฉพาะผู้ใช้หลัก
+      </label>
+      <button class="ghost" id="relockBtn">เลือกผู้ใช้ใหม่</button>
+      <span class="focusInfo" id="focusInfo"></span>
+      <label id="recWrap">โมเดล
+        <select id="recSelect"></select>
+      </label>
+      <button id="finishBtn" class="hidden">จบประโยค</button>
+      <button class="ghost" id="clearSentenceBtn">ล้างประโยค</button>
+    </div>
+
+    <details class="faceSettings" id="faceSettings">
+      <summary>ตั้งค่าการอ่านสีหน้า</summary>
+      <div class="fsRow">
+        <label><input type="checkbox" id="toneToggle" checked> อ่านสีหน้าประกอบแต่ละคำ</label>
+        <button class="ghost" id="calibBtn">ตั้งค่าหน้านิ่ง (นิ่งไว้ 2 วินาที)</button>
+        <span class="fsInfo warn" id="calibInfo">ยังไม่ได้ตั้งค่าหน้านิ่ง</span>
+      </div>
+      <label class="fsRange">คิ้วยกขึ้นเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tRaiseV"></b>
+        <input type="range" id="tRaise" min="0.05" max="0.8" step="0.01"></label>
+      <label class="fsRange">คิ้วขมวดเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tFurrowV"></b>
+        <input type="range" id="tFurrow" min="0.05" max="0.8" step="0.01"></label>
+      <label class="fsRange">ส่ายหน้าซ้ายขวาอย่างน้อยกี่องศาจึงนับว่าปฏิเสธ <b id="tShakeV"></b>
+        <input type="range" id="tShake" min="2" max="20" step="0.5"></label>
+      <label class="fsRange">พยักหน้าขึ้นลงอย่างน้อยกี่องศาจึงนับว่ายืนยัน <b id="tNodV"></b>
+        <input type="range" id="tNod" min="2" max="20" step="0.5"></label>
+      <div class="fsRow"><button class="ghost" id="toneResetBtn">คืนค่าเริ่มต้น</button></div>
+      <p class="fsNote">ใบหน้าแต่ละคนไม่เหมือนกัน ควรกดตั้งค่าหน้านิ่งทุกครั้งที่เปลี่ยนคน ค่าที่ปรับไว้จะจำในเบราว์เซอร์นี้
+        ป้ายสีหน้าเป็นกฎที่ยังรอยืนยันกับผู้ใช้ภาษามือ ไม่ใช่ผลจากโมเดลที่ฝึกแล้ว</p>
+    </details>
+
+    <div id="studyPanel" class="hidden">
+      <div id="studySetup">
+        <div class="studyRow">
+          <label>รหัสผู้ร่วมทดสอบ <input id="studyCode" placeholder="เช่น S01" size="8" maxlength="12"></label>
+          <label>ประเภท
+            <select id="studyType">
+              <option value="deaf">คนหูหนวก</option>
+              <option value="interpreter">ล่ามภาษามือ</option>
+              <option value="hearing">คนได้ยิน</option>
+            </select>
+          </label>
+          <label>จำนวนรอบ
+            <select id="studyReps"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option></select>
+          </label>
+          <button id="studyStart">เริ่มทดสอบ</button>
+        </div>
+        <p class="studyNote">ระบบจะบอกคำให้ทำท่าทีละคำ (8 คำ x จำนวนรอบ) และบันทึกคำตอบของ DANN กับ Baseline พร้อมกัน
+          โดยไม่แสดงผลถูกผิดให้ผู้ร่วมทดสอบเห็น ใช้รหัสแทนชื่อจริง</p>
+      </div>
+      <div id="studyRun" class="hidden">
+        <div class="studyRow">
+          <button class="ghost" id="studyUndo">ย้อนข้อล่าสุด</button>
+          <button class="ghost" id="studySkip">ข้ามข้อนี้</button>
+          <button id="studyFinish">จบการทดสอบ</button>
+        </div>
+      </div>
+      <div id="studySummary" class="hidden"></div>
+      <div class="studyRow" id="studyData">
+        <span class="studyNote" id="studyCount"></span>
+        <button class="ghost" id="studyDownload">ดาวน์โหลด CSV ทั้งหมด</button>
+        <button class="ghost" id="studyClear">ล้างข้อมูลทดสอบ</button>
+      </div>
+    </div>
     <button class="ghost hidden" id="backBtn">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/>
@@ -375,6 +503,15 @@
         <div class="t">เปรียบเทียบโมเดล (RQ3)</div>
         <div class="d">ทำท่าเดียว ดู Baseline กับ DANN ทายพร้อมกันแบบเรียลไทม์</div>
       </div>
+      <div class="modeCard" id="cardStudy">
+        <div class="modeIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 3h6v4l4.5 9a2 2 0 0 1-1.8 3H6.3a2 2 0 0 1-1.8-3L9 7V3Z"/><path d="M8 3h8"/><path d="M7.5 14h9"/>
+          </svg>
+        </div>
+        <div class="t">ทดสอบกับอาสาสมัคร</div>
+        <div class="d">บอกคำให้ทำท่าทีละคำ บันทึกผลของ DANN และ Baseline เป็นไฟล์ CSV</div>
+      </div>
     </div>
     <div class="lb" id="menuLb"></div>
   </div>
@@ -399,6 +536,8 @@
      philosophy as postprocess.py. See innovation/web_app/config.local.example.js. -->
 <script src="config.local.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="person_focus.js"></script>
+<script src="face_tone.js"></script>
 <script type="module">
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
 
@@ -417,6 +556,17 @@ const GAME_DURATION=45;
 // V.3 core is sentence building, face intention and speech to text. The hospital summary card
 // is parked as future work; set this to true to bring it back.
 const SHOW_CLINICAL_CARD=false;
+// Without a countdown a held pose would be read again and again, so after each sign the hand must
+// leave the frame (or move clearly) before the next sign can start. Starting values: tune on a real camera.
+const REARM_ABSENT_MS=300, REARM_MOVE=0.03;   // 0.03 = the same measure the app already uses for "the hand is moving"
+// The 10-class models (DANN, baseline) have no "none" class, so low confidence is their only way to reject a bad read.
+const MIN_CONF_10=0.70;
+const FACE_EVERY_MS=150;   // person focus looks for faces about 7 times a second, hands are read every frame
+const FACE_TONE_EVERY_MS=80;   // reading the face for tags needs faster samples (a head shake is about 2 swings a second)
+const TONE_STORE="thsl_face_settings_v1";
+// The 8 words the old 10-word models share with the 33-word club list (ถาม and บอก are not in that list).
+const STUDY_WORDS=["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่"];
+const STUDY_STORE="thsl_study_rows_v1";
 
 const $=id=>document.getElementById(id);
 
@@ -438,14 +588,46 @@ const statusEl=$("status"), bigEl=$("big"), barsEl=$("bars"), resultEl=$("result
 const gameHud=$("gameHud"), timerEl=$("timer"), scoreEl=$("score"), targetEl=$("target"), flashEl=$("flash");
 const barsCompareBaselineEl=$("barsCompareBaseline"), barsCompareDannEl=$("barsCompareDann"), compareStatusEl=$("compareStatus");
 
-let handLandmarker=null, model=null, modelsLoaded=false;
+let handLandmarker=null;
 let mediaStream=null, cameraStreamActive=false, cameraEverStarted=false;
 let mode="test", state="IDLE", collected=[], prevKp=null;
 let idleStart=null, stillStart=null, missStart=null, collectStart=0;
+let rearm=false, rearmRow=null, rearmAbsentStart=null;
 let wordBuffer=[]; // [{sign, conf}, ...]
 let gameActive=false, score=0, timeLeft=GAME_DURATION, targetWord="", gameTimer=null, starting=false;
-let compareBaselineModel=null, compareDannModel=null, compareLoadState="idle"; // idle|loading|ready|error
+let compareLoadState="idle"; // idle|loading|ready|error
 let direction="sign"; // "sign" | "speech" -- which half of the translate toggle is showing
+
+// ---- recognizers: every model the app can use ----
+// "v6c" is the deployed 12-class model (has finish/none). "dann" and "base" are the 10-class models from the
+// RQ3 experiment, trained on two signers (no finish/none, so the translate screen shows a finish button for them).
+const RECOGNIZERS = {
+  v6c:  { label:"โมเดลเดิม (12 ท่า)", classes:TARGET_SIGNS, hasFinish:true,  file:"weights.json" },
+  dann: { label:"DANN (10 คำ)",       classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_dann.json" },
+  base: { label:"Baseline (10 คำ)",   classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_baseline.json" },
+};
+let activeRec="v6c";
+const loadedModels={}, modelLoading={};
+
+// ---- person focus (use only the main user's hands) ----
+let focusOn=true, faceTracker=null, faceTrackerState="idle"; // idle|loading|ready|failed
+let lastFaceMs=-1e9, lastFocusInfoMs=0;
+const focus=window.PersonFocus ? PersonFocus.create() : null;
+
+// ---- face reading per word (tags on each word bubble) ----
+// The same rules and thresholds as face_test.html. While a sign is being made, the main user's face is sampled;
+// when the sign ends those samples are summarized into tags (ask, deny, confirm) that travel with the word.
+function loadToneSettings(){
+  try{
+    const o=JSON.parse(localStorage.getItem(TONE_STORE)||"{}"), out={};
+    for(const k of ["raiseThresh","furrowThresh","shakeSwingDeg","nodSwingDeg"]) if(typeof o[k]==="number" && isFinite(o[k])) out[k]=o[k];
+    return out;
+  }catch{ return {}; }
+}
+const toneRules=window.FaceTone ? new FaceTone.ToneRules(loadToneSettings()) : null;
+let toneOn=!!toneRules, baselineSet=false, calibrating=null;
+let faceSamples=[], liveTone=null, lastToneMs=-1e9, lastChipMs=0;
+let lastWords=[];   // the previous sentence's words, kept on screen (dimmed) until a new word is read
 
 function buildBars(containerEl, prefix){ for(let i=0;i<5;i++){ const r=document.createElement("div"); r.className="bar-row";
   r.innerHTML=`<div class="bar-label" id="${prefix}bl${i}"></div><div class="bar-track"><div class="bar-fill" id="${prefix}bf${i}"></div></div><div class="bar-pct" id="${prefix}bp${i}"></div>`; containerEl.appendChild(r);} }
@@ -538,38 +720,92 @@ function renderClinicalCard(words){
 }
 
 // ---- model + camera ----
-// Model loading happens once (ensureModelsLoaded). The camera stream itself
-// opens and closes as the user switches direction/screens, so the webcam light
-// isn't left on when nobody's using it.
-async function ensureModelsLoaded(){
-  if(modelsLoaded) return;
+// Models load once and are cached by id (getModel). The camera stream itself opens and closes
+// as the user switches direction/screens, so the webcam light isn't left on when nobody's using it.
+function buildClassifier(nClasses){
+  const m=tf.sequential();
+  m.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
+  m.add(tf.layers.dropout({rate:0.5}));
+  m.add(tf.layers.lstm({units:32}));
+  m.add(tf.layers.dropout({rate:0.5}));
+  m.add(tf.layers.dense({units:16, activation:"relu"}));
+  m.add(tf.layers.dense({units:nClasses, activation:"softmax"}));
+  return m;
+}
+async function loadWeightsInto(mdl, url){
+  const resp=await fetch(url);
+  if(!resp.ok) throw new Error(`${url}: HTTP ${resp.status}`);
+  const wjson=await resp.json();
+  mdl.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
+}
+function getModel(id){
+  if(loadedModels[id]) return Promise.resolve(loadedModels[id]);
+  if(!modelLoading[id]){
+    const r=RECOGNIZERS[id];
+    modelLoading[id]=(async()=>{
+      const m=buildClassifier(r.classes.length);
+      await loadWeightsInto(m, r.file);
+      loadedModels[id]=m; return m;
+    })().catch(e=>{ delete modelLoading[id]; throw e; });
+  }
+  return modelLoading[id];
+}
+function preloadModels(ids){
   statusEl.textContent="กำลังโหลดโมเดล...";
+  return Promise.all(ids.map(getModel))
+    .then(()=>{ if(cameraStreamActive) statusEl.textContent="พร้อม"; })
+    .catch(e=>{ statusEl.textContent="โหลดโมเดลไม่สำเร็จ"; console.error("model load failed:", e); });
+}
+
+async function ensureHandLandmarker(){
+  if(handLandmarker) return;
+  statusEl.textContent="กำลังโหลดโมเดลมือ...";
   const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
   handLandmarker=await HandLandmarker.createFromOptions(vision,{
     baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},
     runningMode:"VIDEO", numHands:2 });
-  model=tf.sequential();
-  model.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
-  model.add(tf.layers.dropout({rate:0.5}));
-  model.add(tf.layers.lstm({units:32}));
-  model.add(tf.layers.dropout({rate:0.5}));
-  model.add(tf.layers.dense({units:16, activation:"relu"}));
-  model.add(tf.layers.dense({units:12, activation:"softmax"}));
-  const wjson=await (await fetch("weights.json")).json();
-  model.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
-  modelsLoaded=true;
+}
+function setFocusInfo(t){ $("focusInfo").textContent=t; }
+// With person focus on we ask for up to 4 hands so a bystander's hands cannot push the user's out of the top 2.
+function applyHandSettings(){
+  if(!handLandmarker) return;
+  try{ handLandmarker.setOptions({numHands:(focusOn && faceTrackerState!=="failed")?4:2}); }catch(e){ console.warn("[focus] setOptions failed", e); }
+}
+async function ensureFaceTracker(){
+  if(faceTrackerState!=="idle") return;
+  faceTrackerState="loading"; setFocusInfo("กำลังโหลดตัวจับใบหน้า...");
+  try{
+    if(!window.FaceTone || !window.PersonFocus) throw new Error("face_tone.js or person_focus.js is missing");
+    // blendshapes and head angles are only computed when face reading is on (they cost more per frame)
+    faceTracker=await FaceTone.createFaceTracker({numFaces:3, blendshapes:toneOn, matrices:toneOn});
+    faceTrackerState="ready"; setFocusInfo("");
+  }catch(e){
+    faceTrackerState="failed"; applyHandSettings();
+    setFocusInfo("โหลดตัวจับใบหน้าไม่สำเร็จ จึงไม่กรองผู้ใช้");
+    console.warn("[focus] face tracker failed to load:", e);
+  }
 }
 async function openCameraStream(){
   $("cameraGate").classList.add("hidden");
-  if(cameraStreamActive) return;
-  await ensureModelsLoaded();
-  mediaStream=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}});
+  if(cameraStreamActive) return true;
+  await ensureHandLandmarker();
+  try{ mediaStream=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}}); }
+  catch(e){
+    // permission denied, no camera, or the page is not on https/localhost: say so and let the user try again
+    console.error("[camera] could not open", e);
+    statusEl.textContent="เปิดกล้องไม่ได้ ตรวจสอบสิทธิ์กล้องของเบราว์เซอร์แล้วลองใหม่";
+    $("cameraGate").classList.remove("hidden");
+    return false;
+  }
   video.srcObject=mediaStream;
   cameraStreamActive=true;
-  state="IDLE"; collected=[]; prevKp=null; idleStart=null; stillStart=null; missStart=null;
+  state="IDLE"; collected=[]; prevKp=null; idleStart=null; stillStart=null; missStart=null; rearm=false;
   await new Promise(res=>{ video.onloadedmetadata=()=>{ overlay.width=video.videoWidth; overlay.height=video.videoHeight; res(); }; });
   statusEl.textContent="พร้อม";
+  if(focusOn || toneOn) ensureFaceTracker().then(applyHandSettings);
+  applyHandSettings();
   loop();
+  return true;
 }
 function stopCameraStream(){
   if(!cameraStreamActive) return;
@@ -579,34 +815,13 @@ function stopCameraStream(){
 }
 
 // ---- compare models (RQ3: pooled-baseline vs pooled+DANN, 10-way, no finish/none) ----
-function buildTenClassModel(){
-  const m=tf.sequential();
-  m.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
-  m.add(tf.layers.dropout({rate:0.5}));
-  m.add(tf.layers.lstm({units:32}));
-  m.add(tf.layers.dropout({rate:0.5}));
-  m.add(tf.layers.dense({units:16, activation:"relu"}));
-  m.add(tf.layers.dense({units:10, activation:"softmax"}));
-  return m;
-}
-async function loadWeightsInto(mdl, url){
-  const resp=await fetch(url);
-  if(!resp.ok) throw new Error(`${url}: HTTP ${resp.status}`);
-  const wjson=await resp.json();
-  mdl.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
-}
 async function loadCompareModels(){
   if(compareLoadState==="ready"||compareLoadState==="loading") return;
   compareLoadState="loading";
   compareStatusEl.textContent="กำลังโหลดโมเดลเปรียบเทียบ...";
   try{
-    compareBaselineModel=buildTenClassModel();
-    compareDannModel=buildTenClassModel();
     // both files come from the RQ3_DANN.ipynb export cell -- see innovation/README.md
-    await Promise.all([
-      loadWeightsInto(compareBaselineModel, "weights_rq3_baseline.json"),
-      loadWeightsInto(compareDannModel, "weights_rq3_dann.json"),
-    ]);
+    await Promise.all([getModel("base"), getModel("dann")]);
     compareLoadState="ready";
     compareStatusEl.textContent="ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย";
   }catch(e){
@@ -630,28 +845,47 @@ function setNavActive(view){
   $("navTranslate").classList.toggle("active", view==="translate");
   $("navResearch").classList.toggle("active", view==="research");
 }
+function setCamUI(on){ ["appScreen","appHint","camControls"].forEach(id=>$(id).classList.toggle("hidden",!on)); }
+function updateRecUI(){
+  const r=RECOGNIZERS[activeRec];
+  $("finishBtn").classList.toggle("hidden", mode!=="test" || r.hasFinish);
+  if(mode==="test"){
+    $("appHint").textContent = "ยกมือแล้วทำท่าได้เลย ค้างนิ่งสักครู่เพื่อให้ระบบอ่าน แล้วลดมือหรือขยับมือก่อนทำท่าถัดไป "
+      + (r.hasFinish ? "ทำท่าจบประโยค (finish) เมื่อทำครบ" : "กดปุ่ม จบประโยค เมื่อทำครบ");
+  }
+}
 function configureAppUI(m){
-  const isGame=(m==="game"), isCompare=(m==="compare");
-  gameHud.classList.toggle("hidden",!isGame); targetEl.classList.toggle("hidden",!isGame);
-  barsEl.classList.toggle("hidden", isGame||isCompare);
-  resultEl.classList.toggle("hidden", isGame||isCompare);
-  sentenceEl.classList.toggle("hidden", isGame||isCompare);
+  const isGame=(m==="game"), isCompare=(m==="compare"), isStudy=(m==="study"), isTest=(m==="test");
+  gameHud.classList.toggle("hidden",!isGame);
+  targetEl.classList.toggle("hidden",!(isGame||isStudy));
+  barsEl.classList.toggle("hidden", !isTest);
+  resultEl.classList.toggle("hidden", !isTest);
+  sentenceEl.classList.toggle("hidden", !isTest);
   barsCompareBaselineEl.classList.toggle("hidden", !isCompare);
   barsCompareDannEl.classList.toggle("hidden", !isCompare);
   compareStatusEl.classList.toggle("hidden", !isCompare);
-  $("clinicalCard").classList.toggle("hidden", !(SHOW_CLINICAL_CARD && m==="test"));
-  $("backBtn").classList.toggle("hidden", m==="test");
+  $("studyHud").classList.toggle("hidden", !isStudy);
+  $("studyPanel").classList.toggle("hidden", !isStudy);
+  $("clinicalCard").classList.toggle("hidden", !(SHOW_CLINICAL_CARD && isTest));
+  $("backBtn").classList.toggle("hidden", isTest);
+  $("recWrap").classList.toggle("hidden", !isTest);
+  $("clearSentenceBtn").classList.toggle("hidden", !isTest);
+  $("wordRow").classList.toggle("hidden", !isTest);
+  $("faceSettings").classList.toggle("hidden", !(isTest && toneRules));
+  if(!isTest) $("faceChip").classList.add("hidden");
+  updateRecUI();
 }
 function showSignScreen(){
   $("speechScreen").classList.add("hidden");
-  $("appScreen").classList.remove("hidden");
-  mode="test"; wordBuffer=[];
+  setCamUI(true);
+  mode="test"; wordBuffer=[]; rearm=false;
   configureAppUI("test");
-  $("appHint").textContent = "ยกมือแล้วทำท่าได้เลย ค้างนิ่งสักครู่เพื่อให้ระบบอ่าน แล้วทำท่าถัดไป รองรับ 10 คำ";
+  renderWordRow();
+  preloadModels([activeRec]);
   if(cameraEverStarted) openCameraStream(); else $("cameraGate").classList.remove("hidden");
 }
 function showSpeechScreen(){
-  $("appScreen").classList.add("hidden");
+  setCamUI(false);
   stopCameraStream();
   $("speechScreen").classList.remove("hidden");
 }
@@ -680,12 +914,18 @@ function launchResearchMode(m){
   $("vocabDrawer").classList.add("hidden");
   $("toggleTrack").classList.add("hidden");
   $("speechScreen").classList.add("hidden");
-  $("appScreen").classList.remove("hidden");
-  mode=m; wordBuffer=[];
+  setCamUI(true);
+  mode=m; wordBuffer=[]; rearm=false;
   configureAppUI(m);
   $("appHint").textContent = m==="game" ? "ทำท่าตามคำที่ขึ้น ให้เร็วที่สุด ยืนใกล้กล้องพอให้เห็นมือเต็ม"
+    : m==="study" ? "ทำท่าตามคำที่ขึ้นบนจอ ทำเสร็จแล้วลดมือลงก่อนข้อถัดไป ไม่ต้องรีบ"
     : "ยกมือแล้วทำท่า ค้างนิ่งสักครู่ ดูสองโมเดลทายพร้อมกันจากท่าเดียวกัน";
-  openCameraStream().then(()=>{ if(m==="game") beginGame(); if(m==="compare") loadCompareModels(); });
+  openCameraStream().then(ok=>{
+    if(!ok) return;
+    if(m==="game") preloadModels(["v6c"]).then(beginGame);
+    if(m==="compare") loadCompareModels();
+    if(m==="study"){ preloadModels(["dann","base"]); showStudyIdle(); }
+  });
 }
 function leaveResearchMode(){
   endGameCleanup(); stopCameraStream();
@@ -693,6 +933,7 @@ function leaveResearchMode(){
   $("vocabDrawer").classList.remove("hidden");
   goResearch();
 }
+$("recSelect").innerHTML = Object.keys(RECOGNIZERS).map(id=>`<option value="${id}">${RECOGNIZERS[id].label}</option>`).join("");
 $("navTranslate").onclick = goTranslate;
 $("navResearch").onclick = goResearch;
 $("dirSignBtn").onclick = () => setDirection("sign");
@@ -700,7 +941,19 @@ $("dirSpeechBtn").onclick = () => setDirection("speech");
 $("startCameraBtn").onclick = () => { cameraEverStarted=true; openCameraStream(); };
 $("cardGame").onclick = () => launchResearchMode("game");
 $("cardCompare").onclick = () => launchResearchMode("compare");
+$("cardStudy").onclick = () => launchResearchMode("study");
 $("backBtn").onclick = leaveResearchMode;
+$("recSelect").onchange = () => {
+  activeRec=$("recSelect").value; wordBuffer=[]; rearm=false;
+  sentenceEl.textContent=""; resultEl.textContent="—"; lastWords=[]; renderWordRow();
+  updateRecUI(); preloadModels([activeRec]);
+};
+$("focusToggle").onchange = () => {
+  focusOn=$("focusToggle").checked;
+  if(focusOn) ensureFaceTracker().then(applyHandSettings); else setFocusInfo("");
+  applyHandSettings();
+};
+$("relockBtn").onclick = () => { if(focus) PersonFocus.reset(focus); };
 
 // ---- speak -> sign (path B: hearing person speaks, deaf person reads/watches) ----
 // Uses the browser's built-in Web Speech API for Thai speech-to-text -- no key, no
@@ -810,10 +1063,7 @@ function renderGlossOutput(originalText, gloss){
 
 // ---- game flow ----
 function newTarget(){ let w; do{ w=GAME_WORDS[Math.floor(Math.random()*GAME_WORDS.length)]; }while(w===targetWord); targetWord=w; targetEl.innerHTML="ทำท่า: <b>"+w+"</b>"; }
-function beginGame(){
-  starting=true; let c=3; bigEl.textContent=c; statusEl.textContent="เตรียมตัว...";
-  const iv=setInterval(()=>{ c--; if(c>0){bigEl.textContent=c;} else { clearInterval(iv); bigEl.textContent=""; starting=false; runGame(); } },1000);
-}
+function beginGame(){ starting=false; runGame(); }   // no countdown: the 45 seconds start as soon as the model is ready
 function runGame(){
   gameActive=true; score=0; timeLeft=GAME_DURATION; scoreEl.textContent="0"; timerEl.textContent=GAME_DURATION;
   newTarget(); statusEl.textContent="เริ่ม";
@@ -825,7 +1075,7 @@ function endGame(){
   $("finalScore").textContent=score; $("nameInput").value=""; renderLB($("overLb"));
   $("viewTranslate").classList.add("hidden"); $("gameover").classList.remove("hidden");
 }
-function endGameCleanup(){ gameActive=false; if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
+function endGameCleanup(){ gameActive=false; studyActive=false; if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
 $("saveBtn").onclick=()=>{ const n=($("nameInput").value.trim()||"ไม่ระบุ"); saveLB(n,score); renderLB($("overLb")); $("saveBtn").innerHTML=ICONS.check+" บันทึกแล้ว"; $("saveBtn").disabled=true; };
 $("againBtn").onclick=()=>{ $("saveBtn").textContent="บันทึกคะแนน"; $("saveBtn").disabled=false; $("gameover").classList.add("hidden"); launchResearchMode("game"); };
 $("gameoverBackBtn").onclick=()=>{ $("gameover").classList.add("hidden"); leaveResearchMode(); };
@@ -841,12 +1091,13 @@ function extractKeypoints(res){
 }
 function meanAbsDelta(a,b){ let s=0; for(let i=0;i<126;i++) s+=Math.abs(a[i]-b[i]); return s/126; }
 function resample30(f){ const n=f.length,o=[]; for(let i=0;i<COLLECT_FRAMES;i++) o.push(f[Math.round(i*(n-1)/(COLLECT_FRAMES-1))]); return o; }
-async function predict(seq, mdl){ mdl=mdl||model; const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
+async function predict(seq, mdl){ const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
   const inp=tf.tensor(flat,[1,30,126]); const out=mdl.predict(inp); const d=await out.data(); inp.dispose(); out.dispose(); return d; }
 function renderBars(probs, signList, prefix){ const r=[...probs.keys()].sort((a,b)=>probs[b]-probs[a]).slice(0,5);
   r.forEach((idx,i)=>{ const s=signList[idx]; $(prefix+"bl"+i).textContent=(s==="none"?"—":s);
     $(prefix+"bf"+i).style.width=(probs[idx]*100)+"%"; $(prefix+"bp"+i).textContent=Math.round(probs[idx]*100)+"%"; }); }
-function showBars(probs){ renderBars(probs, TARGET_SIGNS, ""); }
+async function predictWith(id, seq){ return predict(seq, await getModel(id)); }
+function showBars(probs){ renderBars(probs, RECOGNIZERS[activeRec].classes, ""); }
 
 // ---- Typhoon sentence-forming + TTS (local testing only -- see config.local.example.js) ----
 async function typhoonSentence(words){
@@ -889,13 +1140,26 @@ function speakThai(text){
   }catch(e){ console.warn("[tts] failed:", e); }
 }
 
-async function onComplete(seq){
+async function finishSentence(){
+  if(!wordBuffer.length){ resultEl.textContent="ยังไม่มีคำ"; return; }
+  const words=wordBuffer.slice(); wordBuffer=[]; lastWords=words; renderWordRow();
+  if(SHOW_CLINICAL_CARD) renderClinicalCard(words);
+  // the face tags decide question/negation by plain rules; the sentence step only phrases the resulting word list
+  const list=window.FaceTone ? FaceTone.applyFaceRules(words) : words.map(w=>w.sign);
+  sentenceEl.textContent="กำลังเรียบเรียงประโยค...";
+  const sentence=await typhoonSentence(list);
+  sentenceEl.textContent="ประโยค: "+sentence;
+  speakThai(sentence);
+}
+
+async function onComplete(seq, meta){
+  if(mode==="study"){ await onStudySign(seq, meta); return; }
   if(mode==="compare"){
     if(compareLoadState!=="ready") return;
     // same collected keypoint sequence fed to both models -- that's the whole point of the comparison
     const [probsBase, probsDann] = await Promise.all([
-      predict(seq, compareBaselineModel),
-      predict(seq, compareDannModel),
+      predictWith("base", seq),
+      predictWith("dann", seq),
     ]);
     let bBest=0; for(let i=1;i<10;i++) if(probsBase[i]>probsBase[bBest]) bBest=i;
     let dBest=0; for(let i=1;i<10;i++) if(probsDann[i]>probsDann[dBest]) dBest=i;
@@ -905,41 +1169,102 @@ async function onComplete(seq){
     return;
   }
 
-  const probs=await predict(seq);
-  let best=0; for(let i=1;i<12;i++) if(probs[i]>probs[best]) best=i;
-  const sign=TARGET_SIGNS[best], conf=probs[best];
-
   if(mode==="game"){
+    const probs=await predictWith("v6c", seq);
+    let best=0; for(let i=1;i<12;i++) if(probs[i]>probs[best]) best=i;
     if(!gameActive) return;
-    if(sign===targetWord){ score++; scoreEl.textContent=score; flash(ICONS.check,"#0f9d63"); newTarget(); }
+    if(TARGET_SIGNS[best]===targetWord){ score++; scoreEl.textContent=score; flash(ICONS.check,"#0f9d63"); newTarget(); }
     else { flash(ICONS.cross,"#d1433a"); }
     return;
   }
-  // test mode (the translate screen)
+
+  // test mode (the translate screen), with whichever recognizer is selected
+  const recId=activeRec, rec=RECOGNIZERS[recId];
+  const probs=await predictWith(recId, seq);
+  if(recId!==activeRec || mode!=="test") return;   // the user switched model or screen while this sign was being read
+  let best=0; for(let i=1;i<rec.classes.length;i++) if(probs[i]>probs[best]) best=i;
+  const sign=rec.classes[best], conf=probs[best];
   showBars(probs);
   if(sign==="finish"){
     resultEl.textContent="จบประโยคแล้ว";
-    if(wordBuffer.length){
-      const words=wordBuffer.slice(); wordBuffer=[];
-      if(SHOW_CLINICAL_CARD) renderClinicalCard(words);
-      sentenceEl.textContent="กำลังเรียบเรียงประโยค...";
-      const sentence=await typhoonSentence(words.map(w=>w.sign));
-      sentenceEl.textContent="ประโยค: "+sentence;
-      speakThai(sentence);
-    }
+    if(wordBuffer.length) await finishSentence();
     return;
   }
-  if(sign!=="none" && conf>=(THRESH[sign]||0.8)){
+  const minConf = rec.hasFinish ? (THRESH[sign]||0.8) : MIN_CONF_10;
+  if(sign!=="none" && conf>=minConf){
     if(!wordBuffer.length || wordBuffer[wordBuffer.length-1].sign!==sign){
-      wordBuffer.push({sign, conf});
+      wordBuffer.push({sign, conf, face:meta?meta.face:null});
+      renderWordRow();
       resultEl.textContent=sign+" "+Math.round(conf*100)+"%";
       sentenceEl.textContent="กำลังสร้าง: "+wordBuffer.map(w=>w.sign).join(" ");
     }
   } else resultEl.textContent="—";
 }
 
-function drawHands(res){ ctx.clearRect(0,0,overlay.width,overlay.height); if(!res.landmarks) return;
-  ctx.fillStyle="#0f9d63"; for(const lm of res.landmarks) for(const p of lm){ ctx.beginPath(); ctx.arc(p.x*overlay.width,p.y*overlay.height,5,0,2*Math.PI); ctx.fill(); } }
+// Face sampling, shared by person focus and face reading: find faces a few times a second, keep the lock on
+// the main user, and (when face reading is on) feed that user's face numbers to the tone rules.
+function sampleFaces(ts){
+  if(!(focusOn || toneOn) || faceTrackerState!=="ready" || !focus) return;
+  if(ts-lastFaceMs<(toneOn ? FACE_TONE_EVERY_MS : FACE_EVERY_MS)) return;
+  lastFaceMs=ts;
+  const aspect=(video.videoWidth/video.videoHeight)||16/9;
+  try{
+    const faces=faceTracker.detectFaces(video, ts);
+    PersonFocus.update(focus, faces.map(f=>f.box), ts, aspect);
+    if(toneOn && toneRules){
+      const mine=faces.find(f=>f.box===focus.primary);   // a face hidden behind a hand gives no numbers this time
+      if(mine && mine.features) feedTone(mine.features, ts);
+    }
+  }catch(e){ console.warn("[face] detection failed", e); }
+}
+function feedTone(f, ts){
+  if(calibrating){
+    calibrating.rows.push(f);
+    if(ts>=calibrating.until){
+      toneRules.setBaseline({ browRaise:FaceTone.meanOf(calibrating.rows,"browRaise"), browFurrow:FaceTone.meanOf(calibrating.rows,"browFurrow") });
+      baselineSet=true; calibrating=null; updateToneUI();
+    }
+  }
+  const st=toneRules.push(f, ts);
+  liveTone=st; lastToneMs=ts;
+  faceSamples.push({t:ts, raise:st.raise, furrow:st.furrow, yaw:f.yaw, pitch:f.pitch});
+  while(faceSamples.length && ts-faceSamples[0].t>4000) faceSamples.shift();
+}
+// Person focus: keep only the hands that belong to the locked user.
+function applyFocus(res, ts){
+  const all=res.landmarks||[];
+  sampleFaces(ts);
+  if(!focusOn || faceTrackerState!=="ready" || !focus) return {kept:res, info:null};
+  const aspect=(video.videoWidth/video.videoHeight)||16/9;
+  const info=PersonFocus.filterHands(focus, all, aspect);
+  const idx=[]; info.keep.forEach((k,i)=>{ if(k) idx.push(i); });
+  if(ts-lastFocusInfoMs>300){
+    lastFocusInfoMs=ts;
+    const others=focus.faces.filter(f=>f!==focus.primary).length;
+    const dropped=info.keep.filter(k=>!k).length;
+    setFocusInfo(!focus.primary ? "ยังไม่พบใบหน้า (ยังไม่กรองมือ)"
+      : (others ? `เห็นอีก ${others} คน, ` : "") + (dropped ? `ไม่นับมือ ${dropped} ข้าง` : "ใช้มือของผู้ใช้หลัก"));
+  }
+  return {kept:{landmarks:idx.map(i=>all[i]), handednesses:idx.map(i=>res.handednesses[i])}, info};
+}
+
+// Green = the user (face box and hands), red dashed = other faces, grey = hands that are ignored.
+function drawScene(res, fr){
+  ctx.clearRect(0,0,overlay.width,overlay.height);
+  const W=overlay.width, H=overlay.height;
+  const info=(fr && fr.info && fr.info.filtered) ? fr.info : null;
+  if(info && focus){
+    const box=(b,color,w,dash)=>{ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.setLineDash(dash||[]); ctx.strokeRect(b.x*W,b.y*H,b.w*W,b.h*H); };
+    for(const f of focus.faces) if(f!==focus.primary) box(f,"#d1433a",2,[6,4]);
+    if(focus.primary) box(focus.primary,"#0f9d63",3);
+    ctx.setLineDash([]);
+  }
+  (res.landmarks||[]).forEach((lm,i)=>{
+    const mine=!info || info.keep[i];
+    ctx.fillStyle=mine ? "#0f9d63" : "rgba(160,160,170,.8)";
+    for(const p of lm){ ctx.beginPath(); ctx.arc(p.x*W,p.y*H,mine?5:3,0,2*Math.PI); ctx.fill(); }
+  });
+}
 
 let lastTs=-1;
 async function loop(){
@@ -947,21 +1272,33 @@ async function loop(){
   if(handLandmarker && video.readyState>=2){
     const ts=performance.now();
     if(ts!==lastTs){ lastTs=ts;
-      const res=handLandmarker.detectForVideo(video,ts); drawHands(res);
-      const {row,present}=extractKeypoints(res);
-      const gameBlock=(mode==="game" && (!gameActive || starting)); // don't collect before/after game
+      const res=handLandmarker.detectForVideo(video,ts);
+      const fr=applyFocus(res, ts);
+      drawScene(res, fr);
+      updateFaceChip(ts);
+      const {row,present}=extractKeypoints(fr.kept);
+      // don't collect before/after a game, or before a study participant has been started
+      const blocked=(mode==="game" && (!gameActive || starting)) || (mode==="study" && !studyActive);
 
-      if(!gameBlock){
+      if(!blocked){
         if(state==="IDLE"){
-          if(present){
-            if(idleStart===null) idleStart=ts;
-            if(mode!=="game") statusEl.textContent="จับมือได้แล้ว...";
-            if(ts-idleStart>=IDLE_WARMUP_MS){
-              // no countdown in any mode: a sign starts as soon as the hand has been in view for a moment
-              state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null;
-              if(mode!=="game") statusEl.textContent="กำลังอ่านท่า...";
-            }
-          } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
+          if(rearm){
+            // the last sign was just read: wait until the hand leaves the frame or clearly moves, so a held pose is not read again
+            if(!present){ if(rearmAbsentStart===null) rearmAbsentStart=ts; if(ts-rearmAbsentStart>=REARM_ABSENT_MS) rearm=false; }
+            else { rearmAbsentStart=null; if(meanAbsDelta(row,rearmRow)>REARM_MOVE) rearm=false; }
+            if(rearm){ idleStart=null; if(mode!=="game") statusEl.textContent="ลดมือลง หรือขยับมือ แล้วทำท่าถัดไป"; }
+          }
+          if(!rearm){
+            if(present){
+              if(idleStart===null) idleStart=ts;
+              if(mode!=="game") statusEl.textContent="จับมือได้แล้ว...";
+              if(ts-idleStart>=IDLE_WARMUP_MS){
+                // no countdown in any mode: a sign starts as soon as the hand has been in view for a moment
+                state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null;
+                if(mode!=="game") statusEl.textContent="กำลังอ่านท่า...";
+              }
+            } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
+          }
         } else { // COLLECTING
           let trig=false;
           if(present){
@@ -981,13 +1318,222 @@ async function loop(){
             if((ts-collectStart)>=MIN_COLLECT_MS) trig=true;
             else { state="IDLE"; idleStart=null; collected=[]; }
           }
-          if(trig){ onComplete(resample30(collected)); state="IDLE"; idleStart=null; collected=[]; prevKp=null; }
+          if(trig){
+            rearm=true; rearmRow=row; rearmAbsentStart=null;
+            // face reading for this word: what the face did while the sign was being made
+            const face=(toneOn && toneRules) ? FaceTone.summarize(faceSamples, collectStart, ts, toneRules.o) : null;
+            onComplete(resample30(collected), {frames:collected.length, ms:ts-collectStart, face});
+            if(toneOn && toneRules) faceSamples=[];   // the next word starts with a clean slate
+            state="IDLE"; idleStart=null; collected=[]; prevKp=null;
+          }
         }
       }
     }
   }
   requestAnimationFrame(loop);
 }
+
+// ---- volunteer study (club test) ----
+// A participant is asked for one word at a time. The DANN and baseline models both read the same sign and every
+// answer is saved (with all probabilities) for analysis in a CSV. Correct/wrong is never shown while a participant
+// is signing: the mark after each sign only says "recorded". Words are the 8 the old models share with the 33-word list.
+let studyActive=false, studyTrials=[], studyIdx=0, studyMeta=null, studyBusy=false, studyRows=[];
+try{ studyRows=JSON.parse(localStorage.getItem(STUDY_STORE)||"[]"); }catch{ studyRows=[]; }
+function persistStudy(){ try{ localStorage.setItem(STUDY_STORE, JSON.stringify(studyRows)); }catch(e){ console.warn("[study] could not save in this browser", e); } }
+function shuffled(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]; } return x; }
+// every round covers all words once, in a new random order; the same word never comes twice in a row across rounds
+function makeTrials(words, reps){
+  const out=[]; let last=null;
+  for(let r=1;r<=reps;r++){
+    const order=shuffled(words);
+    if(order.length>1 && order[0]===last){ const k=1+Math.floor(Math.random()*(order.length-1)); [order[0],order[k]]=[order[k],order[0]]; }
+    order.forEach(w=>out.push({round:r, word:w})); last=order[order.length-1];
+  }
+  return out;
+}
+function topIndex(p){ let b=0; for(let i=1;i<p.length;i++) if(p[i]>p[b]) b=i; return b; }
+function renderStudyCount(){ $("studyCount").textContent=`เก็บไว้ในเครื่องนี้ ${studyRows.length} แถว`; }
+function showStudyIdle(){
+  studyActive=false;
+  $("studySetup").classList.remove("hidden"); $("studyRun").classList.add("hidden"); $("studySummary").classList.add("hidden");
+  targetEl.classList.add("hidden"); $("studyHud").textContent="พร้อมเริ่มทดสอบ"; renderStudyCount();
+}
+function showStudyTrial(){
+  if(studyIdx>=studyTrials.length){ finishStudy(); return; }
+  const t=studyTrials[studyIdx];
+  targetEl.classList.remove("hidden");
+  targetEl.innerHTML="ทำท่า: <b>"+t.word+"</b>";
+  $("studyHud").textContent=`${studyMeta.signer} | ข้อ ${studyIdx+1}/${studyTrials.length}`;
+  studyBusy=false;
+}
+function startStudy(){
+  const code=$("studyCode").value.trim();
+  if(!code){ $("studyCode").focus(); $("studyCode").style.borderColor="var(--danger)"; return; }
+  $("studyCode").style.borderColor="";
+  studyMeta={ session:new Date().toISOString(), signer:code, type:$("studyType").value, reps:Number($("studyReps").value),
+              focus:(focusOn && faceTrackerState==="ready") };
+  studyTrials=makeTrials(STUDY_WORDS, studyMeta.reps); studyIdx=0; studyBusy=true; rearm=false;
+  $("studySetup").classList.add("hidden"); $("studyRun").classList.remove("hidden"); $("studySummary").classList.add("hidden");
+  studyActive=true;
+  preloadModels(["dann","base"]).then(showStudyTrial);
+}
+async function onStudySign(seq, meta){
+  if(!studyActive || studyBusy) return;
+  studyBusy=true;
+  const trial=studyTrials[studyIdx];
+  let pd, pb;
+  try{ [pd, pb]=await Promise.all([predictWith("dann", seq), predictWith("base", seq)]); }
+  catch(e){ console.error("[study] prediction failed", e); studyBusy=false; return; }
+  const di=topIndex(pd), bi=topIndex(pb);
+  studyRows.push({
+    session:studyMeta.session, signer:studyMeta.signer, type:studyMeta.type, trial:studyIdx+1, round:trial.round, target:trial.word,
+    skipped:0, t:new Date().toISOString(), frames:meta?meta.frames:"", ms:meta?Math.round(meta.ms):"", focus:studyMeta.focus?1:0,
+    dann_top1:GAME_WORDS[di], dann_conf:pd[di], dann_ok:GAME_WORDS[di]===trial.word?1:0,
+    base_top1:GAME_WORDS[bi], base_conf:pb[bi], base_ok:GAME_WORDS[bi]===trial.word?1:0,
+    dann_p:Array.from(pd), base_p:Array.from(pb),
+  });
+  persistStudy(); renderStudyCount();
+  flash(ICONS.check,"#0f9d63");
+  studyIdx++;
+  setTimeout(showStudyTrial, 700);
+}
+function studySkip(){
+  if(!studyActive || studyIdx>=studyTrials.length) return;
+  const trial=studyTrials[studyIdx];
+  studyRows.push({ session:studyMeta.session, signer:studyMeta.signer, type:studyMeta.type, trial:studyIdx+1, round:trial.round,
+                   target:trial.word, skipped:1, t:new Date().toISOString(), focus:studyMeta.focus?1:0 });
+  persistStudy(); renderStudyCount(); studyIdx++; showStudyTrial();
+}
+function studyUndo(){
+  if(!studyActive || !studyMeta || studyIdx===0) return;
+  const last=studyRows[studyRows.length-1];
+  if(!last || last.session!==studyMeta.session) return;
+  studyRows.pop(); persistStudy(); renderStudyCount(); studyIdx--; showStudyTrial();
+}
+function finishStudy(){
+  studyActive=false; targetEl.classList.add("hidden");
+  const mine=studyRows.filter(r=>studyMeta && r.session===studyMeta.session && !r.skipped);
+  const n=mine.length, d=mine.reduce((a,r)=>a+r.dann_ok,0), b=mine.reduce((a,r)=>a+r.base_ok,0);
+  $("studyRun").classList.add("hidden");
+  $("studySummary").classList.remove("hidden");
+  $("studySummary").innerHTML=`เสร็จแล้ว ขอบคุณมาก<br>บันทึก <b>${n}</b> ข้อ (ส่วนนี้สำหรับผู้ดำเนินการ) DANN ถูก <b>${d}/${n}</b>, Baseline ถูก <b>${b}/${n}</b><br><br><button id="studyNext">คนถัดไป</button>`;
+  $("studyHud").textContent="เสร็จสิ้น";
+  $("studyNext").onclick=()=>{ $("studyCode").value=""; showStudyIdle(); };
+  renderStudyCount();
+}
+function studyCsv(rows){
+  const cols=["session","signer","type","trial","round","target","skipped","t","frames","ms","focus",
+    "dann_top1","dann_conf","dann_ok","base_top1","base_conf","base_ok",
+    ...GAME_WORDS.map(w=>"dann_p_"+w), ...GAME_WORDS.map(w=>"base_p_"+w)];
+  const esc=v=>{ const t=(v===undefined||v===null)?"":String(v); return /[",\n]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; };
+  const lines=[cols.join(",")];
+  rows.forEach(r=>{
+    const flat={...r};
+    GAME_WORDS.forEach((w,i)=>{ flat["dann_p_"+w]=r.dann_p?r.dann_p[i]:""; flat["base_p_"+w]=r.base_p?r.base_p[i]:""; });
+    lines.push(cols.map(c=>{ const v=flat[c]; return esc((typeof v==="number" && (c.endsWith("_conf")||c.includes("_p_"))) ? v.toFixed(4) : v); }).join(","));
+  });
+  return lines.join("\n");
+}
+function downloadStudy(){
+  if(!studyRows.length) return;
+  const blob=new Blob(["﻿"+studyCsv(studyRows)], {type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="thsl_study_"+new Date().toISOString().slice(0,10)+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function clearStudy(){
+  if(!studyRows.length) return;
+  if(!confirm("ลบข้อมูลทดสอบที่เก็บไว้ในเครื่องนี้ทั้งหมด? ควรดาวน์โหลด CSV ก่อน")) return;
+  studyRows=[]; persistStudy(); renderStudyCount();
+}
+$("studyStart").onclick=startStudy;
+$("studyUndo").onclick=studyUndo;
+$("studySkip").onclick=studySkip;
+$("studyFinish").onclick=()=>{ if(studyActive) finishStudy(); };
+$("studyDownload").onclick=downloadStudy;
+$("studyClear").onclick=clearStudy;
+renderStudyCount();
+
+// translate screen buttons (for models without a finish sign)
+$("finishBtn").onclick=()=>finishSentence();
+$("clearSentenceBtn").onclick=()=>{ wordBuffer=[]; lastWords=[]; renderWordRow(); sentenceEl.textContent=""; resultEl.textContent="—"; };
+
+// ---- word bubbles + face settings ----
+function faceTags(face){
+  if(face===null || face===undefined) return [];          // face reading was off for this word
+  if(!face.seen) return [{cls:"none", text:"ไม่เห็นหน้า"}];   // no usable face samples: say so, never guess
+  const t=[];
+  if(face.question) t.push({cls:"q", text:"ถาม"});
+  if(face.negative) t.push({cls:"neg", text:"ปฏิเสธ"});
+  if(face.nod) t.push({cls:"yes", text:"ยืนยัน"});
+  return t.length ? t : [{cls:"none", text:"ปกติ"}];
+}
+function renderWordRow(){
+  const old=!wordBuffer.length && lastWords.length;
+  const list=wordBuffer.length ? wordBuffer : lastWords;
+  if(!list.length){ $("wordRow").innerHTML='<span class="wrLabel">คำที่อ่านได้พร้อมสีหน้าจะขึ้นที่นี่</span>'; return; }
+  $("wordRow").innerHTML=(old?'<span class="wrLabel">ประโยคล่าสุด</span>':"")+list.map((w,i)=>{
+    const f=w.face, cls=(f&&f.negative?" neg":"")+(f&&f.question?" q":"")+(old?" old":"");
+    return `<span class="wordBubble${cls}"><span class="n">${i+1}</span><b>${w.sign}</b>${faceTags(f).map(t=>`<span class="tag ${t.cls}">${t.text}</span>`).join("")}</span>`;
+  }).join("");
+}
+function updateFaceChip(ts){
+  if(ts-lastChipMs<250) return;
+  lastChipMs=ts;
+  const chip=$("faceChip");
+  if(!toneOn || mode!=="test"){ chip.classList.add("hidden"); return; }
+  if(calibrating && ts>calibrating.until+1500){
+    calibrating=null; updateToneUI();
+    $("calibInfo").textContent="วัดไม่ได้เพราะไม่เห็นใบหน้า ลองใหม่"; $("calibInfo").classList.add("warn");
+  }
+  if(!liveTone || ts-lastToneMs>700){ chip.className="nofa"; chip.textContent="ไม่เห็นหน้า"; return; }
+  const q=liveTone.tone==="question", neg=liveTone.shake;
+  chip.className=(q?"q ":"")+(neg?"neg":"");
+  chip.textContent=(q?"ถาม":"ปกติ")+(neg?" | ส่ายหน้า":liveTone.nod?" | พยักหน้า":"")+(baselineSet?"":" (ยังไม่ตั้งค่านิ่ง)");
+}
+function rebuildFaceTracker(){
+  if(faceTracker && faceTracker.close){ try{ faceTracker.close(); }catch(e){ console.warn(e); } }
+  faceTracker=null; faceTrackerState="idle";
+  if(cameraStreamActive && (focusOn||toneOn)) ensureFaceTracker().then(applyHandSettings);
+}
+function updateToneUI(){
+  if(!toneRules) return;
+  const o=toneRules.o;
+  [["tRaise","tRaiseV","raiseThresh"],["tFurrow","tFurrowV","furrowThresh"],["tShake","tShakeV","shakeSwingDeg"],["tNod","tNodV","nodSwingDeg"]]
+    .forEach(([i,l,k])=>{ $(i).value=o[k]; $(l).textContent=o[k]; });
+  const ci=$("calibInfo");
+  if(calibrating){ ci.textContent="กำลังวัด นิ่งไว้..."; ci.classList.remove("warn"); }
+  else if(baselineSet){ ci.textContent=`ตั้งค่าแล้ว (คิ้วยก ${toneRules.base.browRaise.toFixed(2)}, คิ้วขมวด ${toneRules.base.browFurrow.toFixed(2)})`; ci.classList.remove("warn"); }
+  else { ci.textContent="ยังไม่ได้ตั้งค่าหน้านิ่ง"; ci.classList.add("warn"); }
+  $("toneToggle").checked=toneOn;
+}
+function saveToneSettings(){
+  const o=toneRules.o;
+  try{ localStorage.setItem(TONE_STORE, JSON.stringify({raiseThresh:o.raiseThresh, furrowThresh:o.furrowThresh, shakeSwingDeg:o.shakeSwingDeg, nodSwingDeg:o.nodSwingDeg})); }
+  catch(e){ console.warn("[face] could not save settings in this browser", e); }
+}
+if(toneRules){
+  for(const [id,key] of [["tRaise","raiseThresh"],["tFurrow","furrowThresh"],["tShake","shakeSwingDeg"],["tNod","nodSwingDeg"]]){
+    $(id).oninput=()=>{ toneRules.o[key]=Number($(id).value); updateToneUI(); saveToneSettings(); };
+  }
+  $("toneResetBtn").onclick=()=>{
+    const d=FaceTone.DEFAULTS;
+    Object.assign(toneRules.o, {raiseThresh:d.raiseThresh, furrowThresh:d.furrowThresh, shakeSwingDeg:d.shakeSwingDeg, nodSwingDeg:d.nodSwingDeg});
+    updateToneUI(); saveToneSettings();
+  };
+  $("calibBtn").onclick=()=>{
+    if(!toneOn) return;
+    toneRules.reset(); faceSamples=[]; calibrating={until:performance.now()+2000, rows:[]}; updateToneUI();
+  };
+  $("toneToggle").onchange=()=>{
+    toneOn=$("toneToggle").checked; faceSamples=[]; calibrating=null; liveTone=null;
+    if(!toneOn) $("faceChip").classList.add("hidden");
+    rebuildFaceTracker(); updateToneUI();
+  };
+  updateToneUI();
+} else { $("faceSettings").classList.add("hidden"); }
+renderWordRow();
 
 // ---- initial screen ----
 goTranslate();
