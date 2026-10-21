@@ -154,13 +154,17 @@
     const o = Object.assign({ numFaces: 1, blendshapes: true, matrices: true }, opts || {});
     const mp = await import(MP_BUNDLE);
     const vision = await mp.FilesetResolver.forVisionTasks(MP_BUNDLE + "/wasm");
-    const landmarker = await mp.FaceLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: FACE_MODEL },
+    const make = delegate => mp.FaceLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: FACE_MODEL, delegate },
       runningMode: "VIDEO",
       numFaces: o.numFaces,
       outputFaceBlendshapes: o.blendshapes,
       outputFacialTransformationMatrixes: o.matrices,
     });
+    // the web default is the CPU; use the GPU when the browser allows it
+    let landmarker;
+    try { landmarker = await make("GPU"); }
+    catch (e) { console.warn("[face] GPU delegate failed, using CPU", e); landmarker = await make("CPU"); }
 
     return {
       close() { landmarker.close(); },

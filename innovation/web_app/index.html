@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ThSL Bridge | แปลภาษามือไทย</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230a7a4b'/%3E%3Cpath d='M8 21v-8l4 4 4-6 4 6 4-4v8z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -678,7 +679,11 @@ const SHOW_CLINICAL_CARD=false;
 const REARM_ABSENT_MS=300, REARM_MOVE=0.03;   // 0.03 = the same measure the app already uses for "the hand is moving"
 // The 10-class models (DANN, baseline) have no "none" class, so low confidence is their only way to reject a bad read.
 const MIN_CONF_10=0.70;
-const FACE_EVERY_MS=150;   // person focus looks for faces about 7 times a second, hands are read every frame
+// MediaPipe's default confidence is 0.5. A hand lying flat is seen edge-on and scores low, so it was dropped; raise this back if bystander hands start to appear.
+const HAND_CONF=0.35;
+// Hands are read at most ~30 times a second (the rate the timing gates above assume). A 60 or 120 Hz screen would otherwise run the models twice or four times as often for nothing.
+const MIN_FRAME_MS=28;
+const FACE_EVERY_MS=150;  // person focus looks for faces about 7 times a second, hands are read every frame
 const FACE_TONE_EVERY_MS=80;   // reading the face for tags needs faster samples (a head shake is about 2 swings a second)
 const TONE_STORE="thsl_face_settings_v1";
 // The 8 words the old 10-word models share with the 33-word club list (ถาม and บอก are not in that list).
@@ -882,9 +887,13 @@ async function ensureHandLandmarker(){
   if(handLandmarker) return;
   statusEl.textContent="กำลังโหลดโมเดลมือ...";
   const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
-  handLandmarker=await HandLandmarker.createFromOptions(vision,{
-    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},
-    runningMode:"VIDEO", numHands:2 });
+  const make=delegate=>HandLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate},
+    runningMode:"VIDEO", numHands:2,
+    minHandDetectionConfidence:HAND_CONF, minHandPresenceConfidence:HAND_CONF, minTrackingConfidence:HAND_CONF });
+  // the web default is the CPU, which makes the whole tab lag; the GPU is used when the browser allows it
+  try{ handLandmarker=await make("GPU"); }
+  catch(e){ console.warn("[hands] GPU delegate failed, using CPU", e); handLandmarker=await make("CPU"); }
 }
 function setFocusInfo(t){ $("focusInfo").textContent=t; }
 // With person focus on we ask for up to 4 hands so a bystander's hands cannot push the user's out of the top 2.
@@ -910,7 +919,7 @@ async function openCameraStream(){
   $("cameraGate").classList.add("hidden");
   if(cameraStreamActive) return true;
   await ensureHandLandmarker();
-  try{ mediaStream=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}}); }
+  try{ mediaStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:960},height:{ideal:540},frameRate:{ideal:30}}}); }
   catch(e){
     // permission denied, no camera, or the page is not on https/localhost: say so and let the user try again
     console.error("[camera] could not open", e);
@@ -920,7 +929,7 @@ async function openCameraStream(){
   }
   video.srcObject=mediaStream;
   cameraStreamActive=true;
-  state="IDLE"; collected=[]; prevKp=null; idleStart=null; stillStart=null; missStart=null; rearm=false;
+  state="IDLE"; collected=[]; prevKp=null; idleStart=null; stillStart=null; missStart=null; rearm=false; resetHandGaps();
   await new Promise(res=>{ video.onloadedmetadata=()=>{ overlay.width=video.videoWidth; overlay.height=video.videoHeight; res(); }; });
   statusEl.textContent="พร้อม";
   if(focusOn || toneOn) ensureFaceTracker().then(applyHandSettings);
@@ -1229,6 +1238,19 @@ function extractKeypoints(res){
       for(let i=0;i<21;i++){ t[i*3]=lm[i].x; t[i*3+1]=lm[i].y; t[i*3+2]=lm[i].z; } } }
   const row=new Float32Array(126); row.set(lh,0); row.set(rh,63); return {row,present};
 }
+// A hand that flickers out for a frame or two (for example one lying flat, seen edge-on) would become 63 zeros, which looks
+// nothing like the training data. While at least one hand is still detected, a hand lost for less than HAND_HOLD_MS keeps its
+// last seen position. `present` is left alone: it still means "a hand was really detected", so rearm and tolerance logic is unchanged.
+const HAND_HOLD_MS=150;
+const lastHand=[{t:-1e9,kp:null},{t:-1e9,kp:null}];   // [left block, right block]
+function fillHandGaps(row, present, ts){
+  for(let h=0;h<2;h++){
+    const off=h*63, seen=row[off]!==0||row[off+1]!==0, last=lastHand[h];
+    if(seen){ last.t=ts; last.kp=row.slice(off,off+63); }
+    else if(present && last.kp && ts-last.t<=HAND_HOLD_MS){ row.set(last.kp,off); window.__handFilled=(window.__handFilled||0)+1; }
+  }
+}
+function resetHandGaps(){ for(const l of lastHand){ l.t=-1e9; l.kp=null; } }
 function meanAbsDelta(a,b){ let s=0; for(let i=0;i<126;i++) s+=Math.abs(a[i]-b[i]); return s/126; }
 function resample30(f){ const n=f.length,o=[]; for(let i=0;i<COLLECT_FRAMES;i++) o.push(f[Math.round(i*(n-1)/(COLLECT_FRAMES-1))]); return o; }
 async function predict(seq, mdl){ const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
@@ -1437,12 +1459,13 @@ async function loop(){
   if(!cameraStreamActive) return; // stream was stopped (direction switched, left the mode) -- don't reschedule
   if(handLandmarker && video.readyState>=2){
     const ts=performance.now();
-    if(ts!==lastTs){ lastTs=ts;
+    if(ts-lastTs>=MIN_FRAME_MS){ lastTs=ts;
       const res=handLandmarker.detectForVideo(video,ts);
       const fr=applyFocus(res, ts);
       drawScene(res, fr);
       updateFaceChip(ts);
       const {row,present}=extractKeypoints(fr.kept);
+      fillHandGaps(row,present,ts);
       // don't collect before/after a game, or before a study participant has been started
       const blocked=(mode==="game" && (!gameActive || starting)) || (mode==="study" && !studyActive);
 
