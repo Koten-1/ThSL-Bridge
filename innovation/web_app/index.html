@@ -3,262 +3,320 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ThSL Bridge — แปลภาษามือไทย</title>
+<title>ThSL Bridge | แปลภาษามือไทย</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ThSL Bridge: light theme, AA contrast checked (see the redesign notes). Tokens first, components below. */
   :root {
-    --bg:#f7f7f8; --surface:#ffffff; --surface-muted:#f0f1f3;
-    --border:#e4e5e9; --border-strong:#d7d9de;
-    --text:#16181d; --text-muted:#6b7076; --text-faint:#9a9ea5;
-    --accent:#0f9d63; --accent-strong:#0b7c4e; --accent-soft:#e4f7ee;
-    --warn:#b7791f; --warn-soft:#fbf0dc;
-    --danger:#d1433a; --danger-soft:#fbe9e7;
-    --radius-lg:18px; --radius-md:12px; --radius-sm:8px;
-    --shadow-sm:0 1px 2px rgba(20,20,25,.05);
-    --shadow-md:0 1px 3px rgba(20,20,25,.05), 0 10px 24px -14px rgba(20,20,25,.22);
+    --bg:#f5f6f8; --surface:#ffffff; --surface-muted:#eceff2;
+    --border:#dde1e6; --border-strong:#80878f;
+    --text:#15181d; --text-muted:#4a5159; --text-faint:#59606a;
+    --accent:#0a7a4b; --accent-strong:#075f3a; --accent-soft:#e0f2e8;
+    --warn:#7a4a03; --warn-soft:#fcefd0; --warn-line:#b7791f;
+    --danger:#ab2a22; --danger-soft:#fde7e4;
+    --focus:#1a5fb4;
+    --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
+    --shadow-sm:0 1px 2px rgba(20,24,29,.06);
+    --shadow-md:0 1px 3px rgba(20,24,29,.06), 0 14px 30px -18px rgba(20,24,29,.28);
+    --font:'Noto Sans Thai','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:'Inter','Noto Sans Thai',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-         background:var(--bg); color:var(--text);
-         display:flex; flex-direction:column; align-items:center; min-height:100vh; padding-bottom:30px; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font-family:var(--font); font-size:16px; line-height:1.6; background:var(--bg); color:var(--text); }
   .hidden { display:none !important; }
+  .srOnly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
   .ic { width:1em; height:1em; vertical-align:-.15em; flex-shrink:0; }
+  [lang="en"] { font-family:'Inter',var(--font); }
+  :focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  .skip { position:absolute; left:-999px; top:8px; background:var(--surface); padding:10px 16px; border-radius:var(--radius-sm); z-index:50; }
+  .skip:focus { left:12px; }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
 
-  /* header */
-  .appHeader { position:relative; width:960px; max-width:97vw; text-align:center; padding-top:30px; }
-  .headerGlow { position:absolute; top:-30px; left:50%; transform:translateX(-50%); width:560px; height:240px;
-                background:radial-gradient(ellipse at center, var(--accent-soft) 0%, rgba(228,247,238,0) 70%);
-                z-index:-1; pointer-events:none; }
-  h1 { margin:0 0 2px; font-size:1.5rem; font-weight:800; letter-spacing:-.01em; }
-  .logoMark { color:var(--accent); }
-  .sub { color:var(--text-muted); font-size:.88rem; margin-bottom:16px; }
-  .archDivider { display:block; width:200px; height:14px; margin:0 auto 18px; color:var(--border-strong); }
-
-  .topNav { display:flex; gap:4px; background:var(--surface-muted); padding:4px; border-radius:999px; margin:0 auto 22px; width:fit-content; }
-  .navPill { background:transparent; border:none; padding:9px 22px; border-radius:999px; font-size:.88rem; font-weight:700;
-             color:var(--text-muted); cursor:pointer; font-family:inherit; }
+  /* app bar */
+  .appBar { max-width:1240px; margin:0 auto; padding:18px 24px 12px; display:flex; align-items:center; justify-content:space-between; gap:14px 20px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brandMark { width:46px; height:46px; border-radius:15px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .brandMark svg { width:28px; height:28px; }
+  .brandName { font-weight:800; font-size:1.3rem; line-height:1.2; letter-spacing:-.01em; }
+  .brandSub { font-size:.85rem; color:var(--text-muted); line-height:1.35; }
+  .barRight { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .topNav { display:flex; gap:4px; background:var(--surface-muted); padding:4px; border-radius:999px; }
+  .navPill { background:transparent; color:var(--text-muted); border:none; padding:9px 22px; min-height:40px; border-radius:999px; font-size:.95rem; font-weight:700; cursor:pointer; font-family:inherit; }
+  .navPill:hover { background:rgba(255,255,255,.6); color:var(--text); }
   .navPill.active { background:var(--surface); color:var(--text); box-shadow:var(--shadow-sm); }
   #navResearch.active { color:var(--warn); }
+  .privacyChip { display:inline-flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); border:1px solid transparent; padding:8px 14px; min-height:40px; border-radius:999px; font-size:.88rem; font-weight:700; }
+  .privacyChip:hover { background:#d3ebdf; }
 
-  /* direction toggle (translate screen) */
-  #viewTranslate { width:960px; max-width:97vw; display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .toggleTrack { position:relative; display:flex; background:var(--surface-muted); border-radius:999px; padding:4px; width:340px; max-width:100%; }
-  .toggleThumb { position:absolute; top:4px; bottom:4px; left:4px; width:calc(50% - 4px); background:var(--accent);
-                 border-radius:999px; transition:transform .25s cubic-bezier(.4,0,.2,1); z-index:0; }
-  .toggleOpt { position:relative; z-index:1; flex:1; background:transparent; border:none; padding:11px 10px; border-radius:999px;
-               font-size:.88rem; font-weight:700; color:var(--text-muted); cursor:pointer; font-family:inherit; transition:color .2s; }
+  main { max-width:1240px; margin:0 auto; padding:6px 24px 56px; }
+  #viewTranslate, #viewResearch { display:flex; flex-direction:column; gap:18px; }
+
+  /* direction switch: Thai first, English underneath */
+  .toggleTrack { position:relative; display:flex; align-self:center; background:var(--surface-muted); border-radius:999px; padding:5px; width:min(460px,100%); }
+  .toggleThumb { position:absolute; top:5px; bottom:5px; left:5px; width:calc(50% - 5px); background:var(--accent); border-radius:999px; transition:transform .22s ease; z-index:0; }
+  .toggleOpt { position:relative; z-index:1; flex:1; background:transparent; border:none; padding:9px 8px; min-height:56px; border-radius:999px; font-size:1.05rem; font-weight:700; color:var(--text-muted); cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.25; transition:color .2s; }
+  .toggleOpt small { font-size:.72rem; font-weight:500; }
   .toggleOpt.active { color:#fff; }
+  .toggleOpt:hover:not(.active) { color:var(--text); background:transparent; }
 
-  /* vocab reference drawer */
-  #vocabDrawer { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-                 box-shadow:var(--shadow-sm); padding:16px 20px; }
-  #vocabDrawer summary { cursor:pointer; font-weight:700; font-size:.92rem; display:flex; align-items:center; gap:8px; }
-  #vocabDrawer summary .ic { color:var(--accent); }
-  #vocabDrawer[open] summary { margin-bottom:14px; }
-  .vtScope { color:var(--text-muted); font-size:.82rem; margin:10px 0 14px; line-height:1.55; }
-  .vtScope .en { color:var(--text-faint); display:block; margin-top:4px; }
-  .vtGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:12px; }
-  .vtCard { background:var(--surface-muted); border:1px solid var(--border); border-radius:12px; padding:8px;
-            text-align:center; position:relative; }
-  .vtCard.vtBest { border-color:var(--warn); }
-  .vtCard video { width:100%; border-radius:8px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
-  .vtCard .vtWord { font-weight:700; margin-top:6px; font-size:.92rem; color:var(--text); }
-  .vtCard .vtGloss { color:var(--text-faint); font-size:.7rem; }
-  .vtCard .vtBadge { position:absolute; top:-10px; left:50%; transform:translateX(-50%);
-                      background:var(--warn-soft); color:var(--warn); font-size:.65rem; font-weight:800;
-                      padding:3px 9px; border-radius:8px; white-space:nowrap; border:1px solid var(--warn); }
-  .vtCard .vtBadge .ic { margin-right:2px; }
+  /* two-pane bridge layout: input on the left, the conversation on the right */
+  .bridge { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr); gap:20px; align-items:start; }
+  .bridgeMain, .bridgeSide { display:flex; flex-direction:column; gap:14px; min-width:0; }
+  /* narrow screens: one column, ordered by what the user needs next (state, camera, sentence, thread, then settings) */
+  @media (max-width:1000px) {
+    .bridge { display:flex; flex-direction:column; gap:14px; }
+    .bridgeMain, .bridgeSide { display:contents; }
+    #stateBanner { order:1; } .stageWrap { order:2; } #speechScreen { order:2; } #appHint { order:3; }
+    #composerCard { order:4; } .convCard { order:5; }
+    #camControls, #studyPanel, #backBtn { order:6; } #faceSettings { order:7; } #clinicalCard { order:8; } #vocabDrawer { order:9; }
+  }
+  #viewTranslate.researchMode .bridge { grid-template-columns:minmax(0,1fr); }
+  #viewTranslate.researchMode .bridgeSide { display:none; }
+  #viewTranslate.researchMode .bridgeMain { max-width:980px; width:100%; margin:0 auto; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:18px 20px; }
+  .card h2 { margin:0 0 10px; font-size:1.1rem; font-weight:700; line-height:1.4; }
+  .card h2 small { font-weight:500; color:var(--text-faint); font-size:.78rem; margin-left:8px; }
+
+  /* state banner: the one place the user looks to know what the system is doing */
+  .stateBanner { display:flex; align-items:center; gap:14px; padding:14px 18px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface); min-height:80px; }
+  .stIcon { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--surface-muted); color:var(--text-muted); }
+  .stIcon svg { width:26px; height:26px; }
+  .stText { min-width:0; flex:1; }
+  .stBig { font-size:1.55rem; font-weight:800; line-height:1.3; overflow-wrap:anywhere; }
+  .stSmall { font-size:.85rem; line-height:1.4; }
+  .stMeterWrap { display:flex; align-items:center; gap:10px; flex-shrink:0; font-weight:700; }
+  .stMeter { width:120px; height:12px; border-radius:99px; background:rgba(255,255,255,.35); overflow:hidden; }
+  .stMeterFill { height:100%; width:0; background:#fff; border-radius:99px; }
+  .st-loading { background:var(--surface-muted); }
+  .st-reading { background:var(--accent-soft); color:var(--accent-strong); border-color:transparent; }
+  .st-reading .stIcon { background:#fff; color:var(--accent-strong); }
+  .st-listening { background:var(--accent-soft); color:var(--accent-strong); border-color:transparent; }
+  .st-listening .stIcon { background:#fff; color:var(--accent-strong); }
+  .st-confirmed { background:var(--accent); color:#fff; border-color:transparent; }
+  .st-confirmed .stIcon { background:rgba(255,255,255,.2); color:#fff; }
+  .st-uncertain { background:var(--warn-soft); color:var(--warn); border-color:var(--warn-line); }
+  .st-uncertain .stIcon { background:#fff; color:var(--warn); }
+  .st-error { background:var(--danger-soft); color:var(--danger); border-color:var(--danger); }
+  .st-error .stIcon { background:#fff; color:var(--danger); }
 
   /* camera stage */
-  .stageWrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-               box-shadow:var(--shadow-md); padding:10px; width:100%; }
+  .stageWrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); padding:10px; width:100%; }
   .stage { position:relative; aspect-ratio:16/9; background:var(--surface-muted); border-radius:12px; overflow:hidden; }
   video, canvas { width:100%; height:100%; border-radius:12px; display:block; object-fit:cover; }
   canvas { position:absolute; top:0; left:0; }
-  #cameraGate { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-                gap:10px; background:var(--surface-muted); border-radius:12px; z-index:2; }
-  #cameraGate .hint { margin:0; max-width:80%; }
-  #status { position:absolute; top:12px; left:12px; background:rgba(16,18,22,.65); color:#fff;
-            backdrop-filter:blur(8px); padding:7px 14px; border-radius:10px; font-size:.92rem;
-            border:1px solid rgba(255,255,255,.08); }
-  #big { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-         font-size:9rem; font-weight:800; color:#fff; text-shadow:0 6px 30px rgba(0,0,0,.6); }
+  #status { display:none; }
+  #big { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:9rem; font-weight:800; color:#fff; text-shadow:0 6px 30px rgba(0,0,0,.6); }
+  #cameraGate { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:var(--surface-muted); border-radius:12px; z-index:2; padding:20px; text-align:center; }
+  .gateIcon { width:64px; height:64px; border-radius:20px; background:var(--accent-soft); color:var(--accent-strong); display:flex; align-items:center; justify-content:center; }
+  .gateIcon svg { width:34px; height:34px; }
+  #cameraGate h3 { margin:6px 0 0; font-size:1.3rem; }
+  #cameraGate .hint { margin:0; max-width:420px; }
+  @media (max-width:600px) {
+    .stage { aspect-ratio:3/4; }
+    #cameraGate { padding:14px; gap:8px; }
+    .gateIcon { width:52px; height:52px; }
+    #cameraGate h3 { font-size:1.15rem; }
+  }
+  .lockNote { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; color:var(--text-muted); }
+  .hint { color:var(--text-muted); font-size:.88rem; line-height:1.55; margin:0; text-align:left; }
 
-  /* game HUD */
-  #gameHud { position:absolute; top:10px; left:50%; transform:translateX(-50%);
-             display:flex; gap:20px; align-items:center; background:rgba(16,18,22,.65); color:#fff;
-             backdrop-filter:blur(10px); padding:8px 22px; border-radius:14px; border:1px solid rgba(255,255,255,.08); }
-  #gameHud .ic { color:var(--text-faint); }
+  /* game HUD and overlays that sit on live video: dark glass keeps white text readable on any background */
+  #gameHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:20px; align-items:center; background:rgba(14,16,20,.82); color:#fff; padding:8px 22px; border-radius:14px; }
+  #gameHud .ic { color:#c9cdd3; }
   #timer { font-size:1.5rem; font-weight:800; }
   #score { font-size:1.5rem; font-weight:800; color:#6ee7a8; }
-  #target { position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
-            background:rgba(16,18,22,.65); color:#fff; backdrop-filter:blur(10px); padding:12px 36px;
-            border-radius:16px; font-size:2.4rem; font-weight:800; border:1px solid rgba(255,255,255,.08); }
+  #target { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(14,16,20,.82); color:#fff; padding:12px 36px; border-radius:16px; font-size:2.4rem; font-weight:800; white-space:nowrap; }
   #target b { color:#6ee7a8; }
-  #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%);
-           font-size:6rem; opacity:0; transition:opacity .1s; pointer-events:none; }
+  #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:6rem; opacity:0; transition:opacity .1s; pointer-events:none; }
   #flash .ic { stroke-width:2.5; filter:drop-shadow(0 6px 20px rgba(0,0,0,.35)); }
-
-  /* test overlays */
-  #result { position:absolute; bottom:58px; left:50%; transform:translateX(-50%);
-            background:rgba(16,18,22,.6); color:#fff; backdrop-filter:blur(8px); padding:10px 30px;
-            border-radius:14px; font-size:2.2rem; font-weight:800; white-space:nowrap; border:1px solid rgba(255,255,255,.08); }
-  #sentence { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
-              background:rgba(16,18,22,.55); color:#fff; backdrop-filter:blur(6px); padding:5px 18px;
-              border-radius:10px; font-size:1.02rem; white-space:nowrap; }
-  .bars { position:absolute; right:12px; top:50%; transform:translateY(-50%);
-          width:230px; background:rgba(16,18,22,.6); backdrop-filter:blur(10px); color:#fff;
-          padding:14px; border-radius:14px; border:1px solid rgba(255,255,255,.08); }
+  .bars { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:230px; background:rgba(14,16,20,.82); color:#fff; padding:14px; border-radius:14px; }
+  body:not(.diag) #bars { display:none !important; }   /* the model's raw guesses are diagnostics: hidden unless asked for */
   .bar-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
   .bar-label { width:74px; text-align:right; font-size:.85rem; }
-  .bar-track { flex:1; background:rgba(255,255,255,.14); border-radius:6px; height:16px; overflow:hidden; }
+  .bar-track { flex:1; background:rgba(255,255,255,.18); border-radius:6px; height:16px; overflow:hidden; }
   .bar-fill { height:100%; background:#34d399; width:0%; transition:width .15s; }
   .bar-pct { width:38px; font-size:.8rem; text-align:right; }
-
-  /* compare mode (RQ3: pooled-baseline vs pooled+DANN, same gesture, side by side) */
   .barsLeft { left:12px; right:auto; }
   .barsRight { right:12px; }
   .barsHead { font-weight:700; text-align:center; margin-bottom:8px; font-size:.9rem; color:#6ee7a8; }
   #barsCompareDann .barsHead { color:#fbbf6a; }
-  #compareStatus { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
-                   background:rgba(16,18,22,.6); color:#fff; backdrop-filter:blur(6px); padding:6px 20px;
-                   border-radius:10px; font-size:.95rem; white-space:nowrap; text-align:center; max-width:94%; overflow-x:auto; }
-  @media (max-width: 700px) {
+  #compareStatus { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(14,16,20,.82); color:#fff; padding:6px 20px; border-radius:10px; font-size:.95rem; white-space:nowrap; text-align:center; max-width:94%; overflow-x:auto; }
+  @media (max-width:700px) {
     #barsCompareBaseline, #barsCompareDann { width:150px; padding:10px; }
     #barsCompareBaseline .bar-label, #barsCompareDann .bar-label { width:44px; font-size:.72rem; }
     #barsCompareBaseline .bar-pct, #barsCompareDann .bar-pct { width:30px; font-size:.7rem; }
     #barsCompareBaseline .barsHead, #barsCompareDann .barsHead { font-size:.78rem; }
   }
+  #faceChip { position:absolute; top:12px; right:12px; background:rgba(14,16,20,.82); color:#fff; padding:7px 14px; border-radius:10px; font-size:.9rem; font-weight:700; }
+  #faceChip.q { color:#fbbf6a; } #faceChip.neg { color:#ff9a90; } #faceChip.nofa { color:#c9cdd3; font-weight:600; }
+  #studyHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(14,16,20,.82); color:#fff; padding:8px 18px; border-radius:14px; font-size:.95rem; font-weight:700; white-space:nowrap; }
 
-  /* clinical summary card (schema v3) -- rule-based, not LLM-derived */
-  #clinicalCard { width:960px; max-width:97vw; background:var(--surface); border:1px solid var(--border);
-                  border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px 24px; margin-top:14px; }
-  .clinHead { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
-  .clinHead .t { font-weight:700; font-size:1rem; }
-  .clinHead .d { color:var(--text-faint); font-size:.76rem; }
-  .clinEmpty { color:var(--text-muted); font-size:.9rem; text-align:center; padding:10px 0; }
-  .clinPriority { display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; font-weight:700;
-                  border-left:4px solid; margin-bottom:14px; }
-  .clinPriority.urgent { background:var(--danger-soft); color:var(--danger); border-left-color:var(--danger); }
-  .clinPriority.normal { background:var(--accent-soft); color:var(--accent-strong); border-left-color:var(--accent); }
-  .clinGrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; }
-  .clinLabel { font-size:.7rem; color:var(--text-faint); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
-  .clinValue { font-weight:600; color:var(--text); font-size:.95rem; }
-  .clinValue.flagYes { color:var(--danger); }
-  .clinValue.empty { color:var(--text-faint); font-weight:400; }
-  .clinRaw { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
-  .clinRawRow { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-  .clinSign { background:var(--surface-muted); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:.85rem; }
-  .clinSign small { color:var(--text-faint); margin-left:4px; }
-  .clinSign.lowConf { border-color:var(--warn); background:var(--warn-soft); }
+  /* controls under the camera */
+  .camControls { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; font-size:.9rem; color:var(--text-muted); }
+  .chk { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; min-height:40px; border:1px solid var(--border); border-radius:999px; background:var(--surface); cursor:pointer; color:var(--text); font-size:.9rem; }
+  .chk input { width:18px; height:18px; accent-color:var(--accent); margin:0; }
+  .camControls select { font-family:inherit; border:1px solid var(--border-strong); border-radius:10px; padding:8px 10px; min-height:40px; background:var(--surface); color:var(--text); font-size:.9rem; }
+  .camControls button { padding:8px 16px; font-size:.9rem; }
+  .focusInfo { color:var(--text-faint); font-size:.8rem; }
 
-  /* speak -> sign (hearing person speaks, deaf person reads/watches) */
-  #speechScreen { width:100%; display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .speakPanel { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-                box-shadow:var(--shadow-sm); padding:26px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .grammarToggle { display:flex; gap:20px; font-size:.92rem; color:var(--text-muted); }
-  .grammarToggle label { display:flex; align-items:center; gap:6px; cursor:pointer; }
-  #micBtn { font-size:1.1rem; padding:16px 44px; border-radius:50px; }
-  #micBtn.listening { background:var(--danger); }
-  #micBtn.listening:hover { background:#b93a32; }
-  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(209,67,58,.45);} 50%{box-shadow:0 0 0 14px rgba(209,67,58,0);} }
-  #micBtn.listening { animation:pulse 1.4s infinite; }
-  #speakStatus { color:var(--text-muted); font-size:.9rem; min-height:1.2em; text-align:center; }
-  #speakStatus.warnText { color:var(--danger); font-weight:600; }
-  #speakStatus .ic { margin-right:4px; }
-  #speakTranscript { font-size:1.1rem; color:var(--text); min-height:1.4em; text-align:center; }
-  .speakSentence { font-size:1.05rem; color:var(--warn); text-align:center; font-weight:600; }
-  .glossRow { display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:6px; margin-top:10px; }
-  .glossChip { background:var(--accent-soft); color:var(--accent-strong); font-weight:700; padding:6px 14px; border-radius:10px; }
-  .glossArrow { color:var(--text-faint); }
-  .glossEmpty { color:var(--text-muted); font-size:.9rem; }
-  .glossEmpty .ic { color:var(--warn); margin-right:4px; }
-  #speakClips { display:grid; grid-template-columns:repeat(auto-fill, minmax(110px,1fr)); gap:10px; width:100%; }
-  #speakClips video { width:100%; border-radius:8px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
-
-  /* research view */
-  #viewResearch { width:960px; max-width:97vw; display:flex; flex-direction:column; align-items:center; gap:18px; }
-  .researchIntro { text-align:center; max-width:560px; }
-  .researchIntro .t { font-weight:700; font-size:1.05rem; margin-bottom:4px; }
-  .researchIntro .d { color:var(--text-muted); font-size:.85rem; line-height:1.5; }
-  .modeBtns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; width:100%; }
-  .modeCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-              box-shadow:var(--shadow-sm); padding:24px 26px; width:230px; cursor:pointer;
-              transition:transform .15s, box-shadow .15s, border-color .15s; text-align:center; }
-  .modeCard:hover { border-color:var(--border-strong); box-shadow:var(--shadow-md); transform:translateY(-3px); }
-  .modeIcon { width:48px; height:48px; border-radius:14px; background:var(--warn-soft); color:var(--warn);
-              display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
-  .modeIcon svg { width:23px; height:23px; }
-  .modeCard .t { font-size:1.05rem; font-weight:700; margin:0 0 4px; }
-  .modeCard .d { font-size:.82rem; color:var(--text-muted); line-height:1.45; }
-
-  /* camera controls: person focus, model choice, finish button */
-  .camControls { width:100%; display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; justify-content:center;
-                 font-size:.85rem; color:var(--text-muted); }
-  .camControls label { display:flex; align-items:center; gap:6px; cursor:pointer; }
-  .camControls select { font-family:inherit; border:1px solid var(--border-strong); border-radius:8px; padding:6px 8px;
-                        background:var(--surface); color:var(--text); font-size:.85rem; }
-  .camControls button { padding:7px 14px; font-size:.82rem; }
-  .focusInfo { color:var(--text-faint); font-size:.78rem; }
-
-  /* word bubbles with the face reading, and the face settings panel */
-  #wordRow { width:100%; display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:center; min-height:36px; }
-  #wordRow .wrLabel { color:var(--text-faint); font-size:.78rem; }
-  .wordBubble { display:inline-flex; align-items:baseline; gap:7px; background:var(--surface); border:1px solid var(--border-strong);
-                border-radius:14px; padding:6px 12px; font-size:.95rem; box-shadow:var(--shadow-sm); }
-  .wordBubble .n { color:var(--text-faint); font-size:.7rem; }
+  /* composer: the sentence being built */
+  #wordRow { display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:44px; }
+  #wordRow .wrLabel { color:var(--text-faint); font-size:.85rem; }
+  .wordBubble { display:inline-flex; align-items:baseline; gap:8px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; padding:7px 13px; font-size:1.1rem; }
+  .wordBubble .n { color:var(--text-faint); font-size:.72rem; }
   .wordBubble b { font-weight:700; }
-  .wordBubble .tag { font-size:.74rem; font-weight:700; padding:1px 8px; border-radius:999px; background:var(--surface-muted); color:var(--text-muted); }
-  .wordBubble.q { border-color:var(--warn); }
+  .wordBubble .tag { font-size:.78rem; font-weight:700; padding:1px 9px; border-radius:999px; background:var(--surface-muted); color:var(--text-muted); }
+  .wordBubble.q { border-color:var(--warn-line); }
   .wordBubble.neg { border-color:var(--danger); }
   .wordBubble .tag.q { background:var(--warn-soft); color:var(--warn); }
   .wordBubble .tag.neg { background:var(--danger-soft); color:var(--danger); }
   .wordBubble .tag.yes { background:var(--accent-soft); color:var(--accent-strong); }
-  .wordBubble .tag.none { background:var(--surface-muted); color:var(--text-faint); font-weight:600; }
-  .wordBubble.old { opacity:.55; }
-  #faceChip { position:absolute; top:12px; right:12px; background:rgba(16,18,22,.65); color:#fff; backdrop-filter:blur(8px);
-              padding:7px 14px; border-radius:10px; font-size:.88rem; font-weight:700; border:1px solid rgba(255,255,255,.08); }
-  #faceChip.q { color:#fbbf6a; } #faceChip.neg { color:#ff8a80; } #faceChip.nofa { color:#b8bcc4; font-weight:600; }
-  .faceSettings { width:100%; max-width:620px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-                  box-shadow:var(--shadow-sm); padding:12px 18px; }
-  .faceSettings summary { cursor:pointer; font-weight:700; font-size:.88rem; }
+  .wordBubble .tag.none { background:var(--surface-muted); color:var(--text-muted); font-weight:600; }
+  .wordBubble.old { opacity:.6; }
+  #sentence { font-size:1.4rem; font-weight:600; line-height:1.5; min-height:2.6em; padding:10px 0 4px; color:var(--text); overflow-wrap:anywhere; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-top:6px; }
+  .actions .switch { margin-left:auto; display:inline-flex; align-items:center; gap:8px; font-size:.92rem; cursor:pointer; }
+  .actions .switch input { width:20px; height:20px; accent-color:var(--accent); margin:0; }
+
+  /* conversation: both people, one thread */
+  .convHead { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; margin-bottom:10px; }
+  .who { font-size:.85rem; font-weight:700; padding:3px 12px; border-radius:999px; }
+  .who.deaf { background:var(--accent-soft); color:var(--accent-strong); }
+  .who.hearing { background:var(--warn-soft); color:var(--warn); }
+  .bridgeArc { width:100%; height:18px; color:var(--border-strong); }
+  #convLog { display:flex; flex-direction:column; gap:12px; min-height:200px; max-height:52vh; overflow-y:auto; padding:2px; }
+  .convEmpty { color:var(--text-muted); text-align:center; padding:34px 14px; font-size:.95rem; line-height:1.6; }
+  .msg { max-width:94%; display:flex; flex-direction:column; gap:4px; }
+  .msg.deaf { align-self:flex-start; }
+  .msg.hearing { align-self:flex-end; align-items:flex-end; }
+  .msgWho { font-size:.78rem; color:var(--text-muted); }
+  .msgBubble { padding:12px 16px; border-radius:18px 18px 18px 6px; font-size:1.25rem; line-height:1.5; background:var(--accent-soft); color:var(--text); overflow-wrap:anywhere; }
+  .msg.hearing .msgBubble { border-radius:18px 18px 6px 18px; background:var(--warn-soft); }
+  .msgChips { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+  .chipOk, .chipNo { font-size:.82rem; padding:2px 10px; border-radius:999px; background:var(--surface); }
+  .chipOk { border:1px solid var(--accent); color:var(--accent-strong); font-weight:600; }
+  .chipNo { border:1px dashed var(--border-strong); color:var(--text-muted); }
+  .convFoot { display:flex; justify-content:flex-end; margin-top:10px; }
+
+  /* vocabulary panel */
+  #vocabDrawer { padding:14px 18px; }
+  #vocabDrawer summary { cursor:pointer; font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; min-height:32px; }
+  #vocabDrawer summary .ic { color:var(--accent); }
+  #vocabDrawer[open] summary { margin-bottom:12px; }
+  .vtScope { color:var(--text-muted); font-size:.88rem; margin:0 0 12px; line-height:1.6; }
+  .vocabChips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .vchip { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; border:1px solid var(--border); background:var(--surface-muted); font-size:.9rem; color:var(--text); }
+  .vchip.ok { border-color:var(--accent); background:var(--accent-soft); color:var(--accent-strong); font-weight:600; }
+  .vchip small { font-size:.68rem; font-weight:600; color:var(--text-muted); }
+  .vtGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px; }
+  .vtCard { background:var(--surface-muted); border:1px solid var(--border); border-radius:12px; padding:8px; text-align:center; position:relative; }
+  .vtCard.vtBest { border-color:var(--warn-line); }
+  .vtCard video { width:100%; border-radius:8px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+  .vtCard .vtWord { font-weight:700; margin-top:6px; font-size:.95rem; color:var(--text); }
+  .vtCard .vtGloss { color:var(--text-muted); font-size:.72rem; }
+  .vtCard .vtBadge { position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:var(--warn-soft); color:var(--warn); font-size:.68rem; font-weight:800; padding:3px 9px; border-radius:8px; white-space:nowrap; border:1px solid var(--warn-line); }
+  .vtCard .vtBadge .ic { margin-right:2px; }
+
+  /* face settings */
+  .faceSettings { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:12px 18px; }
+  .faceSettings summary { cursor:pointer; font-weight:700; font-size:.95rem; min-height:32px; display:flex; align-items:center; }
   .faceSettings[open] summary { margin-bottom:6px; }
-  .fsRow { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:10px 0; font-size:.85rem; color:var(--text-muted); }
-  .fsRow label { display:flex; align-items:center; gap:6px; cursor:pointer; }
-  .fsRow button { padding:8px 16px; font-size:.84rem; }
-  .fsInfo { font-size:.8rem; color:var(--text-faint); }
+  .fsRow { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:10px 0; font-size:.9rem; color:var(--text-muted); }
+  .fsRow label { display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--text); }
+  .fsRow input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); }
+  .fsRow button { padding:8px 16px; font-size:.9rem; }
+  .fsInfo { font-size:.85rem; color:var(--text-muted); }
   .fsInfo.warn { color:var(--warn); font-weight:600; }
-  .fsRange { display:block; font-size:.82rem; color:var(--text-muted); margin-top:12px; }
+  .fsRange { display:block; font-size:.9rem; color:var(--text-muted); margin-top:12px; }
   .fsRange b { color:var(--text); margin-left:6px; }
   .fsRange input[type=range] { width:100%; accent-color:var(--accent); }
-  .fsNote { font-size:.76rem; color:var(--text-faint); line-height:1.5; margin:10px 0 2px; }
+  .fsNote { font-size:.82rem; color:var(--text-muted); line-height:1.55; margin:10px 0 2px; }
 
-  /* volunteer study mode */
-  #studyHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(16,18,22,.65); color:#fff;
-              backdrop-filter:blur(10px); padding:8px 18px; border-radius:14px; font-size:.95rem; font-weight:700;
-              border:1px solid rgba(255,255,255,.08); white-space:nowrap; }
-  #studyPanel { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
-                box-shadow:var(--shadow-sm); padding:18px 20px; }
+  /* speech and typed input: hearing person to deaf person */
+  #speechScreen { display:flex; flex-direction:column; gap:14px; }
+  .speakForm { display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 10px; }
+  #speakText { flex:1 1 240px; min-width:0; font-family:inherit; font-size:1.2rem; padding:14px 16px; border:2px solid var(--border-strong); border-radius:var(--radius-md); background:var(--surface); color:var(--text); text-align:left; }
+  #speakText:focus-visible { border-color:var(--focus); }
+  .speakForm button { min-height:52px; padding:10px 22px; font-size:1.05rem; }
+  #micBtn { background:var(--surface); color:var(--text); border:2px solid var(--border-strong); }
+  #micBtn:hover { background:var(--surface-muted); }
+  #micBtn.listening { background:var(--danger); color:#fff; border-color:var(--danger); outline:4px solid rgba(171,42,34,.25); outline-offset:0; }
+  #speakStatus { color:var(--text-muted); font-size:.92rem; min-height:1.4em; }
+  #speakStatus.warnText { color:var(--danger); font-weight:600; }
+  #speakStatus .ic { margin-right:4px; }
+  #speakTranscript { font-size:1.15rem; color:var(--text); min-height:1.4em; }
+  .opts { margin:10px 0; font-size:.9rem; color:var(--text-muted); }
+  .opts summary { cursor:pointer; font-weight:600; min-height:32px; }
+  .grammarToggle { display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:.9rem; color:var(--text); }
+  .grammarToggle label { display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .speakSentence { font-size:1.1rem; color:var(--text); font-weight:600; margin-top:8px; }
+  .glossRow { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; }
+  .glossChip { background:var(--accent-soft); color:var(--accent-strong); font-weight:700; padding:6px 14px; border-radius:10px; }
+  .glossArrow { color:var(--text-muted); }
+  .glossEmpty { color:var(--text-muted); font-size:.95rem; }
+  .glossEmpty .ic { color:var(--warn); margin-right:4px; }
+  #speakClips { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px; width:100%; margin-top:10px; }
+  .signCard { border:1px solid var(--border); border-radius:var(--radius-md); padding:10px; background:var(--surface); display:flex; flex-direction:column; gap:8px; }
+  .signCard video { width:100%; border-radius:10px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+  .signCard .w { font-weight:700; font-size:1.15rem; }
+  .signCard .en { font-size:.8rem; color:var(--text-muted); }
+  .signCard a { font-size:.88rem; color:var(--accent-strong); font-weight:600; }
+  .signCard.none { border-style:dashed; border-color:var(--border-strong); background:var(--surface-muted); }
+  .signCard.none .w { color:var(--text-muted); font-weight:600; }
+
+  /* research view (evaluation tools) */
+  .researchIntro { text-align:center; max-width:560px; align-self:center; }
+  .researchIntro .t { font-weight:700; font-size:1.15rem; margin-bottom:4px; }
+  .researchIntro .d { color:var(--text-muted); font-size:.92rem; line-height:1.55; }
+  .modeBtns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; width:100%; }
+  .modeCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:24px 26px; width:250px; cursor:pointer; transition:transform .15s, box-shadow .15s, border-color .15s; text-align:center; }
+  .modeCard:hover { border-color:var(--border-strong); box-shadow:var(--shadow-md); transform:translateY(-3px); }
+  .modeIcon { width:48px; height:48px; border-radius:14px; background:var(--warn-soft); color:var(--warn); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+  .modeIcon svg { width:23px; height:23px; }
+  .modeCard .t { font-size:1.08rem; font-weight:700; margin:0 0 4px; }
+  .modeCard .d { font-size:.9rem; color:var(--text-muted); line-height:1.5; }
+  #viewResearch .lb { align-self:center; }
+
+  /* clinical card (parked behind SHOW_CLINICAL_CARD) */
+  #clinicalCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px 24px; }
+  .clinHead { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .clinHead .t { font-weight:700; font-size:1rem; }
+  .clinHead .d { color:var(--text-muted); font-size:.8rem; }
+  .clinEmpty { color:var(--text-muted); font-size:.92rem; text-align:center; padding:10px 0; }
+  .clinPriority { display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; font-weight:700; border-left:4px solid; margin-bottom:14px; }
+  .clinPriority.urgent { background:var(--danger-soft); color:var(--danger); border-left-color:var(--danger); }
+  .clinPriority.normal { background:var(--accent-soft); color:var(--accent-strong); border-left-color:var(--accent); }
+  .clinGrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; }
+  .clinLabel { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+  .clinValue { font-weight:600; color:var(--text); font-size:.95rem; }
+  .clinValue.flagYes { color:var(--danger); }
+  .clinValue.empty { color:var(--text-muted); font-weight:400; }
+  .clinRaw { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .clinRawRow { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .clinSign { background:var(--surface-muted); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:.85rem; }
+  .clinSign small { color:var(--text-muted); margin-left:4px; }
+  .clinSign.lowConf { border-color:var(--warn-line); background:var(--warn-soft); }
+
+  /* volunteer study */
+  #studyPanel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:18px 20px; }
   .studyRow { display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:center; margin:6px 0; }
-  .studyRow label { font-size:.85rem; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
-  .studyRow select, .studyRow input { font-family:inherit; font-size:.9rem; padding:8px 10px; border:1px solid var(--border-strong);
-                                      border-radius:8px; background:var(--surface); color:var(--text); text-align:left; }
-  .studyRow button { padding:9px 18px; font-size:.88rem; }
-  .studyNote { color:var(--text-faint); font-size:.78rem; text-align:center; margin:6px 0 0; line-height:1.5; }
+  .studyRow label { font-size:.9rem; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+  .studyRow select, .studyRow input { font-family:inherit; font-size:.95rem; padding:8px 10px; border:1px solid var(--border-strong); border-radius:10px; background:var(--surface); color:var(--text); text-align:left; }
+  .studyRow button { padding:9px 18px; font-size:.92rem; }
+  .studyNote { color:var(--text-muted); font-size:.82rem; text-align:center; margin:6px 0 0; line-height:1.55; }
   .studyWarn { color:var(--danger); font-weight:600; }
-  #studySummary { text-align:center; font-size:.95rem; line-height:1.7; }
+  #studySummary { text-align:center; font-size:.98rem; line-height:1.7; }
   #studySummary b { color:var(--accent-strong); }
 
-  /* gameover */
-  #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; }
+  /* gameover and leaderboard */
+  #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; padding:0 24px; }
   #finalScore { font-size:3rem; font-weight:900; color:var(--accent); }
-  input { background:var(--surface); border:1px solid var(--border-strong); color:var(--text); padding:10px 16px;
-          border-radius:10px; font-size:1rem; text-align:center; }
-  input:focus { outline:none; border-color:var(--accent); }
-  .lb { background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm);
-        border-radius:14px; padding:14px 20px; min-width:320px; }
+  input { font-family:inherit; }
+  #nameInput { background:var(--surface); border:2px solid var(--border-strong); color:var(--text); padding:10px 16px; border-radius:10px; font-size:1rem; text-align:center; }
+  .lb { background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm); border-radius:var(--radius-md); padding:14px 20px; min-width:320px; }
   .lb h3 { margin:0 0 8px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
   .lb h3 .ic { color:var(--warn); }
   .lb-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); }
@@ -266,269 +324,327 @@
   .lb-row .nm { flex:1; }
   .lb-row .sc { font-weight:700; color:var(--accent); }
 
-  button { background:var(--accent); color:#fff; border:none; padding:12px 30px;
-           border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer;
-           transition:background .15s, transform .1s; font-family:inherit; }
+  /* buttons */
+  button { background:var(--accent); color:#fff; border:none; padding:12px 26px; min-height:44px; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer; transition:background .15s; font-family:inherit; }
   button:hover { background:var(--accent-strong); }
   button:active { transform:translateY(1px); }
-  .ghost { background:transparent; color:var(--text-muted); border:1px solid var(--border-strong); }
+  button:disabled { background:var(--surface-muted); color:var(--text-muted); cursor:default; }
+  .ghost { background:var(--surface); color:var(--text); border:1px solid var(--border-strong); }
   .ghost:hover { background:var(--surface-muted); color:var(--text); }
   .ghost .ic { margin-right:6px; }
-  .hint { color:var(--text-muted); font-size:.82rem; max-width:680px; text-align:center; line-height:1.5; margin:10px 14px; }
+  .tiny { padding:6px 14px; min-height:36px; font-size:.88rem; }
+
+  /* privacy dialog */
+  dialog { border:none; border-radius:var(--radius-lg); padding:26px 28px; max-width:600px; width:calc(100% - 32px); box-shadow:0 30px 80px -20px rgba(20,24,29,.5); color:var(--text); }
+  dialog::backdrop { background:rgba(20,24,29,.5); }
+  dialog h2 { margin:0 0 4px; font-size:1.35rem; }
+  dialog h3 { margin:18px 0 6px; font-size:1rem; }
+  dialog ul { margin:0; padding-left:20px; color:var(--text); line-height:1.65; }
+  dialog .fsRow { flex-direction:column; align-items:flex-start; gap:8px; }
+  dialog form[method=dialog] { margin-top:18px; display:flex; justify-content:flex-end; }
 </style>
 </head>
 <body>
-  <div class="appHeader">
-    <div class="headerGlow"></div>
-    <h1>
-      <svg class="ic logoMark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 16c0-4.5 2.5-8 4.5-8S9 11 12 11s4.5-3 6.5-3S21 11.5 21 16"/><path d="M3 20h18"/>
-      </svg>
-      ThSL Bridge
-    </h1>
-    <div class="sub">ผู้ช่วยสื่อสารระหว่างคนหูหนวกกับคนทั่วไป</div>
-  </div>
-  <svg class="archDivider" viewBox="0 0 200 14" preserveAspectRatio="none">
-    <path d="M0 11 Q 100 -3 200 11" stroke="currentColor" stroke-width="1.5" fill="none"/>
-  </svg>
+  <a class="skip" href="#main">ข้ามไปที่เนื้อหา</a>
 
-  <nav class="topNav">
-    <button class="navPill active" id="navTranslate">แปลภาษา</button>
-    <button class="navPill" id="navResearch">งานวิจัย</button>
-  </nav>
-
-  <!-- TRANSLATE (the product: two directions, one screen) -->
-  <div id="viewTranslate">
-    <div class="toggleTrack" id="toggleTrack">
-      <div class="toggleThumb" id="toggleThumb"></div>
-      <button class="toggleOpt active" id="dirSignBtn">มือ → เสียง</button>
-      <button class="toggleOpt" id="dirSpeechBtn">เสียง → มือ</button>
-    </div>
-
-    <details id="vocabDrawer">
-      <summary>
-        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+  <header class="appBar">
+    <div class="brand">
+      <div class="brandMark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 16c0-4.5 2.5-8 4.5-8S9 11 12 11s4.5-3 6.5-3S21 11.5 21 16"/><path d="M3 20h18"/>
         </svg>
-        คำศัพท์ที่รองรับตอนนี้ (10 คำ)
-      </summary>
-      <div class="vtScope">
-        ระบบรู้จักเฉพาะ 10 คำนี้ ยังไม่ใช่ภาษามือไทยทั้งหมด ลองทำตามท่าด้านล่างดูก่อนได้
-        <span class="en">The system currently knows these 10 signs only, not all of Thai Sign Language. Try one below.</span>
       </div>
-      <div class="vtGrid" id="vtGrid"></div>
-    </details>
+      <div>
+        <div class="brandName">ThSL Bridge</div>
+        <div class="brandSub">ผู้ช่วยสื่อสารระหว่างคนหูหนวกกับคนทั่วไป <span lang="en">Sign language bridge</span></div>
+      </div>
+    </div>
+    <div class="barRight">
+      <nav class="topNav" aria-label="เมนูหลัก">
+        <button class="navPill active" id="navTranslate">แปลภาษา</button>
+        <button class="navPill" id="navResearch">งานวิจัย</button>
+      </nav>
+      <button class="privacyChip" id="privacyBtn" aria-haspopup="dialog">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        ข้อมูลอยู่ในเครื่องนี้
+      </button>
+    </div>
+  </header>
 
-    <!-- camera stage: shared by sign-to-speech translate AND the research game/compare modes -->
-    <div class="stageWrap" id="appScreen">
-      <div class="stage">
-        <div id="cameraGate">
-          <button id="startCameraBtn">
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 7a2 2 0 0 0-2-2h-3.17L16 3H8L6.17 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><circle cx="12" cy="13" r="4"/>
-            </svg>
-            เปิดกล้องเพื่อเริ่มแปล
+  <main id="main">
+    <!-- TRANSLATE: two directions, one thread -->
+    <div id="viewTranslate">
+      <div class="toggleTrack" id="toggleTrack" role="group" aria-label="ทิศทางการสื่อสาร">
+        <div class="toggleThumb" id="toggleThumb"></div>
+        <button class="toggleOpt active" id="dirSignBtn">คนหูหนวกทำท่า <small lang="en">Sign to text and speech</small></button>
+        <button class="toggleOpt" id="dirSpeechBtn">คนได้ยินพิมพ์หรือพูด <small lang="en">Type or speak to sign</small></button>
+      </div>
+
+      <div class="bridge">
+        <section class="bridgeMain" aria-label="ส่วนรับข้อมูล">
+          <div id="stateBanner" class="stateBanner st-loading" role="status" aria-live="polite">
+            <div class="stIcon" id="stIcon" aria-hidden="true"></div>
+            <div class="stText">
+              <div class="stBig" id="stBig">กำลังโหลด</div>
+              <div class="stSmall" id="stSmall" lang="en">Loading</div>
+            </div>
+            <div class="stMeterWrap hidden" id="stMeterWrap">
+              <div class="stMeter" role="meter" aria-label="ความมั่นใจ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="stMeter"><div class="stMeterFill" id="stMeterFill"></div></div>
+              <span id="stMeterNum"></span>
+            </div>
+          </div>
+          <div id="result" class="srOnly">—</div>
+
+          <!-- camera stage: shared by sign-to-speech translate AND the research game/compare/study modes -->
+          <div class="stageWrap" id="appScreen">
+            <div class="stage">
+              <div id="cameraGate">
+                <div class="gateIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2h-3.17L16 3H8L6.17 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <h3>เปิดกล้องเพื่อเริ่มแปลภาษามือ</h3>
+                <p class="hint">เบราว์เซอร์จะขออนุญาตใช้กล้อง ภาพจากกล้องและจุดมือประมวลผลในเครื่องนี้ ไม่ถูกส่งออกไปไหน</p>
+                <button id="startCameraBtn">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7a2 2 0 0 0-2-2h-3.17L16 3H8L6.17 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><circle cx="12" cy="13" r="4"/></svg>
+                  เปิดกล้อง
+                </button>
+              </div>
+              <video id="video" autoplay playsinline muted aria-label="ภาพจากกล้อง"></video>
+              <canvas id="overlay" aria-hidden="true"></canvas>
+              <div id="status">กำลังโหลด...</div>
+              <div id="big"></div>
+              <!-- game -->
+              <div id="gameHud" class="hidden">
+                <span>
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+                  <span id="timer">45</span>
+                </span>
+                <span>
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/></svg>
+                  <span id="score">0</span>
+                </span>
+              </div>
+              <div id="target" class="hidden"></div>
+              <div id="flash"></div>
+              <!-- diagnostics: the model's raw top guesses, hidden unless turned on -->
+              <div class="bars hidden" id="bars"></div>
+              <!-- compare (RQ3: pooled-baseline vs pooled+DANN) -->
+              <div class="bars barsLeft hidden" id="barsCompareBaseline"><div class="barsHead">Baseline</div></div>
+              <div class="bars barsRight hidden" id="barsCompareDann"><div class="barsHead">+ DANN</div></div>
+              <div id="compareStatus" class="hidden">ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย</div>
+              <div id="studyHud" class="hidden"></div>
+              <div id="faceChip" class="hidden"></div>
+            </div>
+          </div>
+          <p class="hint" id="appHint"></p>
+
+          <div class="camControls" id="camControls">
+            <label class="chk" title="แสดงจุดมือและกรอบใบหน้าบนภาพ"><input type="checkbox" id="overlayToggle" checked> แสดงจุดมือและใบหน้า</label>
+            <label class="chk" title="ใช้เฉพาะมือของคนที่หน้าใหญ่และชัดที่สุดในภาพ ไม่สนใจมือของคนอื่นที่ยืนอยู่ข้าง ๆ"><input type="checkbox" id="focusToggle" checked> โฟกัสเฉพาะผู้ใช้หลัก</label>
+            <button class="ghost tiny" id="relockBtn">เลือกผู้ใช้ใหม่</button>
+            <span class="focusInfo" id="focusInfo"></span>
+            <label class="chk" id="recWrap">โมเดล
+              <select id="recSelect" aria-label="เลือกโมเดล"></select>
+            </label>
+            <label class="chk" title="แสดงคำที่โมเดลทายและเปอร์เซ็นต์ สำหรับตรวจสอบ"><input type="checkbox" id="diagToggle"> แสดงรายละเอียดโมเดล</label>
+          </div>
+
+          <details class="faceSettings" id="faceSettings">
+            <summary>ตั้งค่าการอ่านสีหน้า</summary>
+            <div class="fsRow">
+              <label><input type="checkbox" id="toneToggle" checked> อ่านสีหน้าประกอบแต่ละคำ</label>
+              <button class="ghost tiny" id="calibBtn">ตั้งค่าหน้านิ่ง (นิ่งไว้ 2 วินาที)</button>
+              <span class="fsInfo warn" id="calibInfo">ยังไม่ได้ตั้งค่าหน้านิ่ง</span>
+            </div>
+            <label class="fsRange">คิ้วยกขึ้นเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tRaiseV"></b>
+              <input type="range" id="tRaise" min="0.05" max="0.8" step="0.01"></label>
+            <label class="fsRange">คิ้วขมวดเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tFurrowV"></b>
+              <input type="range" id="tFurrow" min="0.05" max="0.8" step="0.01"></label>
+            <label class="fsRange">ส่ายหน้าซ้ายขวาอย่างน้อยกี่องศาจึงนับว่าปฏิเสธ <b id="tShakeV"></b>
+              <input type="range" id="tShake" min="2" max="20" step="0.5"></label>
+            <label class="fsRange">พยักหน้าขึ้นลงอย่างน้อยกี่องศาจึงนับว่ายืนยัน <b id="tNodV"></b>
+              <input type="range" id="tNod" min="2" max="20" step="0.5"></label>
+            <div class="fsRow"><button class="ghost tiny" id="toneResetBtn">คืนค่าเริ่มต้น</button></div>
+            <p class="fsNote">ใบหน้าแต่ละคนไม่เหมือนกัน ควรกดตั้งค่าหน้านิ่งทุกครั้งที่เปลี่ยนคน ค่าที่ปรับไว้จะจำในเบราว์เซอร์นี้
+              ป้ายสีหน้าเป็นกฎที่ยังรอยืนยันกับผู้ใช้ภาษามือ ไม่ใช่ผลจากโมเดลที่ฝึกแล้ว</p>
+          </details>
+
+          <div id="studyPanel" class="hidden">
+            <div id="studySetup">
+              <div class="studyRow">
+                <label>รหัสผู้ร่วมทดสอบ <input id="studyCode" placeholder="เช่น S01" size="8" maxlength="12"></label>
+                <label>ประเภท
+                  <select id="studyType">
+                    <option value="deaf">คนหูหนวก</option>
+                    <option value="interpreter">ล่ามภาษามือ</option>
+                    <option value="hearing">คนได้ยิน</option>
+                  </select>
+                </label>
+                <label>จำนวนรอบ
+                  <select id="studyReps"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option></select>
+                </label>
+                <button id="studyStart">เริ่มทดสอบ</button>
+              </div>
+              <p class="studyNote">ระบบจะบอกคำให้ทำท่าทีละคำ (8 คำ x จำนวนรอบ) และบันทึกคำตอบของ DANN กับ Baseline พร้อมกัน
+                โดยไม่แสดงผลถูกผิดให้ผู้ร่วมทดสอบเห็น ใช้รหัสแทนชื่อจริง</p>
+            </div>
+            <div id="studyRun" class="hidden">
+              <div class="studyRow">
+                <button class="ghost" id="studyUndo">ย้อนข้อล่าสุด</button>
+                <button class="ghost" id="studySkip">ข้ามข้อนี้</button>
+                <button id="studyFinish">จบการทดสอบ</button>
+              </div>
+            </div>
+            <div id="studySummary" class="hidden"></div>
+            <div class="studyRow" id="studyData">
+              <span class="studyNote" id="studyCount"></span>
+              <button class="ghost" id="studyDownload">ดาวน์โหลด CSV ทั้งหมด</button>
+              <button class="ghost" id="studyClear">ล้างข้อมูลทดสอบ</button>
+            </div>
+          </div>
+
+          <button class="ghost hidden" id="backBtn" style="align-self:flex-start">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+            กลับหน้างานวิจัย
           </button>
-          <p class="hint">ต้องอนุญาตให้เว็บนี้ใช้กล้องก่อน</p>
-        </div>
-        <video id="video" autoplay playsinline></video>
-        <canvas id="overlay"></canvas>
-        <div id="status">กำลังโหลด...</div>
-        <div id="big"></div>
-        <!-- game -->
-        <div id="gameHud" class="hidden">
-          <span>
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>
-            </svg>
-            <span id="timer">45</span>
-          </span>
-          <span>
-            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/>
-              <path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/>
-            </svg>
-            <span id="score">0</span>
-          </span>
-        </div>
-        <div id="target" class="hidden"></div>
-        <div id="flash"></div>
-        <!-- test (translate) -->
-        <div class="bars hidden" id="bars"></div>
-        <div id="result" class="hidden">—</div>
-        <div id="sentence" class="hidden"></div>
-        <!-- compare (RQ3: pooled-baseline vs pooled+DANN) -->
-        <div class="bars barsLeft hidden" id="barsCompareBaseline">
-          <div class="barsHead">Baseline</div>
-        </div>
-        <div class="bars barsRight hidden" id="barsCompareDann">
-          <div class="barsHead">+ DANN</div>
-        </div>
-        <div id="compareStatus" class="hidden">ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย</div>
-        <div id="studyHud" class="hidden"></div>
-        <div id="faceChip" class="hidden"></div>
+
+          <div id="clinicalCard" class="hidden">
+            <div class="clinHead">
+              <div class="t">สรุปสำหรับแพทย์</div>
+              <div class="d">สร้างจากคำที่ทำท่าโดยตรง ไม่ผ่านการสรุปของ AI</div>
+            </div>
+            <div id="clinicalBody"><div class="clinEmpty">ยังไม่มีข้อมูล ทำท่าแล้วจบประโยคเพื่อดูสรุปที่นี่</div></div>
+          </div>
+
+          <!-- hearing person to deaf person: typed or spoken Thai, shown as text and matched to signs -->
+          <div id="speechScreen" class="hidden">
+            <section class="card speakPanel" aria-label="พิมพ์หรือพูด">
+              <h2>พิมพ์หรือพูดภาษาไทย <small lang="en">Type or speak</small></h2>
+              <form class="speakForm" id="speakForm" autocomplete="off">
+                <label class="srOnly" for="speakText">ข้อความภาษาไทย</label>
+                <input id="speakText" type="text" lang="th" placeholder="พิมพ์ข้อความ เช่น คุณต้องการยาไหม">
+                <button type="submit" id="speakSend">ส่ง</button>
+                <button type="button" id="micBtn">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8.5 21h7"/></svg>
+                  พูด
+                </button>
+              </form>
+              <div id="speakStatus" role="status">พิมพ์แล้วกดส่ง หรือกดปุ่มพูด (ปุ่มพูดใช้ได้ใน Chrome และต้องอนุญาตไมโครโฟน)</div>
+              <div id="speakTranscript" aria-live="polite"></div>
+              <details class="opts">
+                <summary>ตัวเลือกการแปลงเป็นท่า</summary>
+                <div class="grammarToggle">
+                  <label><input type="radio" name="grammarMode" value="normal" checked> ตามลำดับที่พิมพ์หรือพูด (ทำงานในเครื่อง)</label>
+                  <label><input type="radio" name="grammarMode" value="thsl"> เรียงตามไวยากรณ์ภาษามือ ด้วย AI (ส่งข้อความออกนอกเครื่อง ต้องมีกุญแจ)</label>
+                </div>
+              </details>
+              <div id="speakOutput"></div>
+              <div id="speakClips"></div>
+            </section>
+          </div>
+        </section>
+
+        <aside class="bridgeSide" id="bridgeSide" aria-label="บทสนทนา">
+          <section class="card composer" id="composerCard" aria-label="ประโยคที่กำลังสร้าง">
+            <h2>ประโยคที่กำลังสร้าง <small lang="en">Sentence</small></h2>
+            <div id="wordRow"></div>
+            <div id="sentence" class="hidden" aria-live="polite"></div>
+            <div class="actions">
+              <button class="ghost tiny" id="undoWordBtn">ย้อนคำล่าสุด</button>
+              <button class="ghost tiny" id="clearSentenceBtn">ล้างประโยค</button>
+              <button id="finishBtn" class="hidden">จบประโยค</button>
+              <label class="switch"><input type="checkbox" id="ttsToggle" checked> อ่านออกเสียง</label>
+            </div>
+            <p class="hint hidden" id="ttsNote" style="margin-top:8px"></p>
+          </section>
+
+          <section class="card convCard" aria-label="บทสนทนา">
+            <div class="convHead">
+              <span class="who deaf">ผู้ใช้ภาษามือ</span>
+              <svg class="bridgeArc" viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M0 16 Q 100 -8 200 16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+              <span class="who hearing">คนได้ยิน</span>
+            </div>
+            <div id="convLog" role="log" aria-live="polite" aria-label="ข้อความในบทสนทนา"></div>
+            <div class="convFoot"><button class="ghost tiny" id="convClear">ล้างบทสนทนา</button></div>
+          </section>
+
+          <details id="vocabDrawer" class="card">
+            <summary>
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+              คำศัพท์ <span lang="en" style="font-weight:500;color:var(--text-muted);font-size:.8rem">Vocabulary</span>
+            </summary>
+            <p class="vtScope" id="vocabScope"></p>
+            <div class="vocabChips" id="vocabList"></div>
+            <div class="vtGrid" id="vtGrid"></div>
+          </details>
+        </aside>
       </div>
     </div>
-    <p class="hint" id="appHint"></p>
 
-    <div id="wordRow"></div>
-
-    <div class="camControls" id="camControls">
-      <label title="ใช้เฉพาะมือของคนที่หน้าใหญ่และชัดที่สุดในภาพ ไม่สนใจมือของคนอื่นที่ยืนอยู่ข้าง ๆ">
-        <input type="checkbox" id="focusToggle" checked> โฟกัสเฉพาะผู้ใช้หลัก
-      </label>
-      <button class="ghost" id="relockBtn">เลือกผู้ใช้ใหม่</button>
-      <span class="focusInfo" id="focusInfo"></span>
-      <label id="recWrap">โมเดล
-        <select id="recSelect"></select>
-      </label>
-      <button id="finishBtn" class="hidden">จบประโยค</button>
-      <button class="ghost" id="clearSentenceBtn">ล้างประโยค</button>
-    </div>
-
-    <details class="faceSettings" id="faceSettings">
-      <summary>ตั้งค่าการอ่านสีหน้า</summary>
-      <div class="fsRow">
-        <label><input type="checkbox" id="toneToggle" checked> อ่านสีหน้าประกอบแต่ละคำ</label>
-        <button class="ghost" id="calibBtn">ตั้งค่าหน้านิ่ง (นิ่งไว้ 2 วินาที)</button>
-        <span class="fsInfo warn" id="calibInfo">ยังไม่ได้ตั้งค่าหน้านิ่ง</span>
+    <!-- RESEARCH (evaluation tools, not the main product) -->
+    <div id="viewResearch" class="hidden">
+      <div class="researchIntro">
+        <div class="t">เครื่องมือสำหรับงานวิจัยและประเมินผล</div>
+        <div class="d">ฟีเจอร์ในหน้านี้ใช้ทดสอบและเปรียบเทียบโมเดล ไม่ใช่ส่วนหลักของแอป</div>
       </div>
-      <label class="fsRange">คิ้วยกขึ้นเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tRaiseV"></b>
-        <input type="range" id="tRaise" min="0.05" max="0.8" step="0.01"></label>
-      <label class="fsRange">คิ้วขมวดเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tFurrowV"></b>
-        <input type="range" id="tFurrow" min="0.05" max="0.8" step="0.01"></label>
-      <label class="fsRange">ส่ายหน้าซ้ายขวาอย่างน้อยกี่องศาจึงนับว่าปฏิเสธ <b id="tShakeV"></b>
-        <input type="range" id="tShake" min="2" max="20" step="0.5"></label>
-      <label class="fsRange">พยักหน้าขึ้นลงอย่างน้อยกี่องศาจึงนับว่ายืนยัน <b id="tNodV"></b>
-        <input type="range" id="tNod" min="2" max="20" step="0.5"></label>
-      <div class="fsRow"><button class="ghost" id="toneResetBtn">คืนค่าเริ่มต้น</button></div>
-      <p class="fsNote">ใบหน้าแต่ละคนไม่เหมือนกัน ควรกดตั้งค่าหน้านิ่งทุกครั้งที่เปลี่ยนคน ค่าที่ปรับไว้จะจำในเบราว์เซอร์นี้
-        ป้ายสีหน้าเป็นกฎที่ยังรอยืนยันกับผู้ใช้ภาษามือ ไม่ใช่ผลจากโมเดลที่ฝึกแล้ว</p>
-    </details>
-
-    <div id="studyPanel" class="hidden">
-      <div id="studySetup">
-        <div class="studyRow">
-          <label>รหัสผู้ร่วมทดสอบ <input id="studyCode" placeholder="เช่น S01" size="8" maxlength="12"></label>
-          <label>ประเภท
-            <select id="studyType">
-              <option value="deaf">คนหูหนวก</option>
-              <option value="interpreter">ล่ามภาษามือ</option>
-              <option value="hearing">คนได้ยิน</option>
-            </select>
-          </label>
-          <label>จำนวนรอบ
-            <select id="studyReps"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option></select>
-          </label>
-          <button id="studyStart">เริ่มทดสอบ</button>
+      <div class="modeBtns">
+        <div class="modeCard" id="cardGame" role="button" tabindex="0">
+          <div class="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="4"/><path d="M7 10v4M5 12h4"/><circle cx="15.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="13" r="1" fill="currentColor" stroke="none"/></svg></div>
+          <div class="t">Sign Speed Test</div>
+          <div class="d">ทำท่าตามคำที่สุ่มให้ ภายใน 45 วินาที ทำได้กี่คำ</div>
         </div>
-        <p class="studyNote">ระบบจะบอกคำให้ทำท่าทีละคำ (8 คำ x จำนวนรอบ) และบันทึกคำตอบของ DANN กับ Baseline พร้อมกัน
-          โดยไม่แสดงผลถูกผิดให้ผู้ร่วมทดสอบเห็น ใช้รหัสแทนชื่อจริง</p>
-      </div>
-      <div id="studyRun" class="hidden">
-        <div class="studyRow">
-          <button class="ghost" id="studyUndo">ย้อนข้อล่าสุด</button>
-          <button class="ghost" id="studySkip">ข้ามข้อนี้</button>
-          <button id="studyFinish">จบการทดสอบ</button>
+        <div class="modeCard" id="cardCompare" role="button" tabindex="0">
+          <div class="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"/><path d="M3 8h12.5a4.5 4.5 0 0 1 4.5 4.5V13"/><path d="M17 20l4-4-4-4"/><path d="M21 16H8.5A4.5 4.5 0 0 1 4 11.5V11"/></svg></div>
+          <div class="t">เปรียบเทียบโมเดล (RQ3)</div>
+          <div class="d">ทำท่าเดียว ดู Baseline กับ DANN ทายพร้อมกันแบบเรียลไทม์</div>
+        </div>
+        <div class="modeCard" id="cardStudy" role="button" tabindex="0">
+          <div class="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v4l4.5 9a2 2 0 0 1-1.8 3H6.3a2 2 0 0 1-1.8-3L9 7V3Z"/><path d="M8 3h8"/><path d="M7.5 14h9"/></svg></div>
+          <div class="t">ทดสอบกับอาสาสมัคร</div>
+          <div class="d">บอกคำให้ทำท่าทีละคำ บันทึกผลของ DANN และ Baseline เป็นไฟล์ CSV</div>
         </div>
       </div>
-      <div id="studySummary" class="hidden"></div>
-      <div class="studyRow" id="studyData">
-        <span class="studyNote" id="studyCount"></span>
-        <button class="ghost" id="studyDownload">ดาวน์โหลด CSV ทั้งหมด</button>
-        <button class="ghost" id="studyClear">ล้างข้อมูลทดสอบ</button>
-      </div>
-    </div>
-    <button class="ghost hidden" id="backBtn">
-      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/>
-      </svg>
-      กลับหน้างานวิจัย
-    </button>
-
-    <!-- clinical summary card (schema v3), only shown in sign-to-speech translate -->
-    <div id="clinicalCard" class="hidden">
-      <div class="clinHead">
-        <div class="t">สรุปสำหรับแพทย์</div>
-        <div class="d">สร้างจากคำที่ทำท่าโดยตรง ไม่ผ่านการสรุปของ AI</div>
-      </div>
-      <div id="clinicalBody"><div class="clinEmpty">ยังไม่มีข้อมูล ทำท่าแล้วจบประโยคเพื่อดูสรุปที่นี่</div></div>
+      <div class="lb" id="menuLb"></div>
     </div>
 
-    <!-- speech -> sign (hearing person speaks, deaf person reads/watches) -->
-    <div id="speechScreen" class="hidden">
-      <div class="speakPanel">
-        <div class="grammarToggle">
-          <label><input type="radio" name="grammarMode" value="thsl" checked> ไวยากรณ์ภาษามือ (ThSL gloss)</label>
-          <label><input type="radio" name="grammarMode" value="normal"> ไวยากรณ์ภาษาไทยปกติ</label>
-        </div>
-        <button id="micBtn">
-          <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8.5 21h7"/>
-          </svg>
-          พูด
-        </button>
-        <div id="speakStatus">กดปุ่มแล้วพูดเป็นภาษาไทย (ต้องใช้ Chrome และอนุญาตไมโครโฟน)</div>
-        <div id="speakTranscript"></div>
-        <div id="speakOutput"></div>
-        <div id="speakClips"></div>
+    <!-- GAMEOVER -->
+    <div id="gameover" class="hidden">
+      <div>หมดเวลา คุณทำได้</div>
+      <div id="finalScore">0</div>
+      <div>คำ</div>
+      <input id="nameInput" placeholder="ใส่ชื่อของคุณ" maxlength="16" aria-label="ชื่อสำหรับบันทึกคะแนน">
+      <button id="saveBtn">บันทึกคะแนน</button>
+      <div class="lb" id="overLb"></div>
+      <div style="display:flex; gap:10px;">
+        <button class="ghost" id="gameoverBackBtn">กลับหน้างานวิจัย</button>
+        <button id="againBtn">เล่นอีกครั้ง</button>
       </div>
     </div>
-  </div>
+  </main>
 
-  <!-- RESEARCH (evaluation tools, not the main product) -->
-  <div id="viewResearch" class="hidden">
-    <div class="researchIntro">
-      <div class="t">เครื่องมือสำหรับงานวิจัยและประเมินผล</div>
-      <div class="d">ฟีเจอร์ในหน้านี้ใช้ทดสอบและเปรียบเทียบโมเดล ไม่ใช่ส่วนหลักของแอป</div>
+  <dialog id="privacyDialog" aria-labelledby="pvTitle">
+    <h2 id="pvTitle">ความเป็นส่วนตัว <span lang="en" style="font-weight:500;font-size:.9rem;color:var(--text-muted)">Privacy</span></h2>
+    <h3>อยู่ในเครื่องนี้เท่านั้น</h3>
+    <ul>
+      <li>ภาพจากกล้อง ไม่ถูกบันทึกและไม่ถูกส่งออก</li>
+      <li>จุดมือและจุดใบหน้าที่ใช้ทายท่าและสีหน้า</li>
+      <li>บทสนทนาบนหน้านี้ จะหายเมื่อปิดหรือรีเฟรชหน้า</li>
+    </ul>
+    <h3>อาจถูกส่งออกจากเครื่อง</h3>
+    <ul>
+      <li>เสียงพูด: เมื่อกดปุ่มพูด เบราว์เซอร์ (Chrome) ส่งเสียงให้ Google แปลงเป็นข้อความ การพิมพ์ไม่ส่งอะไรออกไป</li>
+      <li>รายการคำที่ทำท่า: ส่งให้บริการ Typhoon เพื่อเรียบเรียงประโยค เฉพาะเครื่องที่ตั้งค่ากุญแจไว้เท่านั้น</li>
+      <li>เสียงอ่านประโยค: ใช้เสียงในเครื่องก่อน ถ้าเครื่องไม่มีเสียงไทยและคุณอนุญาตด้านล่าง ข้อความประโยคจะถูกส่งให้ Google</li>
+      <li>ครั้งแรกที่เปิดหน้านี้ ระบบดาวน์โหลดโมเดลและฟอนต์จากอินเทอร์เน็ต (ไม่มีข้อมูลของผู้ใช้ถูกส่งไป)</li>
+    </ul>
+    <h3>ตัวเลือกของคุณ</h3>
+    <div class="fsRow">
+      <label><input type="checkbox" id="aiToggle"> ใช้บริการ AI เรียบเรียงประโยค (ส่งรายการคำออกนอกเครื่อง)</label>
+      <label><input type="checkbox" id="ttsRemoteToggle"> อนุญาตเสียงอ่านจาก Google เมื่อเครื่องไม่มีเสียงไทยในเครื่อง</label>
     </div>
-    <div class="modeBtns">
-      <div class="modeCard" id="cardGame">
-        <div class="modeIcon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="7" width="20" height="10" rx="4"/><path d="M7 10v4M5 12h4"/>
-            <circle cx="15.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="13" r="1" fill="currentColor" stroke="none"/>
-          </svg>
-        </div>
-        <div class="t">Sign Speed Test</div>
-        <div class="d">ทำท่าตามคำที่สุ่มให้ ภายใน 45 วินาที ทำได้กี่คำ</div>
-      </div>
-      <div class="modeCard" id="cardCompare">
-        <div class="modeIcon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 4 3 8l4 4"/><path d="M3 8h12.5a4.5 4.5 0 0 1 4.5 4.5V13"/>
-            <path d="M17 20l4-4-4-4"/><path d="M21 16H8.5A4.5 4.5 0 0 1 4 11.5V11"/>
-          </svg>
-        </div>
-        <div class="t">เปรียบเทียบโมเดล (RQ3)</div>
-        <div class="d">ทำท่าเดียว ดู Baseline กับ DANN ทายพร้อมกันแบบเรียลไทม์</div>
-      </div>
-      <div class="modeCard" id="cardStudy">
-        <div class="modeIcon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 3h6v4l4.5 9a2 2 0 0 1-1.8 3H6.3a2 2 0 0 1-1.8-3L9 7V3Z"/><path d="M8 3h8"/><path d="M7.5 14h9"/>
-          </svg>
-        </div>
-        <div class="t">ทดสอบกับอาสาสมัคร</div>
-        <div class="d">บอกคำให้ทำท่าทีละคำ บันทึกผลของ DANN และ Baseline เป็นไฟล์ CSV</div>
-      </div>
-    </div>
-    <div class="lb" id="menuLb"></div>
-  </div>
-
-  <!-- GAMEOVER -->
-  <div id="gameover" class="hidden">
-    <div>หมดเวลา คุณทำได้</div>
-    <div id="finalScore">0</div>
-    <div>คำ</div>
-    <input id="nameInput" placeholder="ใส่ชื่อของคุณ" maxlength="16">
-    <button id="saveBtn">บันทึกคะแนน</button>
-    <div class="lb" id="overLb"></div>
-    <div style="display:flex; gap:10px;">
-      <button class="ghost" id="gameoverBackBtn">กลับหน้างานวิจัย</button>
-      <button id="againBtn">เล่นอีกครั้ง</button>
-    </div>
-  </div>
+    <p class="fsNote" id="voiceInfo"></p>
+    <form method="dialog"><button>ปิด</button></form>
+  </dialog>
 
 <!-- Local-only: config.local.js sets window.TYPHOON_API_KEY, gitignored, not committed.
      Missing file is non-fatal -- window.TYPHOON_API_KEY just stays undefined and
@@ -538,6 +654,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
 <script src="person_focus.js"></script>
 <script src="face_tone.js"></script>
+<script src="bridge_utils.js"></script>
 <script type="module">
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
 
@@ -580,6 +697,10 @@ const ICONS = {
   cross: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>',
   warning: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 16.5h.01"/></svg>',
   star: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9Z"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  dots: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg>',
+  loader: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>',
+  question: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1 1-1.1 1.7"/><path d="M12 17h.01"/></svg>',
   trophy: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/></svg>',
 };
 
@@ -845,7 +966,7 @@ function setNavActive(view){
   $("navTranslate").classList.toggle("active", view==="translate");
   $("navResearch").classList.toggle("active", view==="research");
 }
-function setCamUI(on){ ["appScreen","appHint","camControls"].forEach(id=>$(id).classList.toggle("hidden",!on)); }
+function setCamUI(on){ ["appScreen","appHint","camControls","composerCard","faceSettings"].forEach(id=>$(id).classList.toggle("hidden",!on)); }
 function updateRecUI(){
   const r=RECOGNIZERS[activeRec];
   $("finishBtn").classList.toggle("hidden", mode!=="test" || r.hasFinish);
@@ -882,12 +1003,14 @@ function showSignScreen(){
   configureAppUI("test");
   renderWordRow();
   preloadModels([activeRec]);
-  if(cameraEverStarted) openCameraStream(); else $("cameraGate").classList.remove("hidden");
+  if(cameraEverStarted) openCameraStream();
+  else { $("cameraGate").classList.remove("hidden"); setBanner("idle","กดเปิดกล้องเพื่อเริ่ม","Open the camera to start"); }
 }
 function showSpeechScreen(){
   setCamUI(false);
   stopCameraStream();
   $("speechScreen").classList.remove("hidden");
+  setBanner("idle","พิมพ์หรือพูดได้เลย","Type or speak");
 }
 function setDirection(d){
   direction=d;
@@ -898,6 +1021,7 @@ function setDirection(d){
 }
 function goTranslate(){
   endGameCleanup(); hideAllScreens();
+  $("viewTranslate").classList.remove("researchMode");
   $("viewTranslate").classList.remove("hidden");
   setNavActive("translate");
   if(direction==="sign") showSignScreen(); else showSpeechScreen();
@@ -910,6 +1034,7 @@ function goResearch(){
 }
 function launchResearchMode(m){
   hideAllScreens();
+  $("viewTranslate").classList.add("researchMode");
   $("viewTranslate").classList.remove("hidden"); // appScreen lives inside viewTranslate's DOM subtree
   $("vocabDrawer").classList.add("hidden");
   $("toggleTrack").classList.add("hidden");
@@ -946,7 +1071,7 @@ $("backBtn").onclick = leaveResearchMode;
 $("recSelect").onchange = () => {
   activeRec=$("recSelect").value; wordBuffer=[]; rearm=false;
   sentenceEl.textContent=""; resultEl.textContent="—"; lastWords=[]; renderWordRow();
-  updateRecUI(); preloadModels([activeRec]);
+  updateRecUI(); preloadModels([activeRec]); renderVocabPanel();
 };
 $("focusToggle").onchange = () => {
   focusOn=$("focusToggle").checked;
@@ -971,7 +1096,7 @@ function setSpeakWarn(msg){ $("speakStatus").classList.add("warnText"); $("speak
 
 function initSpeakRecognition(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ setSpeakWarn("เบราว์เซอร์นี้ไม่รองรับ ลองใช้ Chrome"); return null; }
+  if(!SR){ setSpeakWarn("เบราว์เซอร์นี้ไม่รองรับการพูด ลองใช้ Chrome หรือพิมพ์ข้อความแทน"); return null; }
   const r = new SR();
   r.lang = "th-TH"; r.interimResults = true; r.continuous = false;
   r.onresult = (e) => {
@@ -981,12 +1106,13 @@ function initSpeakRecognition(){
   r.onend = () => {
     speakListening=false; setMicBtn(false);
     const finalText = $("speakTranscript").textContent.trim();
-    if(finalText) handleSpeakTranscript(finalText);
-    else setSpeakWarn("ไม่ได้ยินเสียงพูด ลองใหม่อีกครั้ง");
+    if(finalText) handleHearingInput(finalText);
+    else { setSpeakWarn("ไม่ได้ยินเสียงพูด ลองใหม่อีกครั้ง"); setBanner("uncertain","ไม่ได้ยินเสียงพูด","Heard nothing, please try again"); }
   };
   r.onerror = (e) => {
     speakListening=false; setMicBtn(false);
     setSpeakWarn("ไม่ได้ยิน หรือไม่ได้อนุญาตไมโครโฟน ("+e.error+")");
+    setBanner("error","ใช้ไมโครโฟนไม่ได้","Microphone problem. You can type instead.");
   };
   return r;
 }
@@ -994,31 +1120,57 @@ $("micBtn").onclick = () => {
   if(speakListening){ speakRecognition && speakRecognition.stop(); return; }
   if(!speakRecognition) speakRecognition = initSpeakRecognition();
   if(!speakRecognition) return;
-  $("speakTranscript").textContent=""; $("speakOutput").innerHTML=""; $("speakClips").innerHTML="";
+  $("speakTranscript").textContent="";
   speakListening=true; setMicBtn(true);
-  setSpeakStatus("กำลังฟัง พูดได้เลย");
+  setSpeakStatus("กำลังฟัง พูดได้เลย"); setBanner("listening","กำลังฟัง พูดได้เลย","Listening");
   speakRecognition.start();
 };
 
-async function handleSpeakTranscript(text){
-  setSpeakStatus("กำลังประมวลผล...");
-  if(getGrammarMode()==="normal"){
-    $("speakOutput").innerHTML = `<div class="speakSentence">"${text}"</div>`;
-    $("speakClips").innerHTML = "";
-    setSpeakStatus("พร้อม กดพูดอีกครั้งเพื่อลองใหม่");
-    return;
+// One handler for typed and spoken Thai. The default match is a plain lookup against the vocabulary (runs in the
+// device, no model involved). The AI reordering is optional and only possible when a key is configured.
+async function handleHearingInput(text){
+  text=String(text||"").trim();
+  if(!text) return;
+  $("speakTranscript").textContent=text;
+  setSpeakStatus("กำลังจับคู่กับคำศัพท์...");
+  setBanner("loading","กำลังจับคู่กับคำศัพท์","Matching words");
+  const base = lookup ? lookup.lookup(text) : {items:[{text, supported:false}], supported:[], unsupported:[text]};
+  let items = base.items;
+  if(getGrammarMode()==="thsl" && useAi()){
+    const gloss = await typhoonToGloss(text);
+    if(gloss.length){
+      const byTh=new Map(vocabWords.map(w=>[w.th,w]));
+      items = gloss.map(th=>({text:th, supported:true, word:byTh.get(th)})).concat(base.items.filter(i=>!i.supported));
+    }
   }
-  const gloss = await typhoonToGloss(text);
-  renderGlossOutput(text, gloss);
-  setSpeakStatus("พร้อม กดพูดอีกครั้งเพื่อลองใหม่");
+  addConv("hearing", text, items.map(i=>({ok:i.supported, text: i.supported ? i.text : "ยังไม่รองรับ: "+i.text})));
+  renderSignOutput(text, items);
+  const n=items.filter(i=>i.supported).length;
+  setSpeakStatus(n ? `พบ ${n} คำในรายการคำศัพท์` : "ยังไม่มีคำในข้อความนี้ที่อยู่ในรายการคำศัพท์");
+  $("speakTranscript").textContent="";   // the message is in the conversation now; this line is only for what is being heard
+  setBanner("confirmed","ส่งข้อความแล้ว","Sent");
+  setTimeout(()=>{ if(direction==="speech" && mode==="test" && bannerKind==="confirmed") setBanner("idle","พิมพ์หรือพูดได้เลย","Type or speak"); }, 2500);
+}
+function renderSignOutput(text, items){
+  const ok=items.filter(i=>i.supported);
+  $("speakOutput").innerHTML = `<div class="glossRow">${ok.length
+        ? ok.map(i=>`<span class="glossChip">${escHtml(i.text)}</span>`).join('<span class="glossArrow" aria-hidden="true">→</span>')
+        : `<span class="glossEmpty">${ICONS.warning} ยังไม่มีคำในข้อความนี้ที่อยู่ในรายการคำศัพท์ ลองพิมพ์คำสั้น ๆ เช่น คุณ ต้องการ ยา</span>`}</div>`;
+  $("speakClips").innerHTML = items.map(it=>{
+    if(!it.supported) return `<div class="signCard none"><div class="w">${escHtml(it.text)}</div><div class="en">ยังไม่รองรับคำนี้</div></div>`;
+    const w=it.word||{th:it.text}, idx=CLIP_INDEX[w.th];
+    const media = idx!==undefined ? `<video src="tutorial_clips/sign_${String(idx).padStart(2,"0")}.mp4" autoplay loop muted playsinline onerror="this.outerHTML='<div class=&quot;en&quot;>เปิดคลิปไม่ได้</div>'"></video>` : "";
+    const link = w.thsl_url ? `<a href="${escHtml(w.thsl_url)}" target="_blank" rel="noopener">ดูท่าที่ th-sl.com</a>` : "";
+    return `<div class="signCard"><div class="w">${escHtml(w.th)}</div><div class="en" lang="en">${escHtml(w.en||"")}</div>${media}${link}</div>`;
+  }).join("");
 }
 
 // Returns an array of words, each one guaranteed to be in GAME_WORDS (double-checked
 // locally -- never trust the LLM's JSON to only contain words we actually asked for).
 async function typhoonToGloss(text){
-  const key = window.TYPHOON_API_KEY;
+  const key = useAi() ? window.TYPHOON_API_KEY : null;
   if(!key){ console.log("[typhoon] no API key -- gloss conversion needs it"); return []; }
-  const vocabList = GAME_WORDS.join(", ");
+  const vocabList = vocabWords.map(w=>w.th).join(", ");
   const prompt = "คุณเป็นผู้ช่วยแปลงประโยคภาษาไทยเป็นลำดับคำศัพท์ภาษามือไทย (ThSL gloss)\n"
     + "ใช้ได้เฉพาะคำในรายการนี้เท่านั้น: [" + vocabList + "]\n"
     + "จัดลำดับคำใหม่ตามไวยากรณ์ภาษามือไทย (ประธานหรือหัวข้อก่อน ตามด้วยกริยาหรืออาการ "
@@ -1042,23 +1194,11 @@ async function typhoonToGloss(text){
     const raw = ((data.choices||[])[0]||{}).message?.content?.trim() || "[]";
     const match = raw.match(/\[[\s\S]*\]/); // tolerate stray text Typhoon might add around the array
     const arr = JSON.parse(match ? match[0] : raw);
-    return Array.isArray(arr) ? arr.filter(w => GAME_WORDS.includes(w)) : [];
+    return Array.isArray(arr) ? arr.filter(w => vocabWords.some(v=>v.th===w)) : [];
   }catch(e){
     console.warn("[typhoon] gloss conversion failed -- treating as no known words:", e);
     return [];
   }
-}
-
-function renderGlossOutput(originalText, gloss){
-  $("speakOutput").innerHTML =
-    `<div class="speakSentence">"${originalText}"</div>`
-    + `<div class="glossRow">${gloss.length
-        ? gloss.map(w => `<span class="glossChip">${w}</span>`).join('<span class="glossArrow">→</span>')
-        : `<span class="glossEmpty">${ICONS.warning} ไม่มีคำในประโยคนี้ที่โมเดลรู้จัก (รองรับแค่ 10 คำ ลองพูดประโยคที่มีคำเหล่านี้)</span>`}</div>`;
-  $("speakClips").innerHTML = gloss.map(w => {
-    const idx = String(GAME_WORDS.indexOf(w)).padStart(2, "0");
-    return `<video src="tutorial_clips/sign_${idx}.mp4" autoplay loop muted playsinline></video>`;
-  }).join("");
 }
 
 // ---- game flow ----
@@ -1102,7 +1242,7 @@ function showBars(probs){ renderBars(probs, RECOGNIZERS[activeRec].classes, "");
 // ---- Typhoon sentence-forming + TTS (local testing only -- see config.local.example.js) ----
 async function typhoonSentence(words){
   const raw = words.join(" ");
-  const key = window.TYPHOON_API_KEY;
+  const key = useAi() ? window.TYPHOON_API_KEY : null;
   if(!key){ console.log("[typhoon] no API key (config.local.js missing) -- using raw words"); return raw; }
   const prompt = "คุณเป็นผู้ช่วยแปลงคำจากภาษามือไทยให้เป็นประโยคภาษาไทยที่เป็นธรรมชาติ "
     + "ฉันจะให้ลำดับคำที่ได้จากการแปลภาษามือ "
@@ -1131,13 +1271,36 @@ async function typhoonSentence(words){
     return raw;
   }
 }
+// Spoken output: the browser's own Thai voice first. A voice that runs on the device sends nothing out. Google's
+// endpoint is only used if the user allowed it in the privacy options and the browser has no Thai voice at all.
+let voices=[];
+function refreshVoices(){ try{ voices=window.speechSynthesis ? speechSynthesis.getVoices() : []; }catch(e){ voices=[]; } updateVoiceInfo(); }
+function voiceChoice(){ return window.BridgeUtils ? BridgeUtils.pickThaiVoice(voices, prefs.ttsRemote) : {voice:null, remote:false, reason:"none"}; }
+function updateVoiceInfo(){
+  const p=voiceChoice(), el=$("voiceInfo");
+  el.textContent = p.voice ? `เสียงอ่านที่ใช้ตอนนี้: ${p.voice.name} (${p.remote ? "ส่งข้อความไปที่เซิร์ฟเวอร์" : "ทำงานในเครื่อง"})`
+    : p.reason==="remote-only" ? "เบราว์เซอร์นี้มีเฉพาะเสียงไทยที่ส่งข้อความออกนอกเครื่อง ยังไม่ได้อนุญาต จึงยังไม่อ่านออกเสียง"
+    : prefs.ttsRemote ? "ไม่พบเสียงไทยในเบราว์เซอร์นี้ จะใช้บริการอ่านออกเสียงของ Google (ส่งข้อความออกนอกเครื่อง)"
+    : "ไม่พบเสียงไทยในเบราว์เซอร์นี้ จึงยังไม่อ่านออกเสียง";
+}
+function setTtsNote(text){ const n=$("ttsNote"); n.textContent=text||""; n.classList.toggle("hidden", !text); }
 function speakThai(text){
-  if(!text) return;
-  try{
-    // Same endpoint the Python gTTS library wraps -- no API key needed.
-    const url = "https://translate.google.com/translate_tts?ie=UTF-8&q="+encodeURIComponent(text)+"&tl=th&client=tw-ob";
-    new Audio(url).play().catch(e=>console.warn("[tts] playback failed:", e));
-  }catch(e){ console.warn("[tts] failed:", e); }
+  if(!text || !prefs.tts) return;
+  const p=voiceChoice();
+  if(p.voice && window.speechSynthesis){
+    try{
+      const u=new SpeechSynthesisUtterance(text); u.voice=p.voice; u.lang=p.voice.lang; u.rate=0.95;
+      speechSynthesis.cancel(); speechSynthesis.speak(u); setTtsNote(""); return;
+    }catch(e){ console.warn("[tts] browser voice failed:", e); }
+  }
+  if(prefs.ttsRemote){
+    try{
+      // Google's unofficial endpoint (what the Python gTTS library wraps): opt-in only, and it sends the sentence to Google.
+      const url = "https://translate.google.com/translate_tts?ie=UTF-8&q="+encodeURIComponent(text)+"&tl=th&client=tw-ob";
+      new Audio(url).play().catch(e=>console.warn("[tts] playback failed:", e)); setTtsNote(""); return;
+    }catch(e){ console.warn("[tts] failed:", e); }
+  }
+  setTtsNote("ยังไม่อ่านออกเสียง เพราะเบราว์เซอร์นี้ไม่มีเสียงไทยในเครื่อง ดูตัวเลือกได้ที่ปุ่ม ข้อมูลอยู่ในเครื่องนี้ (ข้อความประโยคยังแสดงอยู่ด้านบน)");
 }
 
 async function finishSentence(){
@@ -1149,6 +1312,7 @@ async function finishSentence(){
   sentenceEl.textContent="กำลังเรียบเรียงประโยค...";
   const sentence=await typhoonSentence(list);
   sentenceEl.textContent="ประโยค: "+sentence;
+  addConv("deaf", sentence, words.map(w=>({ok:true, text:w.sign+tagText(w.face)})));
   speakThai(sentence);
 }
 
@@ -1197,8 +1361,9 @@ async function onComplete(seq, meta){
       renderWordRow();
       resultEl.textContent=sign+" "+Math.round(conf*100)+"%";
       sentenceEl.textContent="กำลังสร้าง: "+wordBuffer.map(w=>w.sign).join(" ");
-    }
-  } else resultEl.textContent="—";
+      uiAccepted(sign, conf, false);
+    } else uiAccepted(sign, conf, true);
+  } else { resultEl.textContent="—"; uiUncertain(); }
 }
 
 // Face sampling, shared by person focus and face reading: find faces a few times a second, keep the lock on
@@ -1251,6 +1416,7 @@ function applyFocus(res, ts){
 // Green = the user (face box and hands), red dashed = other faces, grey = hands that are ignored.
 function drawScene(res, fr){
   ctx.clearRect(0,0,overlay.width,overlay.height);
+  if(!prefs.overlay) return;
   const W=overlay.width, H=overlay.height;
   const info=(fr && fr.info && fr.info.filtered) ? fr.info : null;
   if(info && focus){
@@ -1458,6 +1624,11 @@ renderStudyCount();
 // translate screen buttons (for models without a finish sign)
 $("finishBtn").onclick=()=>finishSentence();
 $("clearSentenceBtn").onclick=()=>{ wordBuffer=[]; lastWords=[]; renderWordRow(); sentenceEl.textContent=""; resultEl.textContent="—"; };
+$("undoWordBtn").onclick=()=>{
+  if(!wordBuffer.length) return;
+  wordBuffer.pop(); renderWordRow();
+  sentenceEl.textContent = wordBuffer.length ? "กำลังสร้าง: "+wordBuffer.map(w=>w.sign).join(" ") : "";
+};
 
 // ---- word bubbles + face settings ----
 function faceTags(face){
@@ -1534,6 +1705,108 @@ if(toneRules){
   updateToneUI();
 } else { $("faceSettings").classList.add("hidden"); }
 renderWordRow();
+
+// ================= bridge UI layer: state banner, conversation, vocabulary, privacy and preferences =================
+// Nothing here changes how signs are read. It only shows state, keeps the conversation and holds the user's choices.
+const PREF_KEY="thsl_prefs_v1";
+const prefs=Object.assign({tts:true, ttsRemote:false, ai:true, overlay:true, diag:false},
+  (()=>{ try{ return JSON.parse(localStorage.getItem(PREF_KEY)||"{}"); }catch{ return {}; } })());
+function savePrefs(){ try{ localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); }catch(e){ console.warn("[prefs] could not save in this browser", e); } }
+function useAi(){ return !!prefs.ai && !!window.TYPHOON_API_KEY; }   // the sentence service needs a key AND the user's yes
+function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function tagText(face){ const t=faceTags(face).filter(x=>x.cls!=="none").map(x=>x.text); return t.length ? " ("+t.join(", ")+")" : ""; }
+
+// state banner: one big, high-contrast place that says what the system is doing
+const BANNER_ICON={idle:ICONS.eye, loading:ICONS.loader, reading:ICONS.dots, listening:ICONS.mic, confirmed:ICONS.check, uncertain:ICONS.question, error:ICONS.warning};
+let bannerKind="", bannerHoldUntil=0;
+function setBanner(kind, big, small, opts){
+  const el=$("stateBanner");
+  if(kind!==bannerKind){ el.className="stateBanner st-"+kind; $("stIcon").innerHTML=BANNER_ICON[kind]||""; bannerKind=kind; }
+  if($("stBig").textContent!==big) $("stBig").textContent=big;
+  const sm=small||""; if($("stSmall").textContent!==sm) $("stSmall").textContent=sm;
+  const conf=(opts && typeof opts.conf==="number") ? Math.round(opts.conf*100) : null;
+  $("stMeterWrap").classList.toggle("hidden", conf===null);
+  if(conf!==null){ $("stMeterFill").style.width=conf+"%"; $("stMeter").setAttribute("aria-valuenow", String(conf)); $("stMeterNum").textContent=conf+"%"; }
+  if(opts && opts.hold) bannerHoldUntil=performance.now()+opts.hold;
+}
+// the camera loop writes plain status text; mirror it into the banner (a fresh result stays on screen for a moment)
+function mirrorStatus(text){
+  if(direction==="speech" && mode==="test") return;
+  const t=String(text||"");
+  if(/^(เปิดกล้องไม่ได้|โหลดโมเดลไม่สำเร็จ)/.test(t)){ setBanner("error", t, "Something went wrong"); return; }
+  if(performance.now()<bannerHoldUntil) return;
+  if(/^ยกมือให้กล้องเห็น/.test(t)) setBanner("idle","ยกมือให้กล้องเห็น","Show your hand to the camera");
+  else if(/^จับมือได้แล้ว/.test(t)) setBanner("reading","จับมือได้แล้ว","Hand found");
+  else if(/^กำลังอ่านท่า/.test(t)) setBanner("reading","กำลังอ่านท่า","Reading your sign");
+  else if(/^ลดมือลง/.test(t)) setBanner("idle","ลดมือลง หรือขยับมือ แล้วทำท่าถัดไป","Lower or move your hand, then sign the next word");
+  else if(/^พร้อม$/.test(t)) setBanner("idle","พร้อม ยกมือได้เลย","Ready");
+  else if(/^กำลังโหลด/.test(t)) setBanner("loading", t.replace(/\.+$/,""), "Loading");
+  else setBanner("idle", t, "");
+}
+new MutationObserver(()=>mirrorStatus(statusEl.textContent)).observe(statusEl, {childList:true, characterData:true, subtree:true});
+function uiAccepted(sign, conf, dup){ setBanner("confirmed", sign, dup ? "Same word again, not added" : "Confirmed", {conf, hold:2500}); }
+function uiUncertain(){ setBanner("uncertain","ไม่แน่ใจ กรุณาทำท่าอีกครั้ง","Not sure, please repeat", {hold:2500}); }
+
+// conversation: both people, one thread (kept in memory only)
+const convLog=[];
+function addConv(side, text, chips){ convLog.push({side, text, chips:chips||[], t:Date.now()}); renderConv(); }
+function renderConv(){
+  const box=$("convLog");
+  if(!convLog.length){
+    box.innerHTML='<div class="convEmpty">ยังไม่มีบทสนทนา<br>ผู้ใช้ภาษามือทำท่าแล้วจบประโยค หรือคนได้ยินพิมพ์หรือพูด ข้อความจะขึ้นที่นี่ทั้งสองฝั่ง</div>';
+    return;
+  }
+  box.innerHTML=convLog.map(m=>{
+    const who=m.side==="deaf" ? "ผู้ใช้ภาษามือ" : "คนได้ยิน";
+    const time=new Date(m.t).toLocaleTimeString("th-TH",{hour:"2-digit", minute:"2-digit"});
+    const chips=m.chips.length ? `<div class="msgChips">${m.chips.map(c=>`<span class="${c.ok?"chipOk":"chipNo"}">${escHtml(c.text)}</span>`).join("")}</div>` : "";
+    return `<div class="msg ${m.side}"><div class="msgWho">${who} ${time}</div><div class="msgBubble">${escHtml(m.text)}</div>${chips}</div>`;
+  }).join("");
+  box.scrollTop=box.scrollHeight;
+}
+$("convClear").onclick=()=>{ convLog.length=0; renderConv(); };
+
+// vocabulary: the 33 target words, with the ones the selected model can actually recognise marked
+const CLIP_INDEX=Object.fromEntries(GAME_WORDS.map((w,i)=>[w,i]));   // reference clips exist only for the original 10 words
+let vocabWords=GAME_WORDS.map(th=>({th, en:SIGN_GLOSS[th]||""})), lookup=null;
+function renderVocabPanel(){
+  const known=new Set(RECOGNIZERS[activeRec].classes);
+  const k=vocabWords.filter(w=>known.has(w.th)).length;
+  $("vocabScope").innerHTML=`คำศัพท์ที่ตั้งเป้าไว้ ${vocabWords.length} คำ โมเดลที่เลือกอยู่ตอนนี้ตรวจจับได้ <b>${k}</b> คำ (สีเขียว) คำอื่นยังไม่มีโมเดล แต่คนได้ยินพิมพ์เพื่อดูลิงก์ท่าอ้างอิงได้`;
+  $("vocabList").innerHTML=vocabWords.map(w=>{ const ok=known.has(w.th); return `<span class="vchip${ok?" ok":""}">${escHtml(w.th)}${ok?"<small>ตรวจจับได้</small>":""}</span>`; }).join("");
+}
+async function loadVocab(){
+  try{
+    const r=await fetch("vocab.json"); if(!r.ok) throw new Error("HTTP "+r.status);
+    vocabWords=(await r.json()).words;
+  }catch(e){ console.warn("[vocab] vocab.json not loaded, using the built-in 10 words", e); }
+  if(window.BridgeUtils) lookup=BridgeUtils.createLookup(vocabWords);
+  renderVocabPanel();
+}
+
+// typed input, preferences, privacy dialog, keyboard access
+$("speakForm").onsubmit=e=>{ e.preventDefault(); const v=$("speakText").value; if(!v.trim()) return; handleHearingInput(v); $("speakText").value=""; $("speakText").focus(); };
+$("overlayToggle").checked=prefs.overlay;
+$("overlayToggle").onchange=()=>{ prefs.overlay=$("overlayToggle").checked; savePrefs(); if(!prefs.overlay) ctx.clearRect(0,0,overlay.width,overlay.height); };
+document.body.classList.toggle("diag", !!prefs.diag);
+$("diagToggle").checked=!!prefs.diag;
+$("diagToggle").onchange=()=>{ prefs.diag=$("diagToggle").checked; savePrefs(); document.body.classList.toggle("diag", prefs.diag); };
+$("ttsToggle").checked=prefs.tts;
+$("ttsToggle").onchange=()=>{ prefs.tts=$("ttsToggle").checked; savePrefs(); if(!prefs.tts){ setTtsNote(""); try{ window.speechSynthesis && speechSynthesis.cancel(); }catch(e){} } };
+$("ttsRemoteToggle").checked=prefs.ttsRemote;
+$("ttsRemoteToggle").onchange=()=>{ prefs.ttsRemote=$("ttsRemoteToggle").checked; savePrefs(); updateVoiceInfo(); };
+if(!window.TYPHOON_API_KEY){
+  $("aiToggle").checked=false; $("aiToggle").disabled=true;
+  $("aiToggle").parentElement.append(" (ปิดอยู่ เพราะเครื่องนี้ไม่ได้ตั้งค่ากุญแจ)");
+} else { $("aiToggle").checked=!!prefs.ai; }
+$("aiToggle").onchange=()=>{ prefs.ai=$("aiToggle").checked; savePrefs(); };
+$("privacyBtn").onclick=()=>{ const d=$("privacyDialog"); updateVoiceInfo(); if(d.showModal) d.showModal(); else d.setAttribute("open",""); };
+for(const id of ["cardGame","cardCompare","cardStudy"]){
+  $(id).addEventListener("keydown", e=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); $(id).click(); } });
+}
+if(window.speechSynthesis){ refreshVoices(); try{ speechSynthesis.addEventListener("voiceschanged", refreshVoices); }catch(e){ /* older browsers */ } } else updateVoiceInfo();
+renderConv();
+loadVocab();
 
 // ---- initial screen ----
 goTranslate();

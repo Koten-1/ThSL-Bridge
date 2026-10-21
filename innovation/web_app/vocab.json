@@ -1,0 +1,255 @@
+{
+  "version": "33-words-2026-10-13",
+  "source": "ThSL Bridge Word List (th-sl.com, NADT sign database), chosen with the Nonthaburi deaf club",
+  "note": "Only words with a single fixed sign. Dropped from the earlier 36: ปวด, เลือดออก, ออก, หัว, คอ, ท้อง, ถาม, บอก.",
+  "control_classes": [
+    "finish",
+    "none"
+  ],
+  "words": [
+    {
+      "id": 1,
+      "th": "ปวดท้อง",
+      "en": "pain in stomach",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/62414/",
+      "location": "ท้อง"
+    },
+    {
+      "id": 2,
+      "th": "ปวดหัว",
+      "en": "headache",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/62339/",
+      "location": "หัว"
+    },
+    {
+      "id": 3,
+      "th": "รอ",
+      "en": "wait",
+      "role": "hospital",
+      "thsl_url": "https://www.th-sl.com/35919/"
+    },
+    {
+      "id": 4,
+      "th": "ไข้",
+      "en": "fever",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/62391/"
+    },
+    {
+      "id": 5,
+      "th": "ไอ",
+      "en": "cough",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/72540/"
+    },
+    {
+      "id": 6,
+      "th": "เวียนหัว",
+      "en": "dizzy",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/89041/"
+    },
+    {
+      "id": 7,
+      "th": "อาเจียน",
+      "en": "vomit",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/62392/"
+    },
+    {
+      "id": 8,
+      "th": "ท้องเสีย",
+      "en": "diarrhea",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/88945/"
+    },
+    {
+      "id": 9,
+      "th": "แพ้ยา",
+      "en": "drug allergy",
+      "role": "allergy",
+      "thsl_url": "https://www.th-sl.com/15770/",
+      "allergy_type": "drug"
+    },
+    {
+      "id": 10,
+      "th": "หน้าอก",
+      "en": "chest",
+      "role": "body_part",
+      "thsl_url": "https://www.th-sl.com/4760/"
+    },
+    {
+      "id": 11,
+      "th": "หลัง",
+      "en": "back",
+      "role": "body_part",
+      "thsl_url": "https://www.th-sl.com/4822/"
+    },
+    {
+      "id": 12,
+      "th": "แขน",
+      "en": "arm",
+      "role": "body_part",
+      "thsl_url": "https://www.th-sl.com/4993/"
+    },
+    {
+      "id": 13,
+      "th": "ขา",
+      "en": "leg",
+      "role": "body_part",
+      "thsl_url": "https://www.th-sl.com/5066/"
+    },
+    {
+      "id": 14,
+      "th": "ตา",
+      "en": "eye",
+      "role": "body_part",
+      "thsl_url": "https://www.th-sl.com/5089/"
+    },
+    {
+      "id": 15,
+      "th": "หมอ",
+      "en": "doctor",
+      "role": "hospital",
+      "thsl_url": "https://www.th-sl.com/18349/"
+    },
+    {
+      "id": 16,
+      "th": "ยา",
+      "en": "medicine",
+      "role": "hospital",
+      "thsl_url": "https://www.th-sl.com/21614/"
+    },
+    {
+      "id": 17,
+      "th": "โรงพยาบาล",
+      "en": "hospital",
+      "role": "hospital",
+      "thsl_url": "https://www.th-sl.com/7428/"
+    },
+    {
+      "id": 18,
+      "th": "ฉุกเฉิน",
+      "en": "emergency",
+      "role": "hospital",
+      "thsl_url": "https://www.th-sl.com/70821/",
+      "urgent": true
+    },
+    {
+      "id": 19,
+      "th": "คนหูหนวก",
+      "en": "deaf person",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/1018/"
+    },
+    {
+      "id": 20,
+      "th": "คุณ",
+      "en": "you",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/2372/"
+    },
+    {
+      "id": 21,
+      "th": "ช่วย",
+      "en": "help",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/35725/",
+      "action": true
+    },
+    {
+      "id": 22,
+      "th": "ขอบคุณ",
+      "en": "thank you",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/941/"
+    },
+    {
+      "id": 23,
+      "th": "ฉัน",
+      "en": "I / me",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/2323/"
+    },
+    {
+      "id": 24,
+      "th": "ต้องการ",
+      "en": "want / need",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/20521/",
+      "action": true
+    },
+    {
+      "id": 25,
+      "th": "เข้าใจ",
+      "en": "understand",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/14322/"
+    },
+    {
+      "id": 26,
+      "th": "ไม่",
+      "en": "no",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/17709/",
+      "answer": "no"
+    },
+    {
+      "id": 27,
+      "th": "เจ็บคอ",
+      "en": "sore throat",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/62315/",
+      "location": "คอ"
+    },
+    {
+      "id": 28,
+      "th": "แพ้อาหาร",
+      "en": "food allergy",
+      "role": "allergy",
+      "thsl_url": "https://www.th-sl.com/15777/",
+      "allergy_type": "food"
+    },
+    {
+      "id": 29,
+      "th": "น้ำมูกไหล",
+      "en": "runny nose",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/62316/",
+      "variant": "แบบที่ 1"
+    },
+    {
+      "id": 30,
+      "th": "หายใจ",
+      "en": "breathe",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/87552/"
+    },
+    {
+      "id": 31,
+      "th": "เจ็บ",
+      "en": "hurt / pain",
+      "role": "symptom",
+      "thsl_url": "https://www.th-sl.com/91380/",
+      "variant": "ท่าที่ 2"
+    },
+    {
+      "id": 32,
+      "th": "สวัสดี",
+      "en": "hello",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/919/",
+      "variant": "สำหรับผู้ใหญ่"
+    },
+    {
+      "id": 33,
+      "th": "ใช่",
+      "en": "yes",
+      "role": "general",
+      "thsl_url": "https://www.th-sl.com/1036/",
+      "answer": "yes"
+    }
+  ]
+}
