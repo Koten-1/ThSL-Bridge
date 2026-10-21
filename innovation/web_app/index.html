@@ -448,6 +448,7 @@
               <select id="recSelect" aria-label="เลือกโมเดล"></select>
             </label>
             <label class="chk" title="แสดงคำที่โมเดลทายและเปอร์เซ็นต์ สำหรับตรวจสอบ"><input type="checkbox" id="diagToggle"> แสดงรายละเอียดโมเดล</label>
+            <label class="chk" title="ถ้าทำท่าด้วยมือข้างเดียวและเป็นข้างที่โมเดลไม่คุ้น ระบบจะกลับด้านให้เหมือนข้างที่โมเดลเรียนมา ปิดเพื่อเทียบผล"><input type="checkbox" id="handFixToggle" checked> ใช้ได้ทั้งมือซ้ายและขวา</label>
           </div>
 
           <details class="faceSettings" id="faceSettings">
@@ -728,9 +729,9 @@ let direction="sign"; // "sign" | "speech" -- which half of the translate toggle
 // "v6c" is the deployed 12-class model (has finish/none). "dann" and "base" are the 10-class models from the
 // RQ3 experiment, trained on two signers (no finish/none, so the translate screen shows a finish button for them).
 const RECOGNIZERS = {
-  v6c:  { label:"โมเดลเดิม (12 ท่า)", classes:TARGET_SIGNS, hasFinish:true,  file:"weights.json" },
-  dann: { label:"DANN (10 คำ)",       classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_dann.json" },
-  base: { label:"Baseline (10 คำ)",   classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_baseline.json" },
+  v6c:  { label:"โมเดลเดิม (12 ท่า)", classes:TARGET_SIGNS, hasFinish:true,  file:"weights.json",              nativeHand:"L" },
+  dann: { label:"DANN (10 คำ)",       classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_dann.json",     nativeHand:"R" },
+  base: { label:"Baseline (10 คำ)",   classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_baseline.json", nativeHand:"R" },
 };
 let activeRec="v6c";
 const loadedModels={}, modelLoading={};
@@ -1258,7 +1259,32 @@ async function predict(seq, mdl){ const flat=new Float32Array(30*126); for(let i
 function renderBars(probs, signList, prefix){ const r=[...probs.keys()].sort((a,b)=>probs[b]-probs[a]).slice(0,5);
   r.forEach((idx,i)=>{ const s=signList[idx]; $(prefix+"bl"+i).textContent=(s==="none"?"—":s);
     $(prefix+"bf"+i).style.width=(probs[idx]*100)+"%"; $(prefix+"bp"+i).textContent=Math.round(probs[idx]*100)+"%"; }); }
-async function predictWith(id, seq){ return predict(seq, await getModel(id)); }
+// The models read the left-hand and right-hand slots of the keypoint row separately, and each learned its signs mostly in ONE slot
+// (the original model: the main signer's hand in the left slot; DANN and baseline: the other signers' hand in the right slot).
+// A sign made with the other hand lands in a slot the model has hardly seen. If only one hand is present and it is in the wrong slot,
+// the clip is mirrored (slots swapped, x -> 1-x) so it looks like the hand the model knows. Offline on the recorded clips this raised
+// one-hand accuracy from 65% to 82% (original model), from 35% to 60% (DANN) and from 41% to 65% (baseline).
+function mirrorRow(r){
+  const o=new Float32Array(126);
+  for(const [dst,src] of [[0,63],[63,0]]){
+    if(r[src]===0 && r[src+1]===0) continue;           // that hand is absent in this frame: it stays absent
+    for(let i=0;i<21;i++){ const s=src+i*3, d=dst+i*3; o[d]=1-r[s]; o[d+1]=r[s+1]; o[d+2]=r[s+2]; }
+  }
+  return o;
+}
+function toNativeHand(seq, native){
+  let nl=0, nr=0;
+  for(const r of seq){ if(r[0]!==0||r[1]!==0) nl++; if(r[63]!==0||r[64]!==0) nr++; }
+  const L=nl>seq.length/2, R=nr>seq.length/2;
+  if(!((native==="L") ? (R&&!L) : (L&&!R))) return seq;
+  window.__handMirrored=(window.__handMirrored||0)+1;
+  return seq.map(mirrorRow);
+}
+async function predictWith(id, seq){
+  const r=RECOGNIZERS[id];
+  if(prefs.handFix && r && r.nativeHand) seq=toNativeHand(seq, r.nativeHand);
+  return predict(seq, await getModel(id));
+}
 function showBars(probs){ renderBars(probs, RECOGNIZERS[activeRec].classes, ""); }
 
 // ---- Typhoon sentence-forming + TTS (local testing only -- see config.local.example.js) ----
@@ -1732,7 +1758,7 @@ renderWordRow();
 // ================= bridge UI layer: state banner, conversation, vocabulary, privacy and preferences =================
 // Nothing here changes how signs are read. It only shows state, keeps the conversation and holds the user's choices.
 const PREF_KEY="thsl_prefs_v1";
-const prefs=Object.assign({tts:true, ttsRemote:false, ai:true, overlay:true, diag:false},
+const prefs=Object.assign({tts:true, ttsRemote:false, ai:true, overlay:true, diag:false, handFix:true},
   (()=>{ try{ return JSON.parse(localStorage.getItem(PREF_KEY)||"{}"); }catch{ return {}; } })());
 function savePrefs(){ try{ localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); }catch(e){ console.warn("[prefs] could not save in this browser", e); } }
 function useAi(){ return !!prefs.ai && !!window.TYPHOON_API_KEY; }   // the sentence service needs a key AND the user's yes
@@ -1814,6 +1840,8 @@ $("overlayToggle").onchange=()=>{ prefs.overlay=$("overlayToggle").checked; save
 document.body.classList.toggle("diag", !!prefs.diag);
 $("diagToggle").checked=!!prefs.diag;
 $("diagToggle").onchange=()=>{ prefs.diag=$("diagToggle").checked; savePrefs(); document.body.classList.toggle("diag", prefs.diag); };
+$("handFixToggle").checked=!!prefs.handFix;
+$("handFixToggle").onchange=()=>{ prefs.handFix=$("handFixToggle").checked; savePrefs(); };
 $("ttsToggle").checked=prefs.tts;
 $("ttsToggle").onchange=()=>{ prefs.tts=$("ttsToggle").checked; savePrefs(); if(!prefs.tts){ setTtsNote(""); try{ window.speechSynthesis && speechSynthesis.cancel(); }catch(e){} } };
 $("ttsRemoteToggle").checked=prefs.ttsRemote;
