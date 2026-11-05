@@ -3,132 +3,705 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ThSL Bridge — แปลภาษามือไทย</title>
+<title>ThSL Bridge | แปลภาษามือไทย</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230a7a4b'/%3E%3Cpath d='M8 21v-8l4 4 4-6 4 6 4-4v8z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#0f1115; --accent:#2ecc71; --gold:#f1c40f; --red:#e74c3c; --text:#e8eaed; }
+  /* ThSL Bridge: light theme, AA contrast checked (see the redesign notes). Tokens first, components below. */
+  :root {
+    --bg:#f5f6f8; --surface:#ffffff; --surface-muted:#eceff2;
+    --border:#dde1e6; --border-strong:#80878f;
+    --text:#15181d; --text-muted:#4a5159; --text-faint:#59606a;
+    --accent:#0a7a4b; --accent-strong:#075f3a; --accent-soft:#e0f2e8;
+    --warn:#7a4a03; --warn-soft:#fcefd0; --warn-line:#b7791f;
+    --danger:#ab2a22; --danger-soft:#fde7e4;
+    --focus:#1a5fb4;
+    --radius-lg:20px; --radius-md:14px; --radius-sm:10px;
+    --shadow-sm:0 1px 2px rgba(20,24,29,.06);
+    --shadow-md:0 1px 3px rgba(20,24,29,.06), 0 14px 30px -18px rgba(20,24,29,.28);
+    --font:'Noto Sans Thai','Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
   * { box-sizing:border-box; }
-  body { margin:0; font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text);
-         display:flex; flex-direction:column; align-items:center; min-height:100vh; padding-bottom:30px; }
-  h1 { margin:14px 0 2px; font-size:1.5rem; }
-  .sub { color:#9aa0a6; font-size:.85rem; margin-bottom:14px; }
+  html { -webkit-text-size-adjust:100%; }
+  body { margin:0; font-family:var(--font); font-size:16px; line-height:1.6; background:var(--bg); color:var(--text); }
   .hidden { display:none !important; }
+  .srOnly { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .ic { width:1em; height:1em; vertical-align:-.15em; flex-shrink:0; }
+  [lang="en"] { font-family:'Inter',var(--font); }
+  :focus-visible { outline:3px solid var(--focus); outline-offset:2px; }
+  .skip { position:absolute; left:-999px; top:8px; background:var(--surface); padding:10px 16px; border-radius:var(--radius-sm); z-index:50; }
+  .skip:focus { left:12px; }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
 
-  /* menu */
-  #menu { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:10px; }
-  .modeBtns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
-  .modeCard { background:#1a1d24; border:2px solid #2a2e38; border-radius:16px; padding:22px 28px;
-              width:240px; cursor:pointer; transition:.15s; text-align:center; }
-  .modeCard:hover { border-color:var(--accent); transform:translateY(-3px); }
-  .modeCard .emoji { font-size:2.6rem; }
-  .modeCard .t { font-size:1.2rem; font-weight:700; margin:8px 0 4px; }
-  .modeCard .d { font-size:.82rem; color:#9aa0a6; line-height:1.4; }
+  /* app bar */
+  .appBar { max-width:1240px; margin:0 auto; padding:18px 24px 12px; display:flex; align-items:center; justify-content:space-between; gap:14px 20px; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brandMark { width:46px; height:46px; border-radius:15px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; }
+  .brandMark svg { width:28px; height:28px; }
+  .brandName { font-weight:800; font-size:1.3rem; line-height:1.2; letter-spacing:-.01em; }
+  .brandSub { font-size:.85rem; color:var(--text-muted); line-height:1.35; }
+  .barRight { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .topNav { display:flex; gap:4px; background:var(--surface-muted); padding:4px; border-radius:999px; }
+  .navPill { background:transparent; color:var(--text-muted); border:none; padding:9px 22px; min-height:40px; border-radius:999px; font-size:.95rem; font-weight:700; cursor:pointer; font-family:inherit; }
+  .navPill:hover { background:rgba(255,255,255,.6); color:var(--text); }
+  .navPill.active { background:var(--surface); color:var(--text); box-shadow:var(--shadow-sm); }
+  #navResearch.active { color:var(--warn); }
+  .privacyChip { display:inline-flex; align-items:center; gap:8px; background:var(--accent-soft); color:var(--accent-strong); border:1px solid transparent; padding:8px 14px; min-height:40px; border-radius:999px; font-size:.88rem; font-weight:700; }
+  .privacyChip:hover { background:#d3ebdf; }
 
-  .stage { position:relative; width:960px; max-width:97vw; }
-  video, canvas { width:100%; border-radius:16px; display:block; }
+  main { max-width:1240px; margin:0 auto; padding:6px 24px 56px; }
+  #viewTranslate, #viewResearch { display:flex; flex-direction:column; gap:18px; }
+
+  /* direction switch: Thai first, English underneath */
+  .toggleTrack { position:relative; display:flex; align-self:center; background:var(--surface-muted); border-radius:999px; padding:5px; width:min(460px,100%); }
+  .toggleThumb { position:absolute; top:5px; bottom:5px; left:5px; width:calc(50% - 5px); background:var(--accent); border-radius:999px; transition:transform .22s ease; z-index:0; }
+  .toggleOpt { position:relative; z-index:1; flex:1; background:transparent; border:none; padding:9px 8px; min-height:56px; border-radius:999px; font-size:1.05rem; font-weight:700; color:var(--text-muted); cursor:pointer; font-family:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.25; transition:color .2s; }
+  .toggleOpt small { font-size:.72rem; font-weight:500; }
+  .toggleOpt.active { color:#fff; }
+  .toggleOpt:hover:not(.active) { color:var(--text); background:transparent; }
+
+  /* two-pane bridge layout: input on the left, the conversation on the right */
+  .bridge { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(340px,1fr); gap:20px; align-items:start; }
+  .bridgeMain, .bridgeSide { display:flex; flex-direction:column; gap:14px; min-width:0; }
+  /* narrow screens: one column, ordered by what the user needs next (state, camera, sentence, thread, then settings) */
+  @media (max-width:1000px) {
+    .bridge { display:flex; flex-direction:column; gap:14px; }
+    .bridgeMain, .bridgeSide { display:contents; }
+    #stateBanner { order:1; } .stageWrap { order:2; } #speechScreen { order:2; } #appHint { order:3; }
+    #composerCard { order:4; } .convCard { order:5; }
+    #camControls, #studyPanel, #backBtn { order:6; } #faceSettings { order:7; } #clinicalCard { order:8; } #vocabDrawer { order:9; }
+  }
+  #viewTranslate.researchMode .bridge { grid-template-columns:minmax(0,1fr); }
+  #viewTranslate.researchMode .bridgeSide { display:none; }
+  #viewTranslate.researchMode .bridgeMain { max-width:980px; width:100%; margin:0 auto; }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:18px 20px; }
+  .card h2 { margin:0 0 10px; font-size:1.1rem; font-weight:700; line-height:1.4; }
+  .card h2 small { font-weight:500; color:var(--text-faint); font-size:.78rem; margin-left:8px; }
+
+  /* state banner: the one place the user looks to know what the system is doing */
+  .stateBanner { display:flex; align-items:center; gap:14px; padding:14px 18px; border-radius:var(--radius-md); border:1px solid var(--border); background:var(--surface); min-height:80px; }
+  .stIcon { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--surface-muted); color:var(--text-muted); }
+  .stIcon svg { width:26px; height:26px; }
+  .stText { min-width:0; flex:1; }
+  .stBig { font-size:1.55rem; font-weight:800; line-height:1.3; overflow-wrap:anywhere; }
+  .stSmall { font-size:.85rem; line-height:1.4; }
+  .stMeterWrap { display:flex; align-items:center; gap:10px; flex-shrink:0; font-weight:700; }
+  .stMeter { width:120px; height:12px; border-radius:99px; background:rgba(255,255,255,.35); overflow:hidden; }
+  .stMeterFill { height:100%; width:0; background:#fff; border-radius:99px; }
+  .st-loading { background:var(--surface-muted); }
+  .st-reading { background:var(--accent-soft); color:var(--accent-strong); border-color:transparent; }
+  .st-reading .stIcon { background:#fff; color:var(--accent-strong); }
+  .st-listening { background:var(--accent-soft); color:var(--accent-strong); border-color:transparent; }
+  .st-listening .stIcon { background:#fff; color:var(--accent-strong); }
+  .st-confirmed { background:var(--accent); color:#fff; border-color:transparent; }
+  .st-confirmed .stIcon { background:rgba(255,255,255,.2); color:#fff; }
+  .st-uncertain { background:var(--warn-soft); color:var(--warn); border-color:var(--warn-line); }
+  .st-uncertain .stIcon { background:#fff; color:var(--warn); }
+  .st-error { background:var(--danger-soft); color:var(--danger); border-color:var(--danger); }
+  .st-error .stIcon { background:#fff; color:var(--danger); }
+
+  /* camera stage */
+  .stageWrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-md); padding:10px; width:100%; }
+  .stage { position:relative; aspect-ratio:16/9; background:var(--surface-muted); border-radius:12px; overflow:hidden; }
+  video, canvas { width:100%; height:100%; border-radius:12px; display:block; object-fit:cover; }
   canvas { position:absolute; top:0; left:0; }
-  #status { position:absolute; top:12px; left:12px; background:rgba(0,0,0,.5);
-            backdrop-filter:blur(6px); padding:7px 14px; border-radius:10px; font-size:.95rem; }
-  #big { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-         font-size:9rem; font-weight:800; color:var(--gold); text-shadow:0 6px 30px rgba(0,0,0,.8); }
+  #status { display:none; }
+  #big { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:9rem; font-weight:800; color:#fff; text-shadow:0 6px 30px rgba(0,0,0,.6); }
+  #cameraGate { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:var(--surface-muted); border-radius:12px; z-index:2; padding:20px; text-align:center; }
+  .gateIcon { width:64px; height:64px; border-radius:20px; background:var(--accent-soft); color:var(--accent-strong); display:flex; align-items:center; justify-content:center; }
+  .gateIcon svg { width:34px; height:34px; }
+  #cameraGate h3 { margin:6px 0 0; font-size:1.3rem; }
+  #cameraGate .hint { margin:0; max-width:420px; }
+  @media (max-width:600px) {
+    .stage { aspect-ratio:3/4; }
+    #cameraGate { padding:14px; gap:8px; }
+    .gateIcon { width:52px; height:52px; }
+    #cameraGate h3 { font-size:1.15rem; }
+  }
+  .lockNote { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; color:var(--text-muted); }
+  .hint { color:var(--text-muted); font-size:.88rem; line-height:1.55; margin:0; text-align:left; }
 
-  /* game HUD */
-  #gameHud { position:absolute; top:10px; left:50%; transform:translateX(-50%);
-             display:flex; gap:20px; align-items:center; background:rgba(0,0,0,.5);
-             backdrop-filter:blur(8px); padding:8px 22px; border-radius:14px; }
-  #timer { font-size:1.5rem; font-weight:800; color:var(--gold); }
-  #score { font-size:1.5rem; font-weight:800; color:var(--accent); }
-  #target { position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
-            background:rgba(0,0,0,.5); backdrop-filter:blur(8px); padding:12px 36px; border-radius:16px;
-            font-size:2.4rem; font-weight:800; }
-  #target b { color:var(--gold); }
-  #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%);
-           font-size:6rem; font-weight:900; opacity:0; transition:opacity .1s; pointer-events:none; }
-
-  /* test overlays */
-  #result { position:absolute; bottom:58px; left:50%; transform:translateX(-50%);
-            background:rgba(0,0,0,.45); backdrop-filter:blur(6px); padding:10px 30px; border-radius:14px;
-            font-size:2.6rem; font-weight:800; color:var(--gold); white-space:nowrap; }
-  #sentence { position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
-              background:rgba(0,0,0,.4); backdrop-filter:blur(4px); padding:5px 18px; border-radius:10px;
-              font-size:1.05rem; color:#fff; white-space:nowrap; }
-  .bars { position:absolute; right:12px; top:50%; transform:translateY(-50%);
-          width:230px; background:rgba(15,17,21,.55); backdrop-filter:blur(8px);
-          padding:14px; border-radius:14px; }
+  /* game HUD and overlays that sit on live video: dark glass keeps white text readable on any background */
+  #gameHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:20px; align-items:center; background:rgba(14,16,20,.82); color:#fff; padding:8px 22px; border-radius:14px; }
+  #gameHud .ic { color:#c9cdd3; }
+  #timer { font-size:1.5rem; font-weight:800; }
+  #score { font-size:1.5rem; font-weight:800; color:#6ee7a8; }
+  #target { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(14,16,20,.82); color:#fff; padding:12px 36px; border-radius:16px; font-size:2.4rem; font-weight:800; white-space:nowrap; }
+  #target b { color:#6ee7a8; }
+  #flash { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:6rem; opacity:0; transition:opacity .1s; pointer-events:none; }
+  #flash .ic { stroke-width:2.5; filter:drop-shadow(0 6px 20px rgba(0,0,0,.35)); }
+  .bars { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:230px; background:rgba(14,16,20,.82); color:#fff; padding:14px; border-radius:14px; }
+  .capDiag { flex-basis:100%; font-size:.82rem; color:var(--text-muted); font-variant-numeric:tabular-nums; line-height:1.5; }
+  body:not(.diag) #capDiag { display:none; }
+  .zoneBar { flex-basis:100%; display:flex; align-items:center; gap:.8rem; flex-wrap:wrap; }
+  .zoneBar .zLabel { font-size:.88rem; color:var(--text-muted); }
+  .zoneBar svg { height:120px; width:auto; flex:none; }
+  .zoneBar .zp { fill:#e8efe9; stroke:#8aa092; stroke-width:1.2; cursor:pointer; transition:fill .12s; }
+  .zoneBar .zp:hover { fill:#cfe3d6; }
+  .zoneBar .zp.on { fill:#1e6b4a; stroke:#14513a; }
+  .zoneBar .zbtns { display:flex; gap:.4rem; flex-wrap:wrap; }
+  .zoneBar .zbtns button, .camControls .zoneBar .zbtns button { font-size:.85rem; font-weight:600; min-height:0; padding:5px 12px; border-radius:999px; border:1px solid #8aa092; background:#fff; color:var(--text); cursor:pointer; }
+  .zoneBar .zbtns button:hover { background:#e8efe9; }
+  .zoneBar .zbtns button.on, .zoneBar .zbtns button.on:hover { background:#1e6b4a; color:#fff; border-color:#14513a; }
+  .zoneBar .zNote { font-size:.8rem; color:var(--text-muted); flex-basis:100%; }
+  .liveRec { flex-basis:100%; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; font-size:.85rem; }
+  body:not(.diag) .liveRec { display:none; }
+  body:not(.diag) #bars { display:none !important; }   /* the model's raw guesses are diagnostics: hidden unless asked for */
   .bar-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
   .bar-label { width:74px; text-align:right; font-size:.85rem; }
-  .bar-track { flex:1; background:rgba(255,255,255,.12); border-radius:6px; height:16px; overflow:hidden; }
-  .bar-fill { height:100%; background:var(--accent); width:0%; transition:width .15s; }
+  .bar-track { flex:1; background:rgba(255,255,255,.18); border-radius:6px; height:16px; overflow:hidden; }
+  .bar-fill { height:100%; background:#34d399; width:0%; transition:width .15s; }
   .bar-pct { width:38px; font-size:.8rem; text-align:right; }
+  .barsLeft { left:12px; right:auto; }
+  .barsRight { right:12px; }
+  .barsHead { font-weight:700; text-align:center; margin-bottom:8px; font-size:.9rem; color:#6ee7a8; }
+  #barsCompareDann .barsHead { color:#fbbf6a; }
+  #compareStatus { position:absolute; bottom:14px; left:50%; transform:translateX(-50%); background:rgba(14,16,20,.82); color:#fff; padding:6px 20px; border-radius:10px; font-size:.95rem; white-space:nowrap; text-align:center; max-width:94%; overflow-x:auto; }
+  @media (max-width:700px) {
+    #barsCompareBaseline, #barsCompareDann { width:150px; padding:10px; }
+    #barsCompareBaseline .bar-label, #barsCompareDann .bar-label { width:44px; font-size:.72rem; }
+    #barsCompareBaseline .bar-pct, #barsCompareDann .bar-pct { width:30px; font-size:.7rem; }
+    #barsCompareBaseline .barsHead, #barsCompareDann .barsHead { font-size:.78rem; }
+  }
+  #faceChip { position:absolute; top:12px; right:12px; background:rgba(14,16,20,.82); color:#fff; padding:7px 14px; border-radius:10px; font-size:.9rem; font-weight:700; }
+  #faceChip.q { color:#fbbf6a; } #faceChip.neg { color:#ff9a90; } #faceChip.nofa { color:#c9cdd3; font-weight:600; }
+  #studyHud { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(14,16,20,.82); color:#fff; padding:8px 18px; border-radius:14px; font-size:.95rem; font-weight:700; white-space:nowrap; }
 
-  /* gameover */
-  #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; }
-  #finalScore { font-size:3rem; font-weight:900; color:var(--gold); }
-  input { background:#1a1d24; border:2px solid #2a2e38; color:#fff; padding:10px 16px;
-          border-radius:10px; font-size:1rem; text-align:center; }
-  .lb { background:#1a1d24; border-radius:14px; padding:14px 20px; min-width:320px; }
-  .lb h3 { margin:0 0 8px; text-align:center; }
-  .lb-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #2a2e38; }
-  .lb-row .rank { color:var(--gold); font-weight:700; width:30px; }
+  /* controls under the camera */
+  .camControls { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; font-size:.9rem; color:var(--text-muted); }
+  .chk { display:inline-flex; align-items:center; gap:8px; padding:8px 14px; min-height:40px; border:1px solid var(--border); border-radius:999px; background:var(--surface); cursor:pointer; color:var(--text); font-size:.9rem; }
+  .chk input { width:18px; height:18px; accent-color:var(--accent); margin:0; }
+  .camControls select { font-family:inherit; border:1px solid var(--border-strong); border-radius:10px; padding:8px 10px; min-height:40px; background:var(--surface); color:var(--text); font-size:.9rem; }
+  .camControls button { padding:8px 16px; font-size:.9rem; }
+  .focusInfo { color:var(--text-faint); font-size:.8rem; }
+
+  /* composer: the sentence being built */
+  #wordRow { display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:44px; }
+  #wordRow .wrLabel { color:var(--text-faint); font-size:.85rem; }
+  .wordBubble { display:inline-flex; align-items:baseline; gap:8px; background:var(--surface); border:1px solid var(--border-strong); border-radius:14px; padding:7px 13px; font-size:1.1rem; }
+  .wordBubble .n { color:var(--text-faint); font-size:.72rem; }
+  .wordBubble b { font-weight:700; }
+  .wordBubble .tag { font-size:.78rem; font-weight:700; padding:1px 9px; border-radius:999px; background:var(--surface-muted); color:var(--text-muted); }
+  .wordBubble.q { border-color:var(--warn-line); }
+  .wordBubble.neg { border-color:var(--danger); }
+  .wordBubble .tag.q { background:var(--warn-soft); color:var(--warn); }
+  .wordBubble .tag.neg { background:var(--danger-soft); color:var(--danger); }
+  .wordBubble .tag.yes { background:var(--accent-soft); color:var(--accent-strong); }
+  .wordBubble .tag.none { background:var(--surface-muted); color:var(--text-muted); font-weight:600; }
+  .wordBubble.old { opacity:.6; }
+  #sentence { font-size:1.4rem; font-weight:600; line-height:1.5; min-height:2.6em; padding:10px 0 4px; color:var(--text); overflow-wrap:anywhere; }
+  .actions { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-top:6px; }
+  .actions .switch { margin-left:auto; display:inline-flex; align-items:center; gap:8px; font-size:.92rem; cursor:pointer; }
+  .actions .switch input { width:20px; height:20px; accent-color:var(--accent); margin:0; }
+
+  /* conversation: both people, one thread */
+  .convHead { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; margin-bottom:10px; }
+  .who { font-size:.85rem; font-weight:700; padding:3px 12px; border-radius:999px; }
+  .who.deaf { background:var(--accent-soft); color:var(--accent-strong); }
+  .who.hearing { background:var(--warn-soft); color:var(--warn); }
+  .bridgeArc { width:100%; height:18px; color:var(--border-strong); }
+  #convLog { display:flex; flex-direction:column; gap:12px; min-height:200px; max-height:52vh; overflow-y:auto; padding:2px; }
+  .convEmpty { color:var(--text-muted); text-align:center; padding:34px 14px; font-size:.95rem; line-height:1.6; }
+  .msg { max-width:94%; display:flex; flex-direction:column; gap:4px; }
+  .msg.deaf { align-self:flex-start; }
+  .msg.hearing { align-self:flex-end; align-items:flex-end; }
+  .msgWho { font-size:.78rem; color:var(--text-muted); }
+  .msgBubble { padding:12px 16px; border-radius:18px 18px 18px 6px; font-size:1.25rem; line-height:1.5; background:var(--accent-soft); color:var(--text); overflow-wrap:anywhere; }
+  .msg.hearing .msgBubble { border-radius:18px 18px 6px 18px; background:var(--warn-soft); }
+  .msgChips { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+  .chipOk, .chipNo { font-size:.82rem; padding:2px 10px; border-radius:999px; background:var(--surface); }
+  .chipOk { border:1px solid var(--accent); color:var(--accent-strong); font-weight:600; }
+  .chipNo { border:1px dashed var(--border-strong); color:var(--text-muted); }
+  .convFoot { display:flex; justify-content:flex-end; margin-top:10px; }
+
+  /* vocabulary panel */
+  #vocabDrawer { padding:14px 18px; }
+  #vocabDrawer summary { cursor:pointer; font-weight:700; font-size:1rem; display:flex; align-items:center; gap:8px; min-height:32px; }
+  #vocabDrawer summary .ic { color:var(--accent); }
+  #vocabDrawer[open] summary { margin-bottom:12px; }
+  .vtScope { color:var(--text-muted); font-size:.88rem; margin:0 0 12px; line-height:1.6; }
+  .vocabChips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .vchip { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:999px; border:1px solid var(--border); background:var(--surface-muted); font-size:.9rem; color:var(--text); }
+  .vchip.ok { border-color:var(--accent); background:var(--accent-soft); color:var(--accent-strong); font-weight:600; }
+  .vchip small { font-size:.68rem; font-weight:600; color:var(--text-muted); }
+  .vtGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(100px,1fr)); gap:10px; }
+  .vtCard { background:var(--surface-muted); border:1px solid var(--border); border-radius:12px; padding:8px; text-align:center; position:relative; }
+  .vtCard.vtBest { border-color:var(--warn-line); }
+  .vtCard video { width:100%; border-radius:8px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+  .vtCard .vtWord { font-weight:700; margin-top:6px; font-size:.95rem; color:var(--text); }
+  .vtCard .vtGloss { color:var(--text-muted); font-size:.72rem; }
+  .vtCard .vtBadge { position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:var(--warn-soft); color:var(--warn); font-size:.68rem; font-weight:800; padding:3px 9px; border-radius:8px; white-space:nowrap; border:1px solid var(--warn-line); }
+  .vtCard .vtBadge .ic { margin-right:2px; }
+
+  /* face settings */
+  .faceSettings { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:12px 18px; }
+  .faceSettings summary { cursor:pointer; font-weight:700; font-size:.95rem; min-height:32px; display:flex; align-items:center; }
+  .faceSettings[open] summary { margin-bottom:6px; }
+  .fsRow { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin:10px 0; font-size:.9rem; color:var(--text-muted); }
+  .fsRow label { display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--text); }
+  .fsRow input[type=checkbox] { width:18px; height:18px; accent-color:var(--accent); }
+  .fsRow button { padding:8px 16px; font-size:.9rem; }
+  .fsInfo { font-size:.85rem; color:var(--text-muted); }
+  .fsInfo.warn { color:var(--warn); font-weight:600; }
+  .fsRange { display:block; font-size:.9rem; color:var(--text-muted); margin-top:12px; }
+  .fsRange b { color:var(--text); margin-left:6px; }
+  .fsRange input[type=range] { width:100%; accent-color:var(--accent); }
+  .fsNote { font-size:.82rem; color:var(--text-muted); line-height:1.55; margin:10px 0 2px; }
+
+  /* speech and typed input: hearing person to deaf person */
+  #speechScreen { display:flex; flex-direction:column; gap:14px; }
+  .speakForm { display:flex; flex-wrap:wrap; gap:10px; margin:6px 0 10px; }
+  #speakText { flex:1 1 240px; min-width:0; font-family:inherit; font-size:1.2rem; padding:14px 16px; border:2px solid var(--border-strong); border-radius:var(--radius-md); background:var(--surface); color:var(--text); text-align:left; }
+  #speakText:focus-visible { border-color:var(--focus); }
+  .speakForm button { min-height:52px; padding:10px 22px; font-size:1.05rem; }
+  #micBtn { background:var(--surface); color:var(--text); border:2px solid var(--border-strong); }
+  #micBtn:hover { background:var(--surface-muted); }
+  #micBtn.listening { background:var(--danger); color:#fff; border-color:var(--danger); outline:4px solid rgba(171,42,34,.25); outline-offset:0; }
+  #speakStatus { color:var(--text-muted); font-size:.92rem; min-height:1.4em; }
+  #speakStatus.warnText { color:var(--danger); font-weight:600; }
+  #speakStatus .ic { margin-right:4px; }
+  #speakTranscript { font-size:1.15rem; color:var(--text); min-height:1.4em; }
+  .opts { margin:10px 0; font-size:.9rem; color:var(--text-muted); }
+  .opts summary { cursor:pointer; font-weight:600; min-height:32px; }
+  .grammarToggle { display:flex; flex-direction:column; gap:6px; margin-top:8px; font-size:.9rem; color:var(--text); }
+  .grammarToggle label { display:flex; align-items:center; gap:8px; cursor:pointer; }
+  .speakSentence { font-size:1.1rem; color:var(--text); font-weight:600; margin-top:8px; }
+  .glossRow { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; }
+  .glossChip { background:var(--accent-soft); color:var(--accent-strong); font-weight:700; padding:6px 14px; border-radius:10px; }
+  .glossArrow { color:var(--text-muted); }
+  .glossEmpty { color:var(--text-muted); font-size:.95rem; }
+  .glossEmpty .ic { color:var(--warn); margin-right:4px; }
+  #speakClips { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:12px; width:100%; margin-top:10px; }
+  .signCard { border:1px solid var(--border); border-radius:var(--radius-md); padding:10px; background:var(--surface); display:flex; flex-direction:column; gap:8px; }
+  .signCard video { width:100%; border-radius:10px; display:block; background:#000; aspect-ratio:9/16; object-fit:cover; }
+  .signCard .w { font-weight:700; font-size:1.15rem; }
+  .signCard .en { font-size:.8rem; color:var(--text-muted); }
+  .signCard a { font-size:.88rem; color:var(--accent-strong); font-weight:600; }
+  .signCard.none { border-style:dashed; border-color:var(--border-strong); background:var(--surface-muted); }
+  .signCard.none .w { color:var(--text-muted); font-weight:600; }
+
+  /* research view (evaluation tools) */
+  .researchIntro { text-align:center; max-width:560px; align-self:center; }
+  .researchIntro .t { font-weight:700; font-size:1.15rem; margin-bottom:4px; }
+  .researchIntro .d { color:var(--text-muted); font-size:.92rem; line-height:1.55; }
+  .modeBtns { display:flex; gap:16px; flex-wrap:wrap; justify-content:center; width:100%; }
+  .modeCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:24px 26px; width:250px; cursor:pointer; transition:transform .15s, box-shadow .15s, border-color .15s; text-align:center; }
+  .modeCard:hover { border-color:var(--border-strong); box-shadow:var(--shadow-md); transform:translateY(-3px); }
+  .modeIcon { width:48px; height:48px; border-radius:14px; background:var(--warn-soft); color:var(--warn); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+  .modeIcon svg { width:23px; height:23px; }
+  .modeCard .t { font-size:1.08rem; font-weight:700; margin:0 0 4px; }
+  .modeCard .d { font-size:.9rem; color:var(--text-muted); line-height:1.5; }
+  #viewResearch .lb { align-self:center; }
+
+  /* clinical card (parked behind SHOW_CLINICAL_CARD) */
+  #clinicalCard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:22px 24px; }
+  .clinHead { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .clinHead .t { font-weight:700; font-size:1rem; }
+  .clinHead .d { color:var(--text-muted); font-size:.8rem; }
+  .clinEmpty { color:var(--text-muted); font-size:.92rem; text-align:center; padding:10px 0; }
+  .clinPriority { display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:10px; font-weight:700; border-left:4px solid; margin-bottom:14px; }
+  .clinPriority.urgent { background:var(--danger-soft); color:var(--danger); border-left-color:var(--danger); }
+  .clinPriority.normal { background:var(--accent-soft); color:var(--accent-strong); border-left-color:var(--accent); }
+  .clinGrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:14px; }
+  .clinLabel { font-size:.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+  .clinValue { font-weight:600; color:var(--text); font-size:.95rem; }
+  .clinValue.flagYes { color:var(--danger); }
+  .clinValue.empty { color:var(--text-muted); font-weight:400; }
+  .clinRaw { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .clinRawRow { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .clinSign { background:var(--surface-muted); border:1px solid var(--border); border-radius:8px; padding:4px 10px; font-size:.85rem; }
+  .clinSign small { color:var(--text-muted); margin-left:4px; }
+  .clinSign.lowConf { border-color:var(--warn-line); background:var(--warn-soft); }
+
+  /* volunteer study */
+  #studyPanel { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:18px 20px; }
+  .studyRow { display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:center; margin:6px 0; }
+  .studyRow label { font-size:.9rem; color:var(--text-muted); display:flex; align-items:center; gap:6px; }
+  .studyRow select, .studyRow input { font-family:inherit; font-size:.95rem; padding:8px 10px; border:1px solid var(--border-strong); border-radius:10px; background:var(--surface); color:var(--text); text-align:left; }
+  .studyRow button { padding:9px 18px; font-size:.92rem; }
+  .studyNote { color:var(--text-muted); font-size:.82rem; text-align:center; margin:6px 0 0; line-height:1.55; }
+  .studyWarn { color:var(--danger); font-weight:600; }
+  #studySummary { text-align:center; font-size:.98rem; line-height:1.7; }
+  #studySummary b { color:var(--accent-strong); }
+
+  /* gameover and leaderboard */
+  #gameover { display:flex; flex-direction:column; align-items:center; gap:14px; margin-top:20px; padding:0 24px; }
+  #finalScore { font-size:3rem; font-weight:900; color:var(--accent); }
+  input { font-family:inherit; }
+  #nameInput { background:var(--surface); border:2px solid var(--border-strong); color:var(--text); padding:10px 16px; border-radius:10px; font-size:1rem; text-align:center; }
+  .lb { background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-sm); border-radius:var(--radius-md); padding:14px 20px; min-width:320px; }
+  .lb h3 { margin:0 0 8px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .lb h3 .ic { color:var(--warn); }
+  .lb-row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); }
+  .lb-row .rank { color:var(--warn); font-weight:700; width:30px; }
   .lb-row .nm { flex:1; }
   .lb-row .sc { font-weight:700; color:var(--accent); }
 
-  button { background:var(--accent); color:#08160d; border:none; padding:12px 30px;
-           border-radius:10px; font-size:1.05rem; font-weight:700; cursor:pointer; }
-  .ghost { background:transparent; color:#9aa0a6; border:1px solid #2a2e38; }
-  .hint { color:#9aa0a6; font-size:.82rem; max-width:680px; text-align:center; line-height:1.5; margin:8px 14px; }
+  /* buttons */
+  button { background:var(--accent); color:#fff; border:none; padding:12px 26px; min-height:44px; border-radius:12px; font-size:1rem; font-weight:700; cursor:pointer; transition:background .15s; font-family:inherit; }
+  button:hover { background:var(--accent-strong); }
+  button:active { transform:translateY(1px); }
+  button:disabled { background:var(--surface-muted); color:var(--text-muted); cursor:default; }
+  .ghost { background:var(--surface); color:var(--text); border:1px solid var(--border-strong); }
+  .ghost:hover { background:var(--surface-muted); color:var(--text); }
+  .ghost .ic { margin-right:6px; }
+  .tiny { padding:6px 14px; min-height:36px; font-size:.88rem; }
+
+  /* privacy dialog */
+  dialog { border:none; border-radius:var(--radius-lg); padding:26px 28px; max-width:600px; width:calc(100% - 32px); box-shadow:0 30px 80px -20px rgba(20,24,29,.5); color:var(--text); }
+  dialog::backdrop { background:rgba(20,24,29,.5); }
+  dialog h2 { margin:0 0 4px; font-size:1.35rem; }
+  dialog h3 { margin:18px 0 6px; font-size:1rem; }
+  dialog ul { margin:0; padding-left:20px; color:var(--text); line-height:1.65; }
+  dialog .fsRow { flex-direction:column; align-items:flex-start; gap:8px; }
+  dialog form[method=dialog] { margin-top:18px; display:flex; justify-content:flex-end; }
 </style>
 </head>
 <body>
-  <h1>🤟 ThSL Bridge</h1>
-  <div class="sub">แปลภาษามือไทยเรียลไทม์ในเบราว์เซอร์ • MediaPipe + LSTM</div>
+  <a class="skip" href="#main">ข้ามไปที่เนื้อหา</a>
 
-  <!-- MENU -->
-  <div id="menu">
-    <div class="modeBtns">
-      <div class="modeCard" id="cardTest">
-        <div class="emoji">🧪</div><div class="t">โหมดทดสอบ</div>
-        <div class="d">ทำท่าอิสระ ดูว่าโมเดลทายเป็นคำไหน สร้างประโยคได้</div>
+  <header class="appBar">
+    <div class="brand">
+      <div class="brandMark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 16c0-4.5 2.5-8 4.5-8S9 11 12 11s4.5-3 6.5-3S21 11.5 21 16"/><path d="M3 20h18"/>
+        </svg>
       </div>
-      <div class="modeCard" id="cardGame">
-        <div class="emoji">🎮</div><div class="t">Sign Speed Test</div>
-        <div class="d">ทำท่าตามคำที่สุ่มให้ ภายใน 45 วินาที ทำได้กี่คำ?</div>
+      <div>
+        <div class="brandName">ThSL Bridge</div>
+        <div class="brandSub">ผู้ช่วยสื่อสารระหว่างคนหูหนวกกับคนทั่วไป <span lang="en">Sign language bridge</span></div>
       </div>
     </div>
-    <div class="lb" id="menuLb"></div>
-  </div>
-
-  <!-- APP -->
-  <div id="app" class="hidden">
-    <div class="stage">
-      <video id="video" autoplay playsinline></video>
-      <canvas id="overlay"></canvas>
-      <div id="status">กำลังโหลด...</div>
-      <div id="big"></div>
-      <!-- game -->
-      <div id="gameHud" class="hidden"><span>⏱️ <span id="timer">45</span></span><span>🏆 <span id="score">0</span></span></div>
-      <div id="target" class="hidden"></div>
-      <div id="flash"></div>
-      <!-- test -->
-      <div class="bars hidden" id="bars"></div>
-      <div id="result" class="hidden">—</div>
-      <div id="sentence" class="hidden"></div>
+    <div class="barRight">
+      <nav class="topNav" aria-label="เมนูหลัก">
+        <button class="navPill active" id="navTranslate">แปลภาษา</button>
+        <button class="navPill" id="navResearch">งานวิจัย</button>
+      </nav>
+      <button class="privacyChip" id="privacyBtn" aria-haspopup="dialog">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        ข้อมูลอยู่ในเครื่องนี้
+      </button>
     </div>
-    <p class="hint" id="appHint"></p>
-    <button class="ghost" id="backBtn">← กลับเมนู</button>
-  </div>
+  </header>
 
-  <!-- GAMEOVER -->
-  <div id="gameover" class="hidden">
-    <div>หมดเวลา! คุณทำได้</div>
-    <div id="finalScore">0</div>
-    <div>คำ</div>
-    <input id="nameInput" placeholder="ใส่ชื่อของคุณ" maxlength="16">
-    <button id="saveBtn">บันทึกคะแนน</button>
-    <div class="lb" id="overLb"></div>
-    <button class="ghost" id="againBtn">เล่นอีกครั้ง</button>
-  </div>
+  <main id="main">
+    <!-- TRANSLATE: two directions, one thread -->
+    <div id="viewTranslate">
+      <div class="toggleTrack" id="toggleTrack" role="group" aria-label="ทิศทางการสื่อสาร">
+        <div class="toggleThumb" id="toggleThumb"></div>
+        <button class="toggleOpt active" id="dirSignBtn">คนหูหนวกทำท่า <small lang="en">Sign to text and speech</small></button>
+        <button class="toggleOpt" id="dirSpeechBtn">คนได้ยินพิมพ์หรือพูด <small lang="en">Type or speak to sign</small></button>
+      </div>
 
+      <div class="bridge">
+        <section class="bridgeMain" aria-label="ส่วนรับข้อมูล">
+          <div id="stateBanner" class="stateBanner st-loading" role="status" aria-live="polite">
+            <div class="stIcon" id="stIcon" aria-hidden="true"></div>
+            <div class="stText">
+              <div class="stBig" id="stBig">กำลังโหลด</div>
+              <div class="stSmall" id="stSmall" lang="en">Loading</div>
+            </div>
+            <div class="stMeterWrap hidden" id="stMeterWrap">
+              <div class="stMeter" role="meter" aria-label="ความมั่นใจ" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="stMeter"><div class="stMeterFill" id="stMeterFill"></div></div>
+              <span id="stMeterNum"></span>
+            </div>
+          </div>
+          <div id="result" class="srOnly">—</div>
+
+          <!-- camera stage: shared by sign-to-speech translate AND the research game/compare/study modes -->
+          <div class="stageWrap" id="appScreen">
+            <div class="stage">
+              <div id="cameraGate">
+                <div class="gateIcon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2h-3.17L16 3H8L6.17 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+                <h3>เปิดกล้องเพื่อเริ่มแปลภาษามือ</h3>
+                <p class="hint">เบราว์เซอร์จะขออนุญาตใช้กล้อง ภาพจากกล้องและจุดมือประมวลผลในเครื่องนี้ ไม่ถูกส่งออกไปไหน</p>
+                <button id="startCameraBtn">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7a2 2 0 0 0-2-2h-3.17L16 3H8L6.17 5H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><circle cx="12" cy="13" r="4"/></svg>
+                  เปิดกล้อง
+                </button>
+              </div>
+              <video id="video" autoplay playsinline muted aria-label="ภาพจากกล้อง"></video>
+              <canvas id="overlay" aria-hidden="true"></canvas>
+              <div id="status">กำลังโหลด...</div>
+              <div id="big"></div>
+              <!-- game -->
+              <div id="gameHud" class="hidden">
+                <span>
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+                  <span id="timer">45</span>
+                </span>
+                <span>
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/></svg>
+                  <span id="score">0</span>
+                </span>
+              </div>
+              <div id="target" class="hidden"></div>
+              <div id="flash"></div>
+              <!-- diagnostics: the model's raw top guesses, hidden unless turned on -->
+              <div class="bars hidden" id="bars"></div>
+              <!-- compare (RQ3: pooled-baseline vs pooled+DANN) -->
+              <div class="bars barsLeft hidden" id="barsCompareBaseline"><div class="barsHead">Baseline</div></div>
+              <div class="bars barsRight hidden" id="barsCompareDann"><div class="barsHead">+ DANN</div></div>
+              <div id="compareStatus" class="hidden">ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย</div>
+              <div id="studyHud" class="hidden"></div>
+              <div id="faceChip" class="hidden"></div>
+            </div>
+          </div>
+          <p class="hint" id="appHint"></p>
+
+          <div class="camControls" id="camControls">
+            <label class="chk" title="แสดงจุดมือและกรอบใบหน้าบนภาพ"><input type="checkbox" id="overlayToggle" checked> แสดงจุดมือและใบหน้า</label>
+            <label class="chk" title="ใช้เฉพาะมือของคนที่หน้าใหญ่และชัดที่สุดในภาพ ไม่สนใจมือของคนอื่นที่ยืนอยู่ข้าง ๆ"><input type="checkbox" id="focusToggle" checked> โฟกัสเฉพาะผู้ใช้หลัก</label>
+            <button class="ghost tiny" id="relockBtn">เลือกผู้ใช้ใหม่</button>
+            <span class="focusInfo" id="focusInfo"></span>
+            <span class="focusInfo" id="handChip" title="จำนวนมือที่ระบบเห็นในภาพตอนนี้ และในท่าล่าสุด"></span>
+            <span class="focusInfo" id="distChip" title="ความกว้างใบหน้าเทียบกับภาพ ใช้บอกระยะจากกล้อง ข้อมูลฝึกส่วนใหญ่อยู่ที่ราว 10 ถึง 12%"></span>
+            <label class="chk" id="recWrap">โมเดล
+              <select id="recSelect" aria-label="เลือกโมเดล"></select>
+            </label>
+            <label class="chk" title="แสดงคำที่โมเดลทายและเปอร์เซ็นต์ สำหรับตรวจสอบ"><input type="checkbox" id="diagToggle"> แสดงรายละเอียดโมเดล</label>
+            <label class="chk" title="ถ้าทำท่าด้วยมือข้างเดียวและเป็นข้างที่โมเดลไม่คุ้น ระบบจะกลับด้านให้เหมือนข้างที่โมเดลเรียนมา ปิดเพื่อเทียบผล"><input type="checkbox" id="handFixToggle" checked> ใช้ได้ทั้งมือซ้ายและขวา</label>
+            <label class="chk" title="ทดลอง: เริ่มจับท่าเมื่อมือขยับ และหยุดเมื่อมือนิ่งต่อเนื่อง ใช้กฎเดียวกับที่ใช้ตัดคลิปฝึกโมเดลชุดใหม่ (ปิด = วิธีเดิม) โมเดล 10 คำเดิมฝึกด้วยคลิปที่ตัดต่างจากนี้ จึงใช้เทียบผลเท่านั้น"><input type="checkbox" id="motionCutToggle"> ตัดท่าตามการเคลื่อนไหว (ทดลอง)</label>
+            <div class="zoneBar" id="zoneBar" title="เลือกส่วนของร่างกายที่ท่าอยู่ ระบบจะเลือกคำเฉพาะคำที่อยู่ส่วนนั้น (คำทั่วไปเช่น ฉัน ขอบคุณ ยังเลือกได้เสมอ)">
+              <span class="zLabel">ส่วนที่ทำท่า</span>
+              <svg viewBox="0 0 60 120" aria-label="เลือกส่วนของร่างกาย">
+                <circle class="zp" data-zone="0" cx="30" cy="14" r="12"/>
+                <rect class="zp" data-zone="1" x="12" y="30" width="36" height="22" rx="6"/>
+                <rect class="zp" data-zone="2" x="12" y="54" width="36" height="26" rx="6"/>
+                <rect class="zp" data-zone="3" x="14" y="82" width="32" height="26" rx="6"/>
+              </svg>
+              <div class="zbtns" id="zoneBtns">
+                <button type="button" data-zone="all" class="on">ทุกส่วน</button>
+                <button type="button" data-zone="0">ศีรษะ</button>
+                <button type="button" data-zone="1">คอ/อกบน</button>
+                <button type="button" data-zone="2">อก/ท้อง</button>
+                <button type="button" data-zone="3">ท้อง</button>
+              </div>
+              <span class="zNote" id="zoneNote"></span>
+            </div>
+            <div class="liveRec" id="liveRec">
+              <label>ตั้งใจทำคำ <select id="liveIntent"></select></label>
+              <button class="ghost tiny" id="liveDl" type="button">ดาวน์โหลดท่าที่จับได้ (<span id="liveN">0</span>)</button>
+              <button class="ghost tiny" id="liveClear" type="button">ล้าง</button>
+            </div>
+            <div id="capDiag" class="capDiag" aria-hidden="true"></div>
+          </div>
+
+          <details class="faceSettings" id="faceSettings">
+            <summary>ตั้งค่าการอ่านสีหน้า</summary>
+            <div class="fsRow">
+              <label><input type="checkbox" id="toneToggle" checked> อ่านสีหน้าประกอบแต่ละคำ</label>
+              <button class="ghost tiny" id="calibBtn">ตั้งค่าหน้านิ่ง (นิ่งไว้ 2 วินาที)</button>
+              <span class="fsInfo warn" id="calibInfo">ยังไม่ได้ตั้งค่าหน้านิ่ง</span>
+            </div>
+            <label class="fsRange">คิ้วยกขึ้นเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tRaiseV"></b>
+              <input type="range" id="tRaise" min="0.05" max="0.8" step="0.01"></label>
+            <label class="fsRange">คิ้วขมวดเกินหน้านิ่งเท่าไรจึงนับว่าถาม <b id="tFurrowV"></b>
+              <input type="range" id="tFurrow" min="0.05" max="0.8" step="0.01"></label>
+            <label class="fsRange">ส่ายหน้าซ้ายขวาอย่างน้อยกี่องศาจึงนับว่าปฏิเสธ <b id="tShakeV"></b>
+              <input type="range" id="tShake" min="2" max="20" step="0.5"></label>
+            <label class="fsRange">พยักหน้าขึ้นลงอย่างน้อยกี่องศาจึงนับว่ายืนยัน <b id="tNodV"></b>
+              <input type="range" id="tNod" min="2" max="20" step="0.5"></label>
+            <div class="fsRow"><button class="ghost tiny" id="toneResetBtn">คืนค่าเริ่มต้น</button></div>
+            <p class="fsNote">ใบหน้าแต่ละคนไม่เหมือนกัน ควรกดตั้งค่าหน้านิ่งทุกครั้งที่เปลี่ยนคน ค่าที่ปรับไว้จะจำในเบราว์เซอร์นี้
+              ป้ายสีหน้าเป็นกฎที่ยังรอยืนยันกับผู้ใช้ภาษามือ ไม่ใช่ผลจากโมเดลที่ฝึกแล้ว</p>
+          </details>
+
+          <div id="studyPanel" class="hidden">
+            <div id="studySetup">
+              <div class="studyRow">
+                <label>รหัสผู้ร่วมทดสอบ <input id="studyCode" placeholder="เช่น S01" size="8" maxlength="12"></label>
+                <label>ประเภท
+                  <select id="studyType">
+                    <option value="deaf">คนหูหนวก</option>
+                    <option value="interpreter">ล่ามภาษามือ</option>
+                    <option value="hearing">คนได้ยิน</option>
+                  </select>
+                </label>
+                <label>จำนวนรอบ
+                  <select id="studyReps"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option></select>
+                </label>
+                <button id="studyStart">เริ่มทดสอบ</button>
+              </div>
+              <p class="studyNote">ระบบจะบอกคำให้ทำท่าทีละคำ (8 คำ x จำนวนรอบ) และบันทึกคำตอบของ DANN กับ Baseline พร้อมกัน
+                โดยไม่แสดงผลถูกผิดให้ผู้ร่วมทดสอบเห็น ใช้รหัสแทนชื่อจริง</p>
+            </div>
+            <div id="studyRun" class="hidden">
+              <div class="studyRow">
+                <button class="ghost" id="studyUndo">ย้อนข้อล่าสุด</button>
+                <button class="ghost" id="studySkip">ข้ามข้อนี้</button>
+                <button id="studyFinish">จบการทดสอบ</button>
+              </div>
+            </div>
+            <div id="studySummary" class="hidden"></div>
+            <div class="studyRow" id="studyData">
+              <span class="studyNote" id="studyCount"></span>
+              <button class="ghost" id="studyDownload">ดาวน์โหลด CSV ทั้งหมด</button>
+              <button class="ghost" id="studyClear">ล้างข้อมูลทดสอบ</button>
+            </div>
+          </div>
+
+          <button class="ghost hidden" id="backBtn" style="align-self:flex-start">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+            กลับหน้างานวิจัย
+          </button>
+
+          <div id="clinicalCard" class="hidden">
+            <div class="clinHead">
+              <div class="t">สรุปสำหรับแพทย์</div>
+              <div class="d">สร้างจากคำที่ทำท่าโดยตรง ไม่ผ่านการสรุปของ AI</div>
+            </div>
+            <div id="clinicalBody"><div class="clinEmpty">ยังไม่มีข้อมูล ทำท่าแล้วจบประโยคเพื่อดูสรุปที่นี่</div></div>
+          </div>
+
+          <!-- hearing person to deaf person: typed or spoken Thai, shown as text and matched to signs -->
+          <div id="speechScreen" class="hidden">
+            <section class="card speakPanel" aria-label="พิมพ์หรือพูด">
+              <h2>พิมพ์หรือพูดภาษาไทย <small lang="en">Type or speak</small></h2>
+              <form class="speakForm" id="speakForm" autocomplete="off">
+                <label class="srOnly" for="speakText">ข้อความภาษาไทย</label>
+                <input id="speakText" type="text" lang="th" placeholder="พิมพ์ข้อความ เช่น คุณต้องการยาไหม">
+                <button type="submit" id="speakSend">ส่ง</button>
+                <button type="button" id="micBtn">
+                  <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8.5 21h7"/></svg>
+                  พูด
+                </button>
+              </form>
+              <div id="speakStatus" role="status">พิมพ์แล้วกดส่ง หรือกดปุ่มพูด (ปุ่มพูดใช้ได้ใน Chrome และต้องอนุญาตไมโครโฟน)</div>
+              <div id="speakTranscript" aria-live="polite"></div>
+              <details class="opts">
+                <summary>ตัวเลือกการแปลงเป็นท่า</summary>
+                <div class="grammarToggle">
+                  <label><input type="radio" name="grammarMode" value="normal" checked> ตามลำดับที่พิมพ์หรือพูด (ทำงานในเครื่อง)</label>
+                  <label><input type="radio" name="grammarMode" value="thsl"> เรียงตามไวยากรณ์ภาษามือ ด้วย AI (ส่งข้อความออกนอกเครื่อง ต้องมีกุญแจ)</label>
+                </div>
+              </details>
+              <div id="speakOutput"></div>
+              <div id="speakClips"></div>
+            </section>
+          </div>
+        </section>
+
+        <aside class="bridgeSide" id="bridgeSide" aria-label="บทสนทนา">
+          <section class="card composer" id="composerCard" aria-label="ประโยคที่กำลังสร้าง">
+            <h2>ประโยคที่กำลังสร้าง <small lang="en">Sentence</small></h2>
+            <div id="wordRow"></div>
+            <div id="sentence" class="hidden" aria-live="polite"></div>
+            <div class="actions">
+              <button class="ghost tiny" id="undoWordBtn">ย้อนคำล่าสุด</button>
+              <button class="ghost tiny" id="clearSentenceBtn">ล้างประโยค</button>
+              <button id="finishBtn" class="hidden">จบประโยค</button>
+              <label class="switch"><input type="checkbox" id="ttsToggle" checked> อ่านออกเสียง</label>
+            </div>
+            <p class="hint hidden" id="ttsNote" style="margin-top:8px"></p>
+          </section>
+
+          <section class="card convCard" aria-label="บทสนทนา">
+            <div class="convHead">
+              <span class="who deaf">ผู้ใช้ภาษามือ</span>
+              <svg class="bridgeArc" viewBox="0 0 200 18" preserveAspectRatio="none" aria-hidden="true"><path d="M0 16 Q 100 -8 200 16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+              <span class="who hearing">คนได้ยิน</span>
+            </div>
+            <div id="convLog" role="log" aria-live="polite" aria-label="ข้อความในบทสนทนา"></div>
+            <div class="convFoot"><button class="ghost tiny" id="convClear">ล้างบทสนทนา</button></div>
+          </section>
+
+          <details id="vocabDrawer" class="card">
+            <summary>
+              <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+              คำศัพท์ <span lang="en" style="font-weight:500;color:var(--text-muted);font-size:.8rem">Vocabulary</span>
+            </summary>
+            <p class="vtScope" id="vocabScope"></p>
+            <div class="vocabChips" id="vocabList"></div>
+            <div class="vtGrid" id="vtGrid"></div>
+          </details>
+        </aside>
+      </div>
+    </div>
+
+    <!-- RESEARCH (evaluation tools, not the main product) -->
+    <div id="viewResearch" class="hidden">
+      <div class="researchIntro">
+        <div class="t">เครื่องมือสำหรับงานวิจัยและประเมินผล</div>
+        <div class="d">ฟีเจอร์ในหน้านี้ใช้ทดสอบและเปรียบเทียบโมเดล ไม่ใช่ส่วนหลักของแอป</div>
+      </div>
+      <div class="modeBtns">
+        <div class="modeCard" id="cardGame" role="button" tabindex="0">
+          <div class="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="10" rx="4"/><path d="M7 10v4M5 12h4"/><circle cx="15.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="18" cy="13" r="1" fill="currentColor" stroke="none"/></svg></div>
+          <div class="t">Sign Speed Test</div>
+          <div class="d">ทำท่าตามคำที่สุ่มให้ ภายใน 45 วินาที ทำได้กี่คำ</div>
+        </div>
+        <div class="modeCard" id="cardCompare" role="button" tabindex="0">
+          <div class="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4"/><path d="M3 8h12.5a4.5 4.5 0 0 1 4.5 4.5V13"/><path d="M17 20l4-4-4-4"/><path d="M21 16H8.5A4.5 4.5 0 0 1 4 11.5V11"/></svg></div>
+          <div class="t">เปรียบเทียบโมเดล (RQ3)</div>
+          <div class="d">ทำท่าเดียว ดู Baseline กับ DANN ทายพร้อมกันแบบเรียลไทม์</div>
+        </div>
+        <div class="modeCard" id="cardStudy" role="button" tabindex="0">
+          <div class="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6v4l4.5 9a2 2 0 0 1-1.8 3H6.3a2 2 0 0 1-1.8-3L9 7V3Z"/><path d="M8 3h8"/><path d="M7.5 14h9"/></svg></div>
+          <div class="t">ทดสอบกับอาสาสมัคร</div>
+          <div class="d">บอกคำให้ทำท่าทีละคำ บันทึกผลของ DANN และ Baseline เป็นไฟล์ CSV</div>
+        </div>
+      </div>
+      <div class="lb" id="menuLb"></div>
+    </div>
+
+    <!-- GAMEOVER -->
+    <div id="gameover" class="hidden">
+      <div>หมดเวลา คุณทำได้</div>
+      <div id="finalScore">0</div>
+      <div>คำ</div>
+      <input id="nameInput" placeholder="ใส่ชื่อของคุณ" maxlength="16" aria-label="ชื่อสำหรับบันทึกคะแนน">
+      <button id="saveBtn">บันทึกคะแนน</button>
+      <div class="lb" id="overLb"></div>
+      <div style="display:flex; gap:10px;">
+        <button class="ghost" id="gameoverBackBtn">กลับหน้างานวิจัย</button>
+        <button id="againBtn">เล่นอีกครั้ง</button>
+      </div>
+    </div>
+  </main>
+
+  <dialog id="privacyDialog" aria-labelledby="pvTitle">
+    <h2 id="pvTitle">ความเป็นส่วนตัว <span lang="en" style="font-weight:500;font-size:.9rem;color:var(--text-muted)">Privacy</span></h2>
+    <h3>อยู่ในเครื่องนี้เท่านั้น</h3>
+    <ul>
+      <li>ภาพจากกล้อง ไม่ถูกบันทึกและไม่ถูกส่งออก</li>
+      <li>จุดมือและจุดใบหน้าที่ใช้ทายท่าและสีหน้า</li>
+      <li>บทสนทนาบนหน้านี้ จะหายเมื่อปิดหรือรีเฟรชหน้า</li>
+    </ul>
+    <h3>อาจถูกส่งออกจากเครื่อง</h3>
+    <ul>
+      <li>เสียงพูด: เมื่อกดปุ่มพูด เบราว์เซอร์ (Chrome) ส่งเสียงให้ Google แปลงเป็นข้อความ การพิมพ์ไม่ส่งอะไรออกไป</li>
+      <li>รายการคำที่ทำท่า: ส่งให้บริการ Typhoon เพื่อเรียบเรียงประโยค เฉพาะเครื่องที่ตั้งค่ากุญแจไว้เท่านั้น</li>
+      <li>เสียงอ่านประโยค: ใช้เสียงในเครื่องก่อน ถ้าเครื่องไม่มีเสียงไทยและคุณอนุญาตด้านล่าง ข้อความประโยคจะถูกส่งให้ Google</li>
+      <li>ครั้งแรกที่เปิดหน้านี้ ระบบดาวน์โหลดโมเดลและฟอนต์จากอินเทอร์เน็ต (ไม่มีข้อมูลของผู้ใช้ถูกส่งไป)</li>
+    </ul>
+    <h3>ตัวเลือกของคุณ</h3>
+    <div class="fsRow">
+      <label><input type="checkbox" id="aiToggle"> ใช้บริการ AI เรียบเรียงประโยค (ส่งรายการคำออกนอกเครื่อง)</label>
+      <label><input type="checkbox" id="ttsRemoteToggle"> อนุญาตเสียงอ่านจาก Google เมื่อเครื่องไม่มีเสียงไทยในเครื่อง</label>
+    </div>
+    <p class="fsNote" id="voiceInfo"></p>
+    <form method="dialog"><button>ปิด</button></form>
+  </dialog>
+
+<!-- Local-only: config.local.js sets window.TYPHOON_API_KEY, gitignored, not committed.
+     Missing file is non-fatal -- window.TYPHOON_API_KEY just stays undefined and
+     typhoonSentence() below falls back to raw joined words, same graceful-degradation
+     philosophy as postprocess.py. See innovation/web_app/config.local.example.js. -->
+<script src="config.local.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="person_focus.js"></script>
+<script src="face_tone.js"></script>
+<script src="bridge_utils.js"></script>
+<script src="capture_rule.js"></script>
+<script src="model_v7.js?v=20261023b"></script>
+<script src="model_show10.js?v=20261023b"></script>
+<script src="model_sym13.js?v=20261023c"></script>
 <script type="module">
 import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
 
@@ -144,91 +717,584 @@ const COLLECT_FRAMES=30, STILL_THRESHOLD=0.03;
 // get cut short. Converted at 30fps: frames/30*1000 = ms.
 const IDLE_WARMUP_MS=133, STILL_MS=200, MIN_COLLECT_MS=333, MAX_COLLECT_MS=5000, MISSING_TOL_MS=267;
 const GAME_DURATION=45;
+// V.3 core is sentence building, face intention and speech to text. The hospital summary card
+// is parked as future work; set this to true to bring it back.
+const SHOW_CLINICAL_CARD=false;
+// Without a countdown a held pose would be read again and again, so after each sign the hand must
+// leave the frame (or move clearly) before the next sign can start. Starting values: tune on a real camera.
+const REARM_ABSENT_MS=300, REARM_MOVE=0.03;   // 0.03 = the same measure the app already uses for "the hand is moving"
+// The 10-class models (DANN, baseline) have no "none" class, so low confidence is their only way to reject a bad read.
+const MIN_CONF_10=0.70;
+// MediaPipe's default confidence is 0.5. A hand lying flat is seen edge-on and scores low, so it was dropped; raise this back if bystander hands start to appear.
+const HAND_CONF=0.35;
+// Hands are read at most ~30 times a second (the rate the timing gates above assume). A 60 or 120 Hz screen would otherwise run the models twice or four times as often for nothing.
+const MIN_FRAME_MS=28;
+const FACE_EVERY_MS=150;  // person focus looks for faces about 7 times a second, hands are read every frame
+const FACE_TONE_EVERY_MS=80;   // reading the face for tags needs faster samples (a head shake is about 2 swings a second)
+const TONE_STORE="thsl_face_settings_v1";
+// The 8 words the old 10-word models share with the 33-word club list (ถาม and บอก are not in that list).
+const STUDY_WORDS=["คนหูหนวก","คุณ","ช่วย","ขอบคุณ","ฉัน","ต้องการ","เข้าใจ","ไม่"];
+const STUDY_STORE="thsl_study_rows_v1";
 
 const $=id=>document.getElementById(id);
+
+// Small inline-SVG icon set (stroke-style, no emoji) -- each is sized via the
+// shared .ic CSS rule (width/height:1em), so an icon automatically matches the
+// font-size of whatever text it's dropped next to. See the <style> block.
+const ICONS = {
+  mic: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v4"/><path d="M8.5 21h7"/></svg>',
+  stop: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="3"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  cross: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>',
+  warning: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 16.5h.01"/></svg>',
+  star: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.3l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9Z"/></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  dots: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg>',
+  loader: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></svg>',
+  question: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1 1-1.1 1.7"/><path d="M12 17h.01"/></svg>',
+  trophy: '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4Z"/><path d="M7 5.5H4.5A2.5 2.5 0 0 0 7 9.5"/><path d="M17 5.5h2.5A2.5 2.5 0 0 1 17 9.5"/></svg>',
+};
+
 const video=$("video"), overlay=$("overlay"), ctx=overlay.getContext("2d");
 const statusEl=$("status"), bigEl=$("big"), barsEl=$("bars"), resultEl=$("result"), sentenceEl=$("sentence");
 const gameHud=$("gameHud"), timerEl=$("timer"), scoreEl=$("score"), targetEl=$("target"), flashEl=$("flash");
+const barsCompareBaselineEl=$("barsCompareBaseline"), barsCompareDannEl=$("barsCompareDann"), compareStatusEl=$("compareStatus");
 
-let handLandmarker=null, model=null, started=false;
-let mode="test", state="IDLE", collected=[], prevKp=null, countdownStart=0;
+let handLandmarker=null;
+let mediaStream=null, cameraStreamActive=false, cameraEverStarted=false;
+let mode="test", state="IDLE", collected=[], prevKp=null;
 let idleStart=null, stillStart=null, missStart=null, collectStart=0;
-let wordBuffer=[];
+let rearm=false, rearmRow=null, rearmAbsentStart=null;
+// Optional capture rule shared with the training-clip splitter (capture_rule.js): start when the hand moves, stop when it has
+// been still. The old rule above stays the default; the switch in the camera controls is for comparing the two.
+const captureRule = window.CaptureRule ? new window.CaptureRule() : null;
+const useMotionCut = () => !!(captureRule && (prefs.motionCut || (RECOGNIZERS[activeRec] && RECOGNIZERS[activeRec].motionCut)));
+let lastCap=null, legacyDelta=0, capDiagAt=0;
+const WHY={still:"นิ่ง", hand_gone:"มือหาย", max:"นานเกิน"};
+let wordBuffer=[]; // [{sign, conf}, ...]
 let gameActive=false, score=0, timeLeft=GAME_DURATION, targetWord="", gameTimer=null, starting=false;
+let compareLoadState="idle"; // idle|loading|ready|error
+let direction="sign"; // "sign" | "speech" -- which half of the translate toggle is showing
 
-function buildBars(){ for(let i=0;i<5;i++){ const r=document.createElement("div"); r.className="bar-row";
-  r.innerHTML=`<div class="bar-label" id="bl${i}"></div><div class="bar-track"><div class="bar-fill" id="bf${i}"></div></div><div class="bar-pct" id="bp${i}"></div>`; barsEl.appendChild(r);} }
-buildBars();
+// ---- recognizers: every model the app can use ----
+// "v6c" is the deployed 12-class model (has finish/none). "dann" and "base" are the 10-class models from the
+// RQ3 experiment, trained on two signers (no finish/none, so the translate screen shows a finish button for them).
+const RECOGNIZERS = {
+  // the model trained for this version: 28 words, all signers, left/right-hand augmentation, signs cut by the motion rule (capture_rule.js).
+  // It has no "finish" sign (the button ends a sentence) and needs no hand-slot correction. A word without a measured threshold uses the default.
+  // the showcase model: 10 words (ขอบคุณ คนหูหนวก คุณ ฉัน ช่วย ต้องการ ถาม บอก เข้าใจ ไม่), trained on all 8 signers (deaf S01 to S05, hearing O01 to O04).
+  // For the demo and video. A signer who is in the training data is read better than a new user, so the honest numbers are the leave-one-signer-out ones.
+  ...(window.MODEL_SHOW10 ? { show10:{ label:"โชว์ 10 คำ (ต้นแบบ)", classes:MODEL_SHOW10.classes, hasFinish:false, file:"weights_show10.json", nativeHand:null,
+                               thresholds:MODEL_SHOW10.thresholds, defaultThreshold:MODEL_SHOW10.defaultThreshold, motionCut:true } } : {}),
+  // the 13 symptom words, read in units of the signer's own face width instead of picture fractions (scripts/head_relative.py, same arithmetic in toHeadRel below).
+  // It needs the face tracker (keep "ใช้เฉพาะผู้ใช้หลัก" ticked). Measured leave-one-signer-out on these 13 words: 78.6% against 72.7% for picture coordinates (signers S01 to S03).
+  ...(window.MODEL_SYM13 ? { sym13:{ label:"อาการ 13 คำ · สัมพัทธ์ใบหน้า (ทดลอง)", classes:MODEL_SYM13.classes, hasFinish:false, file:"weights_sym13.json", nativeHand:null,
+                               thresholds:MODEL_SYM13.thresholds, defaultThreshold:MODEL_SYM13.defaultThreshold, motionCut:true, headRel:true } } : {}),
+  ...(window.MODEL_V7 ? { v7:{ label:"โมเดลใหม่ (28 คำ)", classes:MODEL_V7.classes, hasFinish:false, file:"weights_v7.json", nativeHand:null,
+                               thresholds:MODEL_V7.thresholds, defaultThreshold:MODEL_V7.defaultThreshold, motionCut:true } } : {}),
+  v6c:  { label:"โมเดลเดิม (12 ท่า)", classes:TARGET_SIGNS, hasFinish:true,  file:"weights.json",              nativeHand:"L" },
+  dann: { label:"DANN (10 คำ)",       classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_dann.json",     nativeHand:"R" },
+  base: { label:"Baseline (10 คำ)",   classes:GAME_WORDS,   hasFinish:false, file:"weights_rq3_baseline.json", nativeHand:"R" },
+};
+let activeRec = RECOGNIZERS.show10 ? "show10" : RECOGNIZERS.v7 ? "v7" : "v6c";
+const loadedModels={}, modelLoading={};
+
+// ---- person focus (use only the main user's hands) ----
+let focusOn=true, faceTracker=null, faceTrackerState="idle"; // idle|loading|ready|failed
+let lastFaceMs=-1e9, lastFocusInfoMs=0;
+const focus=window.PersonFocus ? PersonFocus.create() : null;
+
+// ---- face reading per word (tags on each word bubble) ----
+// The same rules and thresholds as face_test.html. While a sign is being made, the main user's face is sampled;
+// when the sign ends those samples are summarized into tags (ask, deny, confirm) that travel with the word.
+function loadToneSettings(){
+  try{
+    const o=JSON.parse(localStorage.getItem(TONE_STORE)||"{}"), out={};
+    for(const k of ["raiseThresh","furrowThresh","shakeSwingDeg","nodSwingDeg"]) if(typeof o[k]==="number" && isFinite(o[k])) out[k]=o[k];
+    return out;
+  }catch{ return {}; }
+}
+const toneRules=window.FaceTone ? new FaceTone.ToneRules(loadToneSettings()) : null;
+let toneOn=!!toneRules, baselineSet=false, calibrating=null;
+let faceSamples=[], liveTone=null, lastToneMs=-1e9, lastChipMs=0;
+let lastWords=[];   // the previous sentence's words, kept on screen (dimmed) until a new word is read
+
+function buildBars(containerEl, prefix){ for(let i=0;i<5;i++){ const r=document.createElement("div"); r.className="bar-row";
+  r.innerHTML=`<div class="bar-label" id="${prefix}bl${i}"></div><div class="bar-track"><div class="bar-fill" id="${prefix}bf${i}"></div></div><div class="bar-pct" id="${prefix}bp${i}"></div>`; containerEl.appendChild(r);} }
+buildBars(barsEl, "");
+buildBars(barsCompareBaselineEl, "cb");
+buildBars(barsCompareDannEl, "cd");
+
+// ---- vocabulary reference (collapsed by default -- it's a reference, not the hero) ----
+// English glosses + "try this first" pick are documentation/UX choices, not model
+// output -- BEST_FIRST_TRY is ขอบคุณ per the SIGN_THRESHOLDS confidence gap in
+// predict_stream.py (correct=1.00, wrong=0.00, "perfect"), the most reliable of the
+// 10 signs. GAME_WORDS is already the canonical 10-word vocabulary in trained order,
+// which sign_00.mp4..sign_09.mp4 (exported from data/raw/) match index-for-index.
+const SIGN_GLOSS = {"คนหูหนวก":"deaf","คุณ":"you","ช่วย":"help","ขอบคุณ":"thank-you","ฉัน":"I/me",
+  "ต้องการ":"want","เข้าใจ":"understand","ไม่":"no/not","ถาม":"ask","บอก":"tell"};
+const BEST_FIRST_TRY = "ขอบคุณ";
+function buildVocabTutorial(){
+  const grid = $("vtGrid");
+  GAME_WORDS.forEach((word, i) => {
+    const idx = String(i).padStart(2,"0");
+    const card = document.createElement("div");
+    card.className = "vtCard" + (word===BEST_FIRST_TRY ? " vtBest" : "");
+    card.innerHTML =
+      (word===BEST_FIRST_TRY ? `<div class="vtBadge">${ICONS.star} ลองก่อน</div>` : "") +
+      `<video src="tutorial_clips/sign_${idx}.mp4" autoplay loop muted playsinline></video>` +
+      `<div class="vtWord">${word}</div><div class="vtGloss">${SIGN_GLOSS[word]||""}</div>`;
+    grid.appendChild(card);
+  });
+}
+buildVocabTutorial();
 
 // ---- leaderboard (localStorage) ----
 function getLB(){ try{return JSON.parse(localStorage.getItem("thsl_lb")||"[]");}catch{return[];} }
 function saveLB(name,sc){ const lb=getLB(); lb.push({name,score:sc}); lb.sort((a,b)=>b.score-a.score); localStorage.setItem("thsl_lb",JSON.stringify(lb.slice(0,10))); }
-function renderLB(el){ const lb=getLB(); el.innerHTML="<h3>🏆 Leaderboard</h3>"+(lb.length?lb.map((r,i)=>
+function renderLB(el){ const lb=getLB(); el.innerHTML=`<h3>${ICONS.trophy} Leaderboard</h3>`+(lb.length?lb.map((r,i)=>
   `<div class="lb-row"><span class="rank">#${i+1}</span><span class="nm">${r.name}</span><span class="sc">${r.score}</span></div>`).join("")
-  :"<div style='text-align:center;color:#9aa0a6'>ยังไม่มีคะแนน</div>"); }
-renderLB($("menuLb"));
+  :"<div style='text-align:center;color:var(--text-faint)'>ยังไม่มีคะแนน</div>"); }
+
+// ---- clinical summary (schema v3) ----
+// Deterministic, NOT LLM-derived: every field below is a plain rule over the
+// signed words themselves, specifically so nothing a doctor reads can be an LLM
+// hallucination. Typhoon only ever touches the optional spoken sentence, never
+// these fields. Categories with no matching word yet (symptom, body_part,
+// severity, duration -- pending the medical word list and NADT's review) render
+// as "not supported yet", never a guess. Add entries here the moment the medical
+// vocabulary is trained; no other code changes needed.
+const WORD_CATEGORY = {
+  "แพ้": "allergy",
+  "ช่วย": "action", "ถาม": "action", "บอก": "action", "ต้องการ": "action",
+  "ไม่": "negation",
+};
+const ACTION_LABEL = {"ช่วย":"ต้องการความช่วยเหลือ","ถาม":"มีคำถาม","บอก":"ต้องการบอกบางอย่าง","ต้องการ":"มีสิ่งที่ต้องการ"};
+const NOT_SUPPORTED = '<span class="clinValue empty">ยังไม่รองรับคำนี้</span>';
+
+function classifyClinical(words){ // words: [{sign, conf}, ...]
+  const c = {urgent:false, allergy:false, actions:[], symptoms:[], bodyParts:[], severity:[], duration:[], negated:false};
+  words.forEach(({sign}) => {
+    const cat = WORD_CATEGORY[sign];
+    if(cat==="urgent") c.urgent=true;
+    else if(cat==="allergy") c.allergy=true;
+    else if(cat==="action") c.actions.push(sign);
+    else if(cat==="negation") c.negated=true;
+    else if(cat==="symptom") c.symptoms.push(sign);
+    else if(cat==="body_part") c.bodyParts.push(sign);
+    else if(cat==="severity") c.severity.push(sign);
+    else if(cat==="duration") c.duration.push(sign);
+  });
+  return c;
+}
+function renderClinicalCard(words){
+  const c = classifyClinical(words);
+  const complaint = [...c.symptoms, ...c.bodyParts];
+  const actionText = c.actions.length ? c.actions.map(a=>ACTION_LABEL[a]||a).join(", ") : "ไม่ระบุ";
+  $("clinicalBody").innerHTML = `
+    <div class="clinPriority ${c.urgent?'urgent':'normal'}">
+      ${ICONS.warning} ${c.urgent?'เร่งด่วน':'ปกติ'}
+    </div>
+    <div class="clinGrid">
+      <div><div class="clinLabel">อาการหลัก</div>${complaint.length?`<div class="clinValue">${complaint.join(' ')}</div>`:NOT_SUPPORTED}</div>
+      <div><div class="clinLabel">ระยะเวลา</div>${c.duration.length?`<div class="clinValue">${c.duration.join(' ')}</div>`:NOT_SUPPORTED}</div>
+      <div><div class="clinLabel">ความรุนแรง</div>${c.severity.length?`<div class="clinValue">${c.severity.join(' ')}</div>`:NOT_SUPPORTED}</div>
+      <div><div class="clinLabel">ประวัติแพ้</div><div class="clinValue ${c.allergy?'flagYes':''}">${c.allergy?'มี':'ไม่ได้ระบุ'}</div></div>
+      <div><div class="clinLabel">ความต้องการ</div><div class="clinValue">${actionText}${c.negated?' (มีคำว่า "ไม่")':''}</div></div>
+    </div>
+    <div class="clinRaw">
+      <div class="clinLabel">ลำดับคำที่ทำท่า (ตรวจสอบได้)</div>
+      <div class="clinRawRow">${words.map(w=>`<span class="clinSign ${w.conf<0.85?'lowConf':''}">${w.sign} <small>${Math.round(w.conf*100)}%</small></span>`).join("")}</div>
+    </div>
+  `;
+}
 
 // ---- model + camera ----
-async function init(){
-  statusEl.textContent="โหลดโมเดล...";
+// Models load once and are cached by id (getModel). The camera stream itself opens and closes
+// as the user switches direction/screens, so the webcam light isn't left on when nobody's using it.
+function buildClassifier(nClasses){
+  const m=tf.sequential();
+  // recurrentActivation must be "sigmoid" (the Keras/TensorFlow 2 default the models were trained with). TensorFlow.js defaults to "hardSigmoid",
+  // which gives different probabilities from the same weights (found by comparing the page with a numpy calculation of the exported model).
+  m.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126], recurrentActivation:"sigmoid"}));
+  m.add(tf.layers.dropout({rate:0.5}));
+  m.add(tf.layers.lstm({units:32, recurrentActivation:"sigmoid"}));
+  m.add(tf.layers.dropout({rate:0.5}));
+  m.add(tf.layers.dense({units:16, activation:"relu"}));
+  m.add(tf.layers.dense({units:nClasses, activation:"softmax"}));
+  return m;
+}
+async function loadWeightsInto(mdl, url){
+  const resp=await fetch(url,{cache:"no-cache"});   // revalidate each time, so a re-exported model is never replaced by a cached copy
+  if(!resp.ok) throw new Error(`${url}: HTTP ${resp.status}`);
+  const wjson=await resp.json();
+  mdl.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
+}
+function getModel(id){
+  if(loadedModels[id]) return Promise.resolve(loadedModels[id]);
+  if(!modelLoading[id]){
+    const r=RECOGNIZERS[id];
+    modelLoading[id]=(async()=>{
+      const m=buildClassifier(r.classes.length);
+      await loadWeightsInto(m, r.file);
+      loadedModels[id]=m; return m;
+    })().catch(e=>{ delete modelLoading[id]; throw e; });
+  }
+  return modelLoading[id];
+}
+function preloadModels(ids){
+  statusEl.textContent="กำลังโหลดโมเดล...";
+  return Promise.all(ids.map(getModel))
+    .then(()=>{ if(cameraStreamActive) statusEl.textContent="พร้อม"; })
+    .catch(e=>{ statusEl.textContent="โหลดโมเดลไม่สำเร็จ"; console.error("model load failed:", e); });
+}
+
+async function ensureHandLandmarker(){
+  if(handLandmarker) return;
+  statusEl.textContent="กำลังโหลดโมเดลมือ...";
   const vision=await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
-  handLandmarker=await HandLandmarker.createFromOptions(vision,{
-    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"},
-    runningMode:"VIDEO", numHands:2 });
-  model=tf.sequential();
-  model.add(tf.layers.lstm({units:32, returnSequences:true, inputShape:[30,126]}));
-  model.add(tf.layers.dropout({rate:0.5}));
-  model.add(tf.layers.lstm({units:32}));
-  model.add(tf.layers.dropout({rate:0.5}));
-  model.add(tf.layers.dense({units:16, activation:"relu"}));
-  model.add(tf.layers.dense({units:12, activation:"softmax"}));
-  const wjson=await (await fetch("weights.json")).json();
-  model.setWeights(wjson.map(w=>tf.tensor(w.data, w.shape)));
-  statusEl.textContent="พร้อม!";
+  const make=delegate=>HandLandmarker.createFromOptions(vision,{
+    baseOptions:{modelAssetPath:"https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate},
+    runningMode:"VIDEO", numHands:2,
+    minHandDetectionConfidence:HAND_CONF, minHandPresenceConfidence:HAND_CONF, minTrackingConfidence:HAND_CONF });
+  // the web default is the CPU, which makes the whole tab lag; the GPU is used when the browser allows it
+  try{ handLandmarker=await make("GPU"); }
+  catch(e){ console.warn("[hands] GPU delegate failed, using CPU", e); handLandmarker=await make("CPU"); }
+}
+function setFocusInfo(t){ $("focusInfo").textContent=t; }
+// With person focus on we ask for up to 4 hands so a bystander's hands cannot push the user's out of the top 2.
+function applyHandSettings(){
+  if(!handLandmarker) return;
+  try{ handLandmarker.setOptions({numHands:(focusOn && faceTrackerState!=="failed")?4:2}); }catch(e){ console.warn("[focus] setOptions failed", e); }
+}
+async function ensureFaceTracker(){
+  if(faceTrackerState!=="idle") return;
+  faceTrackerState="loading"; setFocusInfo("กำลังโหลดตัวจับใบหน้า...");
+  try{
+    if(!window.FaceTone || !window.PersonFocus) throw new Error("face_tone.js or person_focus.js is missing");
+    // blendshapes and head angles are only computed when face reading is on (they cost more per frame)
+    faceTracker=await FaceTone.createFaceTracker({numFaces:3, blendshapes:toneOn, matrices:toneOn});
+    faceTrackerState="ready"; setFocusInfo("");
+  }catch(e){
+    faceTrackerState="failed"; applyHandSettings();
+    setFocusInfo("โหลดตัวจับใบหน้าไม่สำเร็จ จึงไม่กรองผู้ใช้");
+    console.warn("[focus] face tracker failed to load:", e);
+  }
+}
+async function openCameraStream(){
+  $("cameraGate").classList.add("hidden");
+  if(cameraStreamActive) return true;
+  await ensureHandLandmarker();
+  try{ mediaStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:960},height:{ideal:540},frameRate:{ideal:30}}}); }
+  catch(e){
+    // permission denied, no camera, or the page is not on https/localhost: say so and let the user try again
+    console.error("[camera] could not open", e);
+    statusEl.textContent="เปิดกล้องไม่ได้ ตรวจสอบสิทธิ์กล้องของเบราว์เซอร์แล้วลองใหม่";
+    $("cameraGate").classList.remove("hidden");
+    return false;
+  }
+  video.srcObject=mediaStream;
+  cameraStreamActive=true;
+  state="IDLE"; collected=[]; prevKp=null; idleStart=null; stillStart=null; missStart=null; rearm=false; resetHandGaps(); if(captureRule) captureRule.reset();
+  await new Promise(res=>{ video.onloadedmetadata=()=>{ overlay.width=video.videoWidth; overlay.height=video.videoHeight; res(); }; });
+  statusEl.textContent="พร้อม";
+  if(focusOn || toneOn) ensureFaceTracker().then(applyHandSettings);
+  applyHandSettings();
+  loop();
+  return true;
+}
+function stopCameraStream(){
+  if(!cameraStreamActive) return;
+  cameraStreamActive=false;
+  if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; }
+  video.srcObject=null;
 }
 
-async function startCamera(){
-  if(started) return; started=true;
-  await init();
-  const stream=await navigator.mediaDevices.getUserMedia({video:{width:1280,height:720}});
-  video.srcObject=stream;
-  video.onloadedmetadata=()=>{ overlay.width=video.videoWidth; overlay.height=video.videoHeight; loop(); };
+// ---- compare models (RQ3: pooled-baseline vs pooled+DANN, 10-way, no finish/none) ----
+async function loadCompareModels(){
+  if(compareLoadState==="ready"||compareLoadState==="loading") return;
+  compareLoadState="loading";
+  compareStatusEl.textContent="กำลังโหลดโมเดลเปรียบเทียบ...";
+  try{
+    // both files come from the RQ3_DANN.ipynb export cell -- see innovation/README.md
+    await Promise.all([getModel("base"), getModel("dann")]);
+    compareLoadState="ready";
+    compareStatusEl.textContent="ทำท่าคำใดก็ได้ใน 10 คำ ให้ทั้งสองโมเดลทาย";
+  }catch(e){
+    compareLoadState="error";
+    compareStatusEl.innerHTML=`${ICONS.warning} ยังไม่มีไฟล์โมเดลเปรียบเทียบ (weights_rq3_*.json)`;
+    console.error("compare models failed to load:", e);
+  }
 }
 
-// ---- mode selection ----
-function showApp(m){
-  mode=m; $("menu").classList.add("hidden"); $("gameover").classList.add("hidden"); $("app").classList.remove("hidden");
-  const isGame=(m==="game");
-  gameHud.classList.toggle("hidden",!isGame); targetEl.classList.toggle("hidden",!isGame);
-  barsEl.classList.toggle("hidden",isGame); resultEl.classList.toggle("hidden",isGame); sentenceEl.classList.toggle("hidden",isGame);
-  $("appHint").textContent=isGame?"ทำท่าตามคำที่ขึ้น ให้เร็วที่สุด! ยืนใกล้กล้องพอให้เห็นมือเต็ม":"ยกมือ → รอนับ 3-2-1 → ทำท่า → ค้างนิ่ง • รองรับ 10 คำ";
-  state="IDLE"; collected=[]; wordBuffer=[];
-  startCamera().then(()=>{ if(isGame) beginGame(); });
+// ---- screen / navigation control ----
+// Four top-level screens share the DOM: viewTranslate (toggle + vocab + either
+// appScreen or speechScreen), viewResearch (game/compare picker), appScreen
+// (the camera stage -- reused for translate AND for the research game/compare
+// modes), and gameover. Exactly one top-level screen is visible at a time.
+function hideAllScreens(){
+  $("viewTranslate").classList.add("hidden");
+  $("viewResearch").classList.add("hidden");
+  $("gameover").classList.add("hidden");
 }
-$("cardTest").onclick=()=>showApp("test");
-$("cardGame").onclick=()=>showApp("game");
-$("backBtn").onclick=()=>{ endGameCleanup(); $("app").classList.add("hidden"); $("menu").classList.remove("hidden"); renderLB($("menuLb")); };
+function setNavActive(view){
+  $("navTranslate").classList.toggle("active", view==="translate");
+  $("navResearch").classList.toggle("active", view==="research");
+}
+function setCamUI(on){ ["appScreen","appHint","camControls","composerCard","faceSettings"].forEach(id=>$(id).classList.toggle("hidden",!on)); }
+function updateRecUI(){
+  const r=RECOGNIZERS[activeRec];
+  $("finishBtn").classList.toggle("hidden", mode!=="test" || r.hasFinish);
+  if(mode==="test"){
+    $("appHint").textContent = "ยกมือแล้วทำท่าได้เลย ค้างนิ่งสักครู่เพื่อให้ระบบอ่าน แล้วลดมือหรือขยับมือก่อนทำท่าถัดไป "
+      + (r.hasFinish ? "ทำท่าจบประโยค (finish) เมื่อทำครบ" : "กดปุ่ม จบประโยค เมื่อทำครบ");
+  }
+}
+function configureAppUI(m){
+  const isGame=(m==="game"), isCompare=(m==="compare"), isStudy=(m==="study"), isTest=(m==="test");
+  gameHud.classList.toggle("hidden",!isGame);
+  targetEl.classList.toggle("hidden",!(isGame||isStudy));
+  barsEl.classList.toggle("hidden", !isTest);
+  resultEl.classList.toggle("hidden", !isTest);
+  sentenceEl.classList.toggle("hidden", !isTest);
+  barsCompareBaselineEl.classList.toggle("hidden", !isCompare);
+  barsCompareDannEl.classList.toggle("hidden", !isCompare);
+  compareStatusEl.classList.toggle("hidden", !isCompare);
+  $("studyHud").classList.toggle("hidden", !isStudy);
+  $("studyPanel").classList.toggle("hidden", !isStudy);
+  $("clinicalCard").classList.toggle("hidden", !(SHOW_CLINICAL_CARD && isTest));
+  $("backBtn").classList.toggle("hidden", isTest);
+  $("recWrap").classList.toggle("hidden", !isTest);
+  $("clearSentenceBtn").classList.toggle("hidden", !isTest);
+  $("wordRow").classList.toggle("hidden", !isTest);
+  $("faceSettings").classList.toggle("hidden", !(isTest && toneRules));
+  if(!isTest) $("faceChip").classList.add("hidden");
+  updateRecUI();
+}
+function showSignScreen(){
+  $("speechScreen").classList.add("hidden");
+  setCamUI(true);
+  mode="test"; wordBuffer=[]; rearm=false;
+  configureAppUI("test");
+  renderWordRow();
+  preloadModels([activeRec]);
+  if(cameraEverStarted) openCameraStream();
+  else { $("cameraGate").classList.remove("hidden"); setBanner("idle","กดเปิดกล้องเพื่อเริ่ม","Open the camera to start"); }
+}
+function showSpeechScreen(){
+  setCamUI(false);
+  stopCameraStream();
+  $("speechScreen").classList.remove("hidden");
+  setBanner("idle","พิมพ์หรือพูดได้เลย","Type or speak");
+}
+function setDirection(d){
+  direction=d;
+  $("toggleThumb").style.transform = d==="speech" ? "translateX(100%)" : "translateX(0)";
+  $("dirSignBtn").classList.toggle("active", d==="sign");
+  $("dirSpeechBtn").classList.toggle("active", d==="speech");
+  if(d==="sign") showSignScreen(); else showSpeechScreen();
+}
+function goTranslate(){
+  endGameCleanup(); hideAllScreens();
+  $("viewTranslate").classList.remove("researchMode");
+  $("viewTranslate").classList.remove("hidden");
+  setNavActive("translate");
+  if(direction==="sign") showSignScreen(); else showSpeechScreen();
+}
+function goResearch(){
+  endGameCleanup(); stopCameraStream(); hideAllScreens();
+  $("viewResearch").classList.remove("hidden");
+  setNavActive("research");
+  renderLB($("menuLb"));
+}
+function launchResearchMode(m){
+  hideAllScreens();
+  $("viewTranslate").classList.add("researchMode");
+  $("viewTranslate").classList.remove("hidden"); // appScreen lives inside viewTranslate's DOM subtree
+  $("vocabDrawer").classList.add("hidden");
+  $("toggleTrack").classList.add("hidden");
+  $("speechScreen").classList.add("hidden");
+  setCamUI(true);
+  mode=m; wordBuffer=[]; rearm=false;
+  configureAppUI(m);
+  $("appHint").textContent = m==="game" ? "ทำท่าตามคำที่ขึ้น ให้เร็วที่สุด ยืนใกล้กล้องพอให้เห็นมือเต็ม"
+    : m==="study" ? "ทำท่าตามคำที่ขึ้นบนจอ ทำเสร็จแล้วลดมือลงก่อนข้อถัดไป ไม่ต้องรีบ"
+    : "ยกมือแล้วทำท่า ค้างนิ่งสักครู่ ดูสองโมเดลทายพร้อมกันจากท่าเดียวกัน";
+  openCameraStream().then(ok=>{
+    if(!ok) return;
+    if(m==="game") preloadModels(["v6c"]).then(beginGame);
+    if(m==="compare") loadCompareModels();
+    if(m==="study"){ preloadModels(["dann","base"]); showStudyIdle(); }
+  });
+}
+function leaveResearchMode(){
+  endGameCleanup(); stopCameraStream();
+  $("toggleTrack").classList.remove("hidden");
+  $("vocabDrawer").classList.remove("hidden");
+  goResearch();
+}
+$("recSelect").innerHTML = Object.keys(RECOGNIZERS).map(id=>`<option value="${id}">${RECOGNIZERS[id].label}</option>`).join("");
+fillLiveIntent();
+$("navTranslate").onclick = goTranslate;
+$("navResearch").onclick = goResearch;
+$("dirSignBtn").onclick = () => setDirection("sign");
+$("dirSpeechBtn").onclick = () => setDirection("speech");
+$("startCameraBtn").onclick = () => { cameraEverStarted=true; openCameraStream(); };
+$("cardGame").onclick = () => launchResearchMode("game");
+$("cardCompare").onclick = () => launchResearchMode("compare");
+$("cardStudy").onclick = () => launchResearchMode("study");
+$("backBtn").onclick = leaveResearchMode;
+$("recSelect").onchange = () => {
+  activeRec=$("recSelect").value; fillLiveIntent(); wordBuffer=[]; rearm=false; if(captureRule) captureRule.reset(); state="IDLE"; collected=[]; prevKp=null; idleStart=null;
+  sentenceEl.textContent=""; resultEl.textContent="—"; lastWords=[]; renderWordRow();
+  updateRecUI(); preloadModels([activeRec]); renderVocabPanel();
+};
+$("focusToggle").onchange = () => {
+  focusOn=$("focusToggle").checked;
+  if(focusOn) ensureFaceTracker().then(applyHandSettings); else setFocusInfo("");
+  applyHandSettings();
+};
+$("relockBtn").onclick = () => { if(focus) PersonFocus.reset(focus); };
+
+// ---- speak -> sign (path B: hearing person speaks, deaf person reads/watches) ----
+// Uses the browser's built-in Web Speech API for Thai speech-to-text -- no key, no
+// server, works offline-ish in Chrome. ThSL-gloss mode then asks Typhoon to reorder
+// the sentence into ThSL grammar, but RESTRICTED to GAME_WORDS (the 10 signs this
+// model actually knows) -- it must skip unknown words, never invent a sign for them.
+let speakRecognition=null, speakListening=false;
+function getGrammarMode(){ return document.querySelector('input[name="grammarMode"]:checked').value; }
+function setMicBtn(listening){
+  $("micBtn").innerHTML = (listening ? ICONS.stop+" หยุด" : ICONS.mic+" พูด");
+  $("micBtn").classList.toggle("listening", listening);
+}
+function setSpeakStatus(msg){ $("speakStatus").classList.remove("warnText"); $("speakStatus").textContent=msg; }
+function setSpeakWarn(msg){ $("speakStatus").classList.add("warnText"); $("speakStatus").innerHTML=`${ICONS.warning} ${msg}`; }
+
+function initSpeakRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ setSpeakWarn("เบราว์เซอร์นี้ไม่รองรับการพูด ลองใช้ Chrome หรือพิมพ์ข้อความแทน"); return null; }
+  const r = new SR();
+  r.lang = "th-TH"; r.interimResults = true; r.continuous = false;
+  r.onresult = (e) => {
+    let text=""; for(let i=0;i<e.results.length;i++) text += e.results[i][0].transcript;
+    $("speakTranscript").textContent = text;
+  };
+  r.onend = () => {
+    speakListening=false; setMicBtn(false);
+    const finalText = $("speakTranscript").textContent.trim();
+    if(finalText) handleHearingInput(finalText);
+    else { setSpeakWarn("ไม่ได้ยินเสียงพูด ลองใหม่อีกครั้ง"); setBanner("uncertain","ไม่ได้ยินเสียงพูด","Heard nothing, please try again"); }
+  };
+  r.onerror = (e) => {
+    speakListening=false; setMicBtn(false);
+    setSpeakWarn("ไม่ได้ยิน หรือไม่ได้อนุญาตไมโครโฟน ("+e.error+")");
+    setBanner("error","ใช้ไมโครโฟนไม่ได้","Microphone problem. You can type instead.");
+  };
+  return r;
+}
+$("micBtn").onclick = () => {
+  if(speakListening){ speakRecognition && speakRecognition.stop(); return; }
+  if(!speakRecognition) speakRecognition = initSpeakRecognition();
+  if(!speakRecognition) return;
+  $("speakTranscript").textContent="";
+  speakListening=true; setMicBtn(true);
+  setSpeakStatus("กำลังฟัง พูดได้เลย"); setBanner("listening","กำลังฟัง พูดได้เลย","Listening");
+  speakRecognition.start();
+};
+
+// One handler for typed and spoken Thai. The default match is a plain lookup against the vocabulary (runs in the
+// device, no model involved). The AI reordering is optional and only possible when a key is configured.
+async function handleHearingInput(text){
+  text=String(text||"").trim();
+  if(!text) return;
+  $("speakTranscript").textContent=text;
+  setSpeakStatus("กำลังจับคู่กับคำศัพท์...");
+  setBanner("loading","กำลังจับคู่กับคำศัพท์","Matching words");
+  const base = lookup ? lookup.lookup(text) : {items:[{text, supported:false}], supported:[], unsupported:[text]};
+  let items = base.items;
+  if(getGrammarMode()==="thsl" && useAi()){
+    const gloss = await typhoonToGloss(text);
+    if(gloss.length){
+      const byTh=new Map(vocabWords.map(w=>[w.th,w]));
+      items = gloss.map(th=>({text:th, supported:true, word:byTh.get(th)})).concat(base.items.filter(i=>!i.supported));
+    }
+  }
+  addConv("hearing", text, items.map(i=>({ok:i.supported, text: i.supported ? i.text : "ยังไม่รองรับ: "+i.text})));
+  renderSignOutput(text, items);
+  const n=items.filter(i=>i.supported).length;
+  setSpeakStatus(n ? `พบ ${n} คำในรายการคำศัพท์` : "ยังไม่มีคำในข้อความนี้ที่อยู่ในรายการคำศัพท์");
+  $("speakTranscript").textContent="";   // the message is in the conversation now; this line is only for what is being heard
+  setBanner("confirmed","ส่งข้อความแล้ว","Sent");
+  setTimeout(()=>{ if(direction==="speech" && mode==="test" && bannerKind==="confirmed") setBanner("idle","พิมพ์หรือพูดได้เลย","Type or speak"); }, 2500);
+}
+function renderSignOutput(text, items){
+  const ok=items.filter(i=>i.supported);
+  $("speakOutput").innerHTML = `<div class="glossRow">${ok.length
+        ? ok.map(i=>`<span class="glossChip">${escHtml(i.text)}</span>`).join('<span class="glossArrow" aria-hidden="true">→</span>')
+        : `<span class="glossEmpty">${ICONS.warning} ยังไม่มีคำในข้อความนี้ที่อยู่ในรายการคำศัพท์ ลองพิมพ์คำสั้น ๆ เช่น คุณ ต้องการ ยา</span>`}</div>`;
+  $("speakClips").innerHTML = items.map(it=>{
+    if(!it.supported) return `<div class="signCard none"><div class="w">${escHtml(it.text)}</div><div class="en">ยังไม่รองรับคำนี้</div></div>`;
+    const w=it.word||{th:it.text}, idx=CLIP_INDEX[w.th];
+    const media = idx!==undefined ? `<video src="tutorial_clips/sign_${String(idx).padStart(2,"0")}.mp4" autoplay loop muted playsinline onerror="this.outerHTML='<div class=&quot;en&quot;>เปิดคลิปไม่ได้</div>'"></video>` : "";
+    const link = w.thsl_url ? `<a href="${escHtml(w.thsl_url)}" target="_blank" rel="noopener">ดูท่าที่ th-sl.com</a>` : "";
+    return `<div class="signCard"><div class="w">${escHtml(w.th)}</div><div class="en" lang="en">${escHtml(w.en||"")}</div>${media}${link}</div>`;
+  }).join("");
+}
+
+// Returns an array of words, each one guaranteed to be in GAME_WORDS (double-checked
+// locally -- never trust the LLM's JSON to only contain words we actually asked for).
+async function typhoonToGloss(text){
+  const key = useAi() ? window.TYPHOON_API_KEY : null;
+  if(!key){ console.log("[typhoon] no API key -- gloss conversion needs it"); return []; }
+  const vocabList = vocabWords.map(w=>w.th).join(", ");
+  const prompt = "คุณเป็นผู้ช่วยแปลงประโยคภาษาไทยเป็นลำดับคำศัพท์ภาษามือไทย (ThSL gloss)\n"
+    + "ใช้ได้เฉพาะคำในรายการนี้เท่านั้น: [" + vocabList + "]\n"
+    + "จัดลำดับคำใหม่ตามไวยากรณ์ภาษามือไทย (ประธานหรือหัวข้อก่อน ตามด้วยกริยาหรืออาการ "
+    + "และวางคำปฏิเสธ 'ไม่' ไว้หลังคำที่ถูกปฏิเสธ)\n"
+    + "คำในประโยคที่ไม่มีคำตรงในรายการ ให้ข้ามไปเลย ห้ามใส่คำอื่นแทน ห้ามแต่งคำขึ้นใหม่\n"
+    + "ตอบกลับเป็น JSON array ของคำจากรายการเท่านั้น เช่น [\"ฉัน\",\"ต้องการ\",\"ช่วย\"] "
+    + "ห้ามอธิบายเพิ่ม ห้ามมีข้อความอื่นนอกเหนือจาก JSON array\n"
+    + "ประโยค: " + text;
+  try{
+    const resp = await fetch("https://api.opentyphoon.ai/v1/chat/completions", {
+      method:"POST",
+      headers:{ "Authorization":"Bearer "+key, "Content-Type":"application/json" },
+      body: JSON.stringify({
+        model:"typhoon-v2.5-30b-a3b-instruct",
+        messages:[{role:"user", content:prompt}],
+        max_tokens:100, temperature:0.1,
+      }),
+    });
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data = await resp.json();
+    const raw = ((data.choices||[])[0]||{}).message?.content?.trim() || "[]";
+    const match = raw.match(/\[[\s\S]*\]/); // tolerate stray text Typhoon might add around the array
+    const arr = JSON.parse(match ? match[0] : raw);
+    return Array.isArray(arr) ? arr.filter(w => vocabWords.some(v=>v.th===w)) : [];
+  }catch(e){
+    console.warn("[typhoon] gloss conversion failed -- treating as no known words:", e);
+    return [];
+  }
+}
 
 // ---- game flow ----
 function newTarget(){ let w; do{ w=GAME_WORDS[Math.floor(Math.random()*GAME_WORDS.length)]; }while(w===targetWord); targetWord=w; targetEl.innerHTML="ทำท่า: <b>"+w+"</b>"; }
-function beginGame(){
-  starting=true; let c=3; bigEl.textContent=c; statusEl.textContent="เตรียมตัว...";
-  const iv=setInterval(()=>{ c--; if(c>0){bigEl.textContent=c;} else { clearInterval(iv); bigEl.textContent=""; starting=false; runGame(); } },1000);
-}
+function beginGame(){ starting=false; runGame(); }   // no countdown: the 45 seconds start as soon as the model is ready
 function runGame(){
   gameActive=true; score=0; timeLeft=GAME_DURATION; scoreEl.textContent="0"; timerEl.textContent=GAME_DURATION;
-  newTarget(); statusEl.textContent="🟢 เริ่ม!";
+  newTarget(); statusEl.textContent="เริ่ม";
   gameTimer=setInterval(()=>{ timeLeft--; timerEl.textContent=timeLeft; if(timeLeft<=0) endGame(); },1000);
 }
-function flash(txt,color){ flashEl.textContent=txt; flashEl.style.color=color; flashEl.style.opacity="1"; setTimeout(()=>flashEl.style.opacity="0",350); }
+function flash(iconHtml,color){ flashEl.innerHTML=iconHtml; flashEl.style.color=color; flashEl.style.opacity="1"; setTimeout(()=>flashEl.style.opacity="0",350); }
 function endGame(){
   gameActive=false; clearInterval(gameTimer); gameTimer=null;
   $("finalScore").textContent=score; $("nameInput").value=""; renderLB($("overLb"));
-  $("app").classList.add("hidden"); $("gameover").classList.remove("hidden");
+  $("viewTranslate").classList.add("hidden"); $("gameover").classList.remove("hidden");
 }
-function endGameCleanup(){ gameActive=false; if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
-$("saveBtn").onclick=()=>{ const n=($("nameInput").value.trim()||"ไม่ระบุ"); saveLB(n,score); renderLB($("overLb")); $("saveBtn").textContent="บันทึกแล้ว ✓"; $("saveBtn").disabled=true; };
-$("againBtn").onclick=()=>{ $("saveBtn").textContent="บันทึกคะแนน"; $("saveBtn").disabled=false; showApp("game"); };
+function endGameCleanup(){ gameActive=false; studyActive=false; if(gameTimer){clearInterval(gameTimer);gameTimer=null;} }
+$("saveBtn").onclick=()=>{ const n=($("nameInput").value.trim()||"ไม่ระบุ"); saveLB(n,score); renderLB($("overLb")); $("saveBtn").innerHTML=ICONS.check+" บันทึกแล้ว"; $("saveBtn").disabled=true; };
+$("againBtn").onclick=()=>{ $("saveBtn").textContent="บันทึกคะแนน"; $("saveBtn").disabled=false; $("gameover").classList.add("hidden"); launchResearchMode("game"); };
+$("gameoverBackBtn").onclick=()=>{ $("gameover").classList.add("hidden"); leaveResearchMode(); };
 
 // ---- inference ----
 function extractKeypoints(res){
@@ -239,68 +1305,388 @@ function extractKeypoints(res){
       for(let i=0;i<21;i++){ t[i*3]=lm[i].x; t[i*3+1]=lm[i].y; t[i*3+2]=lm[i].z; } } }
   const row=new Float32Array(126); row.set(lh,0); row.set(rh,63); return {row,present};
 }
+// A hand that flickers out for a frame or two (for example one lying flat, seen edge-on) would become 63 zeros, which looks
+// nothing like the training data. While at least one hand is still detected, a hand lost for less than HAND_HOLD_MS keeps its
+// last seen position. `present` is left alone: it still means "a hand was really detected", so rearm and tolerance logic is unchanged.
+const HAND_HOLD_MS=150;
+const lastHand=[{t:-1e9,kp:null},{t:-1e9,kp:null}];   // [left block, right block]
+function fillHandGaps(row, present, ts){
+  for(let h=0;h<2;h++){
+    const off=h*63, seen=row[off]!==0||row[off+1]!==0, last=lastHand[h];
+    if(seen){ last.t=ts; last.kp=row.slice(off,off+63); }
+    else if(present && last.kp && ts-last.t<=HAND_HOLD_MS){ row.set(last.kp,off); window.__handFilled=(window.__handFilled||0)+1; }
+  }
+}
+function resetHandGaps(){ for(const l of lastHand){ l.t=-1e9; l.kp=null; } }
 function meanAbsDelta(a,b){ let s=0; for(let i=0;i<126;i++) s+=Math.abs(a[i]-b[i]); return s/126; }
 function resample30(f){ const n=f.length,o=[]; for(let i=0;i<COLLECT_FRAMES;i++) o.push(f[Math.round(i*(n-1)/(COLLECT_FRAMES-1))]); return o; }
-async function predict(seq){ const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
-  const inp=tf.tensor(flat,[1,30,126]); const out=model.predict(inp); const d=await out.data(); inp.dispose(); out.dispose(); return d; }
-function showBars(probs){ const r=[...probs.keys()].sort((a,b)=>probs[b]-probs[a]).slice(0,5);
-  r.forEach((idx,i)=>{ const s=TARGET_SIGNS[idx]; $("bl"+i).textContent=(s==="none"?"—":s);
-    $("bf"+i).style.width=(probs[idx]*100)+"%"; $("bp"+i).textContent=Math.round(probs[idx]*100)+"%"; }); }
-
-async function onComplete(seq){
-  const probs=await predict(seq);
-  let best=0; for(let i=1;i<12;i++) if(probs[i]>probs[best]) best=i;
-  const sign=TARGET_SIGNS[best], conf=probs[best];
-
-  if(mode==="game"){
-    if(!gameActive) return;
-    if(sign===targetWord){ score++; scoreEl.textContent=score; flash("✓","#2ecc71"); newTarget(); }
-    else { flash("✗","#e74c3c"); }
-    return;
+async function predict(seq, mdl){ const flat=new Float32Array(30*126); for(let i=0;i<30;i++) flat.set(seq[i],i*126);
+  const inp=tf.tensor(flat,[1,30,126]); const out=mdl.predict(inp); const d=await out.data(); inp.dispose(); out.dispose(); return d; }
+function renderBars(probs, signList, prefix){ const r=[...probs.keys()].sort((a,b)=>probs[b]-probs[a]).slice(0,5);
+  r.forEach((idx,i)=>{ const s=signList[idx]; $(prefix+"bl"+i).textContent=(s==="none"?"—":s);
+    $(prefix+"bf"+i).style.width=(probs[idx]*100)+"%"; $(prefix+"bp"+i).textContent=Math.round(probs[idx]*100)+"%"; }); }
+// The models read the left-hand and right-hand slots of the keypoint row separately, and each learned its signs mostly in ONE slot
+// (the original model: the main signer's hand in the left slot; DANN and baseline: the other signers' hand in the right slot).
+// A sign made with the other hand lands in a slot the model has hardly seen. If only one hand is present and it is in the wrong slot,
+// the clip is mirrored (slots swapped, x -> 1-x) so it looks like the hand the model knows. Offline on the recorded clips this raised
+// one-hand accuracy from 65% to 82% (original model), from 35% to 60% (DANN) and from 41% to 65% (baseline).
+function mirrorRow(r){
+  const o=new Float32Array(126);
+  for(const [dst,src] of [[0,63],[63,0]]){
+    if(r[src]===0 && r[src+1]===0) continue;           // that hand is absent in this frame: it stays absent
+    for(let i=0;i<21;i++){ const s=src+i*3, d=dst+i*3; o[d]=1-r[s]; o[d+1]=r[s+1]; o[d+2]=r[s+2]; }
   }
-  // test mode
-  showBars(probs);
-  if(sign==="finish"){ if(wordBuffer.length){ sentenceEl.textContent="ประโยค: "+wordBuffer.join(" "); wordBuffer=[]; } resultEl.textContent="✓ จบประโยค"; return; }
-  if(sign!=="none" && conf>=(THRESH[sign]||0.8)){
-    if(!wordBuffer.length || wordBuffer[wordBuffer.length-1]!==sign){
-      wordBuffer.push(sign); resultEl.textContent=sign+" "+Math.round(conf*100)+"%"; sentenceEl.textContent="กำลังสร้าง: "+wordBuffer.join(" "); }
-  } else resultEl.textContent="—";
+  return o;
+}
+function toNativeHand(seq, native){
+  let nl=0, nr=0;
+  for(const r of seq){ if(r[0]!==0||r[1]!==0) nl++; if(r[63]!==0||r[64]!==0) nr++; }
+  const L=nl>seq.length/2, R=nr>seq.length/2;
+  if(!((native==="L") ? (R&&!L) : (L&&!R))) return seq;
+  window.__handMirrored=(window.__handMirrored||0)+1;
+  return seq.map(mirrorRow);
+}
+// Hand points in units of the signer's face width, face centre at the origin (the same arithmetic as scripts/head_relative.py):
+//   x' = (x - cx) / fw * 0.3,  y' = (y - cy) / fw * (H/W) * 0.3,  z' = z / fw * 0.3.   A hand that is absent (all zeros) stays all zeros.
+function toHeadRel(seq, box){
+  const S=0.3, out=[];
+  for(const row of seq){
+    const r=new Float32Array(126);
+    for(let h=0;h<2;h++){
+      let any=false; for(let k=0;k<63;k++) if(row[h*63+k]!==0){ any=true; break; }
+      if(!any) continue;
+      for(let j=0;j<21;j++){ const b=h*63+j*3;
+        r[b]=(row[b]-box.cx)/box.fw*S; r[b+1]=(row[b+1]-box.cy)/box.fw*box.aspect*S; r[b+2]=row[b+2]/box.fw*S; }
+    }
+    out.push(r);
+  }
+  return out;
+}
+async function predictWith(id, seq){
+  const r=RECOGNIZERS[id];
+  if(prefs.handFix && r && r.nativeHand) seq=toNativeHand(seq, r.nativeHand);
+  if(r && r.headRel){
+    if(!lastFaceBox || Date.now()-lastFaceBoxAt>6000){          // no face seen lately: say "not sure" instead of guessing
+      if(typeof resultEl!=="undefined" && resultEl) resultEl.textContent="ไม่พบใบหน้า โมเดลนี้ต้องเห็นใบหน้า (ติ๊ก ใช้เฉพาะผู้ใช้หลัก)";
+      return new Float32Array(r.classes.length).fill(1/r.classes.length);
+    }
+    seq=toHeadRel(seq, lastFaceBox);
+  }
+  return predict(seq, await getModel(id));
+}
+function showBars(probs){ renderBars(probs, RECOGNIZERS[activeRec].classes, ""); }
+
+// ---- Typhoon sentence-forming + TTS (local testing only -- see config.local.example.js) ----
+async function typhoonSentence(words){
+  const raw = words.join(" ");
+  const key = useAi() ? window.TYPHOON_API_KEY : null;
+  if(!key){ console.log("[typhoon] no API key (config.local.js missing) -- using raw words"); return raw; }
+  const prompt = "คุณเป็นผู้ช่วยแปลงคำจากภาษามือไทยให้เป็นประโยคภาษาไทยที่เป็นธรรมชาติ "
+    + "ฉันจะให้ลำดับคำที่ได้จากการแปลภาษามือ "
+    + "ช่วยเรียบเรียงให้เป็นประโยคสั้น ๆ ที่ถูกต้องและเป็นธรรมชาติ "
+    + "ตอบกลับเฉพาะประโยคเท่านั้น ห้ามอธิบายเพิ่ม\n"
+    + "คำ: " + raw;
+  try{
+    const resp = await fetch("https://api.opentyphoon.ai/v1/chat/completions", {
+      method:"POST",
+      headers:{ "Authorization":"Bearer "+key, "Content-Type":"application/json" },
+      body: JSON.stringify({
+        model:"typhoon-v2.5-30b-a3b-instruct",
+        messages:[{role:"user", content:prompt}],
+        max_tokens:100, temperature:0.3,
+      }),
+    });
+    if(!resp.ok) throw new Error("HTTP "+resp.status);
+    const data = await resp.json();
+    const sentence = ((data.choices||[])[0]||{}).message?.content?.trim();
+    return sentence || raw;
+  }catch(e){
+    // Includes CORS failures -- Typhoon's API may not allow direct browser calls,
+    // in which case this always lands here. Check the console: a CORS error looks
+    // different from an HTTP error and means a backend proxy would be needed instead.
+    console.warn("[typhoon] request failed -- using raw words. Error:", e);
+    return raw;
+  }
+}
+// Spoken output: the browser's own Thai voice first. A voice that runs on the device sends nothing out. Google's
+// endpoint is only used if the user allowed it in the privacy options and the browser has no Thai voice at all.
+let voices=[];
+function refreshVoices(){ try{ voices=window.speechSynthesis ? speechSynthesis.getVoices() : []; }catch(e){ voices=[]; } updateVoiceInfo(); }
+function voiceChoice(){ return window.BridgeUtils ? BridgeUtils.pickThaiVoice(voices, prefs.ttsRemote) : {voice:null, remote:false, reason:"none"}; }
+function updateVoiceInfo(){
+  const p=voiceChoice(), el=$("voiceInfo");
+  el.textContent = p.voice ? `เสียงอ่านที่ใช้ตอนนี้: ${p.voice.name} (${p.remote ? "ส่งข้อความไปที่เซิร์ฟเวอร์" : "ทำงานในเครื่อง"})`
+    : p.reason==="remote-only" ? "เบราว์เซอร์นี้มีเฉพาะเสียงไทยที่ส่งข้อความออกนอกเครื่อง ยังไม่ได้อนุญาต จึงยังไม่อ่านออกเสียง"
+    : prefs.ttsRemote ? "ไม่พบเสียงไทยในเบราว์เซอร์นี้ จะใช้บริการอ่านออกเสียงของ Google (ส่งข้อความออกนอกเครื่อง)"
+    : "ไม่พบเสียงไทยในเบราว์เซอร์นี้ จึงยังไม่อ่านออกเสียง";
+}
+function setTtsNote(text){ const n=$("ttsNote"); n.textContent=text||""; n.classList.toggle("hidden", !text); }
+function speakThai(text){
+  if(!text || !prefs.tts) return;
+  const p=voiceChoice();
+  if(p.voice && window.speechSynthesis){
+    try{
+      const u=new SpeechSynthesisUtterance(text); u.voice=p.voice; u.lang=p.voice.lang; u.rate=0.95;
+      speechSynthesis.cancel(); speechSynthesis.speak(u); setTtsNote(""); return;
+    }catch(e){ console.warn("[tts] browser voice failed:", e); }
+  }
+  if(prefs.ttsRemote){
+    try{
+      // Google's unofficial endpoint (what the Python gTTS library wraps): opt-in only, and it sends the sentence to Google.
+      const url = "https://translate.google.com/translate_tts?ie=UTF-8&q="+encodeURIComponent(text)+"&tl=th&client=tw-ob";
+      new Audio(url).play().catch(e=>console.warn("[tts] playback failed:", e)); setTtsNote(""); return;
+    }catch(e){ console.warn("[tts] failed:", e); }
+  }
+  setTtsNote("ยังไม่อ่านออกเสียง เพราะเบราว์เซอร์นี้ไม่มีเสียงไทยในเครื่อง ดูตัวเลือกได้ที่ปุ่ม ข้อมูลอยู่ในเครื่องนี้ (ข้อความประโยคยังแสดงอยู่ด้านบน)");
 }
 
-function drawHands(res){ ctx.clearRect(0,0,overlay.width,overlay.height); if(!res.landmarks) return;
-  ctx.fillStyle="#2ecc71"; for(const lm of res.landmarks) for(const p of lm){ ctx.beginPath(); ctx.arc(p.x*overlay.width,p.y*overlay.height,5,0,2*Math.PI); ctx.fill(); } }
+async function finishSentence(){
+  if(!wordBuffer.length){ resultEl.textContent="ยังไม่มีคำ"; return; }
+  const words=wordBuffer.slice(); wordBuffer=[]; lastWords=words; renderWordRow();
+  if(SHOW_CLINICAL_CARD) renderClinicalCard(words);
+  // the face tags decide question/negation by plain rules; the sentence step only phrases the resulting word list
+  const list=window.FaceTone ? FaceTone.applyFaceRules(words) : words.map(w=>w.sign);
+  sentenceEl.textContent="กำลังเรียบเรียงประโยค...";
+  const sentence=await typhoonSentence(list);
+  sentenceEl.textContent="ประโยค: "+sentence;
+  addConv("deaf", sentence, words.map(w=>({ok:true, text:w.sign+tagText(w.face)})));
+  speakThai(sentence);
+}
+
+// ---- body-zone filter: the user says which part of the body the sign is at, and only words of that part (plus general words) can win ----
+// Word -> zone comes from the measured hand heights of the 13 symptom words (research/BODY_ZONES.md); every other word is "general" and always allowed.
+const ZONE_OF = {"เวียนหัว":0,"ปวดหัว":0,"ไข้":0, "แพ้อาหาร":1,"น้ำมูกไหล":1,"หายใจ":1,"แพ้ยา":1,"ไอ":1,"เจ็บคอ":1, "เจ็บ":2,"อาเจียน":2,"ท้องเสีย":2, "ปวดท้อง":3};
+const ZONE_NAME = {0:"ศีรษะ",1:"คอ/อกบน",2:"อก/ท้อง",3:"ท้อง"};
+let selectedZone = "all";
+let lastFaceW = null;
+let lastHandCount = -1, lastSignBoth = null;   // hands seen in the current frame; share of frames with both hands in the last captured sign
+function bothHands(f){ let a=false, b=false; for(let k=0;k<63;k++) if(f[k]!==0){ a=true; break; } for(let k=63;k<126;k++) if(f[k]!==0){ b=true; break; } return a&&b; }
+function showHandChip(){ const el=$("handChip"); if(!el) return;
+  el.textContent="มือที่เห็น: "+(lastHandCount<0?"-":lastHandCount)+(lastSignBoth==null?"":" · ท่าล่าสุดเห็นสองมือ "+Math.round(lastSignBoth*100)+"% ของเฟรม"); }
+let lastFaceBox = null, lastFaceBoxAt = 0;   // centre, width and picture shape of the main face (for the face-relative model)
+function setZone(z){
+  selectedZone = z;
+  document.querySelectorAll("#zoneBtns button").forEach(b=>b.classList.toggle("on", b.dataset.zone===String(z)));
+  document.querySelectorAll("#zoneBar .zp").forEach(e=>e.classList.toggle("on", e.dataset.zone===String(z)));
+  const n=$("zoneNote");
+  if(n) n.textContent = z==="all" ? "" : "เลือกเฉพาะคำที่อยู่ส่วน "+ZONE_NAME[z]+" และคำทั่วไป";
+}
+document.querySelectorAll("#zoneBtns button").forEach(b=>b.onclick=()=>setZone(b.dataset.zone));
+document.querySelectorAll("#zoneBar .zp").forEach(e=>e.onclick=()=>setZone(selectedZone===e.dataset.zone ? "all" : e.dataset.zone));
+// Zero out words that belong to another zone, then rescale. The rescale never divides by less than 0.5, so a word that the model gave only a little
+// probability to cannot become "confident" just because the others were removed.
+function applyZone(probs, classes){
+  if(selectedZone==="all") return probs;
+  const out=new Float32Array(probs.length); let sum=0;
+  for(let i=0;i<probs.length;i++){
+    const z=ZONE_OF[classes[i]];
+    if(z===undefined || String(z)===String(selectedZone)){ out[i]=probs[i]; sum+=probs[i]; }
+  }
+  const d=Math.max(sum,0.5);
+  for(let i=0;i<out.length;i++) out[i]/=d;
+  return out;
+}
+
+// ---- live clip recorder (diagnostics only): keeps each captured sign with what the model said, so live signing can be compared with the training clips ----
+const liveClips=[];
+function fillLiveIntent(){
+  const sel=$("liveIntent"); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">(ไม่ระบุ)</option>'+RECOGNIZERS[activeRec].classes.map(c=>`<option value="${c}">${c}</option>`).join("");
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+}
+function liveLog(seq, meta, rec, rawProbs, sign, conf){
+  if(!prefs.diag) return;
+  const top=[...rawProbs.keys()].sort((a,b)=>rawProbs[b]-rawProbs[a]).slice(0,3).map(i=>({w:rec.classes[i], p:Math.round(rawProbs[i]*1000)/1000}));
+  liveClips.push({ t:new Date().toISOString(), model:activeRec, zone:selectedZone, faceW:lastFaceW, faceBox:lastFaceBox, intended:$("liveIntent").value, shown:sign, shownConf:Math.round(conf*1000)/1000,
+                   top3:top, frames:meta?meta.frames:null, ms:meta?Math.round(meta.ms):null, bothShare:(meta && meta.both!=null) ? Math.round(meta.both*100)/100 : null, seq:Array.from(seq, r=>Array.from(r, v=>Math.round(v*1e4)/1e4)) });
+  if(liveClips.length>300) liveClips.shift();
+  $("liveN").textContent=liveClips.length;
+}
+$("liveDl").onclick=()=>{
+  const blob=new Blob([JSON.stringify(liveClips)],{type:"application/json"}), a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="live_clips_"+new Date().toISOString().replace(/[:.]/g,"-")+".json"; a.click();
+};
+$("liveClear").onclick=()=>{ liveClips.length=0; $("liveN").textContent="0"; };
+
+async function onComplete(seq, meta){
+  if(mode==="study"){ await onStudySign(seq, meta); return; }
+  if(mode==="compare"){
+    if(compareLoadState!=="ready") return;
+    // same collected keypoint sequence fed to both models -- that's the whole point of the comparison
+    const [probsBase, probsDann] = await Promise.all([
+      predictWith("base", seq),
+      predictWith("dann", seq),
+    ]);
+    let bBest=0; for(let i=1;i<10;i++) if(probsBase[i]>probsBase[bBest]) bBest=i;
+    let dBest=0; for(let i=1;i<10;i++) if(probsDann[i]>probsDann[dBest]) dBest=i;
+    renderBars(probsBase, GAME_WORDS, "cb");
+    renderBars(probsDann, GAME_WORDS, "cd");
+    compareStatusEl.textContent=`Baseline: ${GAME_WORDS[bBest]} (${Math.round(probsBase[bBest]*100)}%)   |   DANN: ${GAME_WORDS[dBest]} (${Math.round(probsDann[dBest]*100)}%)`;
+    return;
+  }
+
+  if(mode==="game"){
+    const probs=await predictWith("v6c", seq);
+    let best=0; for(let i=1;i<12;i++) if(probs[i]>probs[best]) best=i;
+    if(!gameActive) return;
+    if(TARGET_SIGNS[best]===targetWord){ score++; scoreEl.textContent=score; flash(ICONS.check,"#0f9d63"); newTarget(); }
+    else { flash(ICONS.cross,"#d1433a"); }
+    return;
+  }
+
+  // test mode (the translate screen), with whichever recognizer is selected
+  const recId=activeRec, rec=RECOGNIZERS[recId];
+  const rawProbs=await predictWith(recId, seq);
+  if(recId!==activeRec || mode!=="test") return;   // the user switched model or screen while this sign was being read
+  const probs=applyZone(rawProbs, rec.classes);
+  let best=0; for(let i=1;i<rec.classes.length;i++) if(probs[i]>probs[best]) best=i;
+  const sign=rec.classes[best], conf=probs[best];
+  liveLog(seq, meta, rec, rawProbs, sign, conf);
+  showBars(probs);
+  if(sign==="finish"){
+    resultEl.textContent="จบประโยคแล้ว";
+    if(wordBuffer.length) await finishSentence();
+    return;
+  }
+  const minConf = rec.thresholds ? (rec.thresholds[sign] ?? rec.defaultThreshold) : (rec.hasFinish ? (THRESH[sign]||0.8) : MIN_CONF_10);
+  if(sign!=="none" && conf>=minConf){
+    if(!wordBuffer.length || wordBuffer[wordBuffer.length-1].sign!==sign){
+      wordBuffer.push({sign, conf, face:meta?meta.face:null});
+      renderWordRow();
+      resultEl.textContent=sign+" "+Math.round(conf*100)+"%";
+      sentenceEl.textContent="กำลังสร้าง: "+wordBuffer.map(w=>w.sign).join(" ");
+      uiAccepted(sign, conf, false);
+    } else uiAccepted(sign, conf, true);
+  } else { resultEl.textContent="— (ใกล้เคียง: "+sign+" "+Math.round(conf*100)+"%, ต้องการ "+Math.round(minConf*100)+"%)"; uiUncertain(); }
+}
+
+// Face sampling, shared by person focus and face reading: find faces a few times a second, keep the lock on
+// the main user, and (when face reading is on) feed that user's face numbers to the tone rules.
+function sampleFaces(ts){
+  if(!(focusOn || toneOn || (RECOGNIZERS[activeRec] && RECOGNIZERS[activeRec].headRel)) || faceTrackerState!=="ready" || !focus) return;
+  if(ts-lastFaceMs<(toneOn ? FACE_TONE_EVERY_MS : FACE_EVERY_MS)) return;
+  lastFaceMs=ts;
+  const aspect=(video.videoWidth/video.videoHeight)||16/9;
+  try{
+    const faces=faceTracker.detectFaces(video, ts);
+    PersonFocus.update(focus, faces.map(f=>f.box), ts, aspect);
+    if(focus.primary){ const b=focus.primary; lastFaceBox={cx:b.x+b.w/2, cy:b.y+b.h/2, fw:b.w, aspect:1/aspect}; lastFaceBoxAt=Date.now(); lastFaceW=focus.primary.w; const pct=Math.round(lastFaceW*100); const el=$("distChip");
+      if(el) el.textContent="ใบหน้ากว้าง "+pct+"% ("+(pct<=14?"ระยะเหมือนข้อมูลฝึกส่วนใหญ่":pct<22?"ใกล้กว่าข้อมูลฝึกส่วนใหญ่":"ใกล้มาก เหมือนผู้แสดงที่ถ่ายแนวตั้ง")+")"; }
+    if(toneOn && toneRules){
+      const mine=faces.find(f=>f.box===focus.primary);   // a face hidden behind a hand gives no numbers this time
+      if(mine && mine.features) feedTone(mine.features, ts);
+    }
+  }catch(e){ console.warn("[face] detection failed", e); }
+}
+function feedTone(f, ts){
+  if(calibrating){
+    calibrating.rows.push(f);
+    if(ts>=calibrating.until){
+      toneRules.setBaseline({ browRaise:FaceTone.meanOf(calibrating.rows,"browRaise"), browFurrow:FaceTone.meanOf(calibrating.rows,"browFurrow") });
+      baselineSet=true; calibrating=null; updateToneUI();
+    }
+  }
+  const st=toneRules.push(f, ts);
+  liveTone=st; lastToneMs=ts;
+  faceSamples.push({t:ts, raise:st.raise, furrow:st.furrow, yaw:f.yaw, pitch:f.pitch});
+  while(faceSamples.length && ts-faceSamples[0].t>4000) faceSamples.shift();
+}
+// Person focus: keep only the hands that belong to the locked user.
+function applyFocus(res, ts){
+  const all=res.landmarks||[];
+  sampleFaces(ts);
+  if(!focusOn || faceTrackerState!=="ready" || !focus) return {kept:res, info:null};
+  const aspect=(video.videoWidth/video.videoHeight)||16/9;
+  const info=PersonFocus.filterHands(focus, all, aspect);
+  const idx=[]; info.keep.forEach((k,i)=>{ if(k) idx.push(i); });
+  if(ts-lastFocusInfoMs>300){
+    lastFocusInfoMs=ts;
+    const others=focus.faces.filter(f=>f!==focus.primary).length;
+    const dropped=info.keep.filter(k=>!k).length;
+    setFocusInfo(!focus.primary ? "ยังไม่พบใบหน้า (ยังไม่กรองมือ)"
+      : (others ? `เห็นอีก ${others} คน, ` : "") + (dropped ? `ไม่นับมือ ${dropped} ข้าง` : "ใช้มือของผู้ใช้หลัก"));
+  }
+  return {kept:{landmarks:idx.map(i=>all[i]), handednesses:idx.map(i=>res.handednesses[i])}, info};
+}
+
+// Green = the user (face box and hands), red dashed = other faces, grey = hands that are ignored.
+function drawScene(res, fr){
+  ctx.clearRect(0,0,overlay.width,overlay.height);
+  if(!prefs.overlay) return;
+  const W=overlay.width, H=overlay.height;
+  const info=(fr && fr.info && fr.info.filtered) ? fr.info : null;
+  if(info && focus){
+    const box=(b,color,w,dash)=>{ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.setLineDash(dash||[]); ctx.strokeRect(b.x*W,b.y*H,b.w*W,b.h*H); };
+    for(const f of focus.faces) if(f!==focus.primary) box(f,"#d1433a",2,[6,4]);
+    if(focus.primary) box(focus.primary,"#0f9d63",3);
+    ctx.setLineDash([]);
+  }
+  (res.landmarks||[]).forEach((lm,i)=>{
+    const mine=!info || info.keep[i];
+    ctx.fillStyle=mine ? "#0f9d63" : "rgba(160,160,170,.8)";
+    for(const p of lm){ ctx.beginPath(); ctx.arc(p.x*W,p.y*H,mine?5:3,0,2*Math.PI); ctx.fill(); }
+  });
+}
 
 let lastTs=-1;
 async function loop(){
+  if(!cameraStreamActive) return; // stream was stopped (direction switched, left the mode) -- don't reschedule
   if(handLandmarker && video.readyState>=2){
     const ts=performance.now();
-    if(ts!==lastTs){ lastTs=ts;
-      const res=handLandmarker.detectForVideo(video,ts); drawHands(res);
-      const {row,present}=extractKeypoints(res);
-      const gameBlock=(mode==="game" && (!gameActive || starting)); // don't collect before/after game
+    if(ts-lastTs>=MIN_FRAME_MS){ lastTs=ts;
+      const res=handLandmarker.detectForVideo(video,ts);
+      const fr=applyFocus(res, ts);
+      drawScene(res, fr);
+      updateFaceChip(ts);
+      const {row,present}=extractKeypoints(fr.kept);
+      fillHandGaps(row,present,ts);
+      { let n=0; for(let h=0;h<2;h++) for(let k=0;k<63;k++) if(row[h*63+k]!==0){ n++; break; }
+        if(n!==lastHandCount){ lastHandCount=n; showHandChip(); } }
+      // don't collect before/after a game, or before a study participant has been started
+      const blocked=(mode==="game" && (!gameActive || starting)) || (mode==="study" && !studyActive);
 
-      if(!gameBlock){
-        if(state==="IDLE"){
-          if(present){
-            if(idleStart===null) idleStart=ts;
-            if(mode!=="game") statusEl.textContent="✋ จับมือได้แล้ว...";
-            if(ts-idleStart>=IDLE_WARMUP_MS){
-              if(mode==="game"){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; }
-              else { state="COUNTDOWN"; countdownStart=performance.now(); }
-            }
-          } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
-        } else if(state==="COUNTDOWN"){
-          if(!present){ state="IDLE"; idleStart=null; bigEl.textContent=""; statusEl.textContent="พร้อม"; }
-          else { const r=3-(performance.now()-countdownStart)/1000;
-            if(r<=0){ state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null; bigEl.textContent=""; statusEl.textContent="🟢 ทำท่าเลย!"; }
-            else { bigEl.textContent=Math.ceil(r); statusEl.textContent="เตรียมตัว..."; } }
+      if(!blocked){
+        if(useMotionCut()){
+          const res=captureRule.push(present?row:null, ts);
+          if(res){
+            // face reading for this word: what the face did while the sign was being made
+            const face=(toneOn && toneRules) ? FaceTone.summarize(faceSamples, res.t0, res.t1, toneRules.o) : null;
+            const both=res.frames.length ? res.frames.filter(bothHands).length/res.frames.length : 0;
+            lastSignBoth=both; showHandChip();
+            lastCap={rule:"motion", frames:res.frames.length, ms:res.t1-res.t0, why:res.reason, both};
+            onComplete(resample30(res.frames), {frames:res.frames.length, ms:res.t1-res.t0, face, both});
+            if(toneOn && toneRules) faceSamples=[];
+          }
+          if(mode!=="game"){
+            const msg=captureRule.capturing ? "กำลังอ่านท่า..." : (present ? "จับมือได้แล้ว..." : "ยกมือให้กล้องเห็น");
+            if(statusEl.textContent!==msg) statusEl.textContent=msg;
+          }
+        } else if(state==="IDLE"){
+          if(rearm){
+            // the last sign was just read: wait until the hand leaves the frame or clearly moves, so a held pose is not read again
+            if(!present){ if(rearmAbsentStart===null) rearmAbsentStart=ts; if(ts-rearmAbsentStart>=REARM_ABSENT_MS) rearm=false; }
+            else { rearmAbsentStart=null; if(meanAbsDelta(row,rearmRow)>REARM_MOVE) rearm=false; }
+            if(rearm){ idleStart=null; if(mode!=="game") statusEl.textContent="ลดมือลง หรือขยับมือ แล้วทำท่าถัดไป"; }
+          }
+          if(!rearm){
+            if(present){
+              if(idleStart===null) idleStart=ts;
+              if(mode!=="game") statusEl.textContent="จับมือได้แล้ว...";
+              if(ts-idleStart>=IDLE_WARMUP_MS){
+                // no countdown in any mode: a sign starts as soon as the hand has been in view for a moment
+                state="COLLECTING"; collected=[]; prevKp=null; collectStart=ts; stillStart=null; missStart=null;
+                if(mode!=="game") statusEl.textContent="กำลังอ่านท่า...";
+              }
+            } else { idleStart=null; if(mode!=="game") statusEl.textContent="ยกมือให้กล้องเห็น"; }
+          }
         } else { // COLLECTING
           let trig=false;
           if(present){
             missStart=null;
             collected.push(row);
             if(prevKp && (ts-collectStart)>=MIN_COLLECT_MS){
-              const d=meanAbsDelta(row,prevKp);
+              const d=meanAbsDelta(row,prevKp); legacyDelta=d;
               if(d<STILL_THRESHOLD){ if(stillStart===null) stillStart=ts; } else stillStart=null;
               if(stillStart!==null && (ts-stillStart)>=STILL_MS) trig=true;
             }
@@ -313,13 +1699,345 @@ async function loop(){
             if((ts-collectStart)>=MIN_COLLECT_MS) trig=true;
             else { state="IDLE"; idleStart=null; collected=[]; }
           }
-          if(trig){ onComplete(resample30(collected)); state="IDLE"; idleStart=null; collected=[]; prevKp=null; }
+          if(trig){
+            rearm=true; rearmRow=row; rearmAbsentStart=null;
+            // face reading for this word: what the face did while the sign was being made
+            const face=(toneOn && toneRules) ? FaceTone.summarize(faceSamples, collectStart, ts, toneRules.o) : null;
+            lastCap={rule:"legacy", frames:collected.length, ms:ts-collectStart, why:(stillStart!==null && (ts-stillStart)>=STILL_MS)?"still":"hand_gone"};
+            onComplete(resample30(collected), {frames:collected.length, ms:ts-collectStart, face});
+            if(toneOn && toneRules) faceSamples=[];   // the next word starts with a clean slate
+            state="IDLE"; idleStart=null; collected=[]; prevKp=null;
+          }
         }
+      } else if(captureRule) captureRule.reset();
+      // diagnostics line (only visible with "show model details"): what the capture rule sees, so the thresholds can be tuned on a real camera
+      if(prefs.diag && ts-capDiagAt>150){
+        capDiagAt=ts;
+        const last=lastCap ? `ล่าสุด ${lastCap.frames} เฟรม (${(lastCap.ms/1000).toFixed(1)} วินาที) หยุดเพราะ${WHY[lastCap.why]||lastCap.why}${lastCap.both!=null ? ` · เห็นสองมือ ${Math.round(lastCap.both*100)}% ของเฟรม` : ""}` : "ยังไม่มีท่าที่อ่านแล้ว";
+        $("capDiag").textContent = useMotionCut()
+          ? `วิธีตัดท่า: ตามการเคลื่อนไหว · มือขยับใน 200 ms ${captureRule.lastDelta.toFixed(4)} (เกณฑ์ 0.008) · ${captureRule.capturing?"กำลังจับท่า":"รอมือขยับ"} · ${last}`
+          : `วิธีตัดท่า: วิธีเดิม · มือขยับต่อเฟรม ${legacyDelta.toFixed(4)} (เกณฑ์ 0.03) · ${last}`;
       }
     }
   }
   requestAnimationFrame(loop);
 }
+
+// ---- volunteer study (club test) ----
+// A participant is asked for one word at a time. The DANN and baseline models both read the same sign and every
+// answer is saved (with all probabilities) for analysis in a CSV. Correct/wrong is never shown while a participant
+// is signing: the mark after each sign only says "recorded". Words are the 8 the old models share with the 33-word list.
+let studyActive=false, studyTrials=[], studyIdx=0, studyMeta=null, studyBusy=false, studyRows=[];
+try{ studyRows=JSON.parse(localStorage.getItem(STUDY_STORE)||"[]"); }catch{ studyRows=[]; }
+function persistStudy(){ try{ localStorage.setItem(STUDY_STORE, JSON.stringify(studyRows)); }catch(e){ console.warn("[study] could not save in this browser", e); } }
+function shuffled(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]; } return x; }
+// every round covers all words once, in a new random order; the same word never comes twice in a row across rounds
+function makeTrials(words, reps){
+  const out=[]; let last=null;
+  for(let r=1;r<=reps;r++){
+    const order=shuffled(words);
+    if(order.length>1 && order[0]===last){ const k=1+Math.floor(Math.random()*(order.length-1)); [order[0],order[k]]=[order[k],order[0]]; }
+    order.forEach(w=>out.push({round:r, word:w})); last=order[order.length-1];
+  }
+  return out;
+}
+function topIndex(p){ let b=0; for(let i=1;i<p.length;i++) if(p[i]>p[b]) b=i; return b; }
+function renderStudyCount(){ $("studyCount").textContent=`เก็บไว้ในเครื่องนี้ ${studyRows.length} แถว`; }
+function showStudyIdle(){
+  studyActive=false;
+  $("studySetup").classList.remove("hidden"); $("studyRun").classList.add("hidden"); $("studySummary").classList.add("hidden");
+  targetEl.classList.add("hidden"); $("studyHud").textContent="พร้อมเริ่มทดสอบ"; renderStudyCount();
+}
+function showStudyTrial(){
+  if(studyIdx>=studyTrials.length){ finishStudy(); return; }
+  const t=studyTrials[studyIdx];
+  targetEl.classList.remove("hidden");
+  targetEl.innerHTML="ทำท่า: <b>"+t.word+"</b>";
+  $("studyHud").textContent=`${studyMeta.signer} | ข้อ ${studyIdx+1}/${studyTrials.length}`;
+  studyBusy=false;
+}
+function startStudy(){
+  const code=$("studyCode").value.trim();
+  if(!code){ $("studyCode").focus(); $("studyCode").style.borderColor="var(--danger)"; return; }
+  $("studyCode").style.borderColor="";
+  studyMeta={ session:new Date().toISOString(), signer:code, type:$("studyType").value, reps:Number($("studyReps").value),
+              focus:(focusOn && faceTrackerState==="ready") };
+  studyTrials=makeTrials(STUDY_WORDS, studyMeta.reps); studyIdx=0; studyBusy=true; rearm=false;
+  $("studySetup").classList.add("hidden"); $("studyRun").classList.remove("hidden"); $("studySummary").classList.add("hidden");
+  studyActive=true;
+  preloadModels(["dann","base"]).then(showStudyTrial);
+}
+async function onStudySign(seq, meta){
+  if(!studyActive || studyBusy) return;
+  studyBusy=true;
+  const trial=studyTrials[studyIdx];
+  let pd, pb;
+  try{ [pd, pb]=await Promise.all([predictWith("dann", seq), predictWith("base", seq)]); }
+  catch(e){ console.error("[study] prediction failed", e); studyBusy=false; return; }
+  const di=topIndex(pd), bi=topIndex(pb);
+  studyRows.push({
+    session:studyMeta.session, signer:studyMeta.signer, type:studyMeta.type, trial:studyIdx+1, round:trial.round, target:trial.word,
+    skipped:0, t:new Date().toISOString(), frames:meta?meta.frames:"", ms:meta?Math.round(meta.ms):"", focus:studyMeta.focus?1:0,
+    dann_top1:GAME_WORDS[di], dann_conf:pd[di], dann_ok:GAME_WORDS[di]===trial.word?1:0,
+    base_top1:GAME_WORDS[bi], base_conf:pb[bi], base_ok:GAME_WORDS[bi]===trial.word?1:0,
+    dann_p:Array.from(pd), base_p:Array.from(pb),
+  });
+  persistStudy(); renderStudyCount();
+  flash(ICONS.check,"#0f9d63");
+  studyIdx++;
+  setTimeout(showStudyTrial, 700);
+}
+function studySkip(){
+  if(!studyActive || studyIdx>=studyTrials.length) return;
+  const trial=studyTrials[studyIdx];
+  studyRows.push({ session:studyMeta.session, signer:studyMeta.signer, type:studyMeta.type, trial:studyIdx+1, round:trial.round,
+                   target:trial.word, skipped:1, t:new Date().toISOString(), focus:studyMeta.focus?1:0 });
+  persistStudy(); renderStudyCount(); studyIdx++; showStudyTrial();
+}
+function studyUndo(){
+  if(!studyActive || !studyMeta || studyIdx===0) return;
+  const last=studyRows[studyRows.length-1];
+  if(!last || last.session!==studyMeta.session) return;
+  studyRows.pop(); persistStudy(); renderStudyCount(); studyIdx--; showStudyTrial();
+}
+function finishStudy(){
+  studyActive=false; targetEl.classList.add("hidden");
+  const mine=studyRows.filter(r=>studyMeta && r.session===studyMeta.session && !r.skipped);
+  const n=mine.length, d=mine.reduce((a,r)=>a+r.dann_ok,0), b=mine.reduce((a,r)=>a+r.base_ok,0);
+  $("studyRun").classList.add("hidden");
+  $("studySummary").classList.remove("hidden");
+  $("studySummary").innerHTML=`เสร็จแล้ว ขอบคุณมาก<br>บันทึก <b>${n}</b> ข้อ (ส่วนนี้สำหรับผู้ดำเนินการ) DANN ถูก <b>${d}/${n}</b>, Baseline ถูก <b>${b}/${n}</b><br><br><button id="studyNext">คนถัดไป</button>`;
+  $("studyHud").textContent="เสร็จสิ้น";
+  $("studyNext").onclick=()=>{ $("studyCode").value=""; showStudyIdle(); };
+  renderStudyCount();
+}
+function studyCsv(rows){
+  const cols=["session","signer","type","trial","round","target","skipped","t","frames","ms","focus",
+    "dann_top1","dann_conf","dann_ok","base_top1","base_conf","base_ok",
+    ...GAME_WORDS.map(w=>"dann_p_"+w), ...GAME_WORDS.map(w=>"base_p_"+w)];
+  const esc=v=>{ const t=(v===undefined||v===null)?"":String(v); return /[",\n]/.test(t) ? '"'+t.replace(/"/g,'""')+'"' : t; };
+  const lines=[cols.join(",")];
+  rows.forEach(r=>{
+    const flat={...r};
+    GAME_WORDS.forEach((w,i)=>{ flat["dann_p_"+w]=r.dann_p?r.dann_p[i]:""; flat["base_p_"+w]=r.base_p?r.base_p[i]:""; });
+    lines.push(cols.map(c=>{ const v=flat[c]; return esc((typeof v==="number" && (c.endsWith("_conf")||c.includes("_p_"))) ? v.toFixed(4) : v); }).join(","));
+  });
+  return lines.join("\n");
+}
+function downloadStudy(){
+  if(!studyRows.length) return;
+  const blob=new Blob(["﻿"+studyCsv(studyRows)], {type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="thsl_study_"+new Date().toISOString().slice(0,10)+".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+function clearStudy(){
+  if(!studyRows.length) return;
+  if(!confirm("ลบข้อมูลทดสอบที่เก็บไว้ในเครื่องนี้ทั้งหมด? ควรดาวน์โหลด CSV ก่อน")) return;
+  studyRows=[]; persistStudy(); renderStudyCount();
+}
+$("studyStart").onclick=startStudy;
+$("studyUndo").onclick=studyUndo;
+$("studySkip").onclick=studySkip;
+$("studyFinish").onclick=()=>{ if(studyActive) finishStudy(); };
+$("studyDownload").onclick=downloadStudy;
+$("studyClear").onclick=clearStudy;
+renderStudyCount();
+
+// translate screen buttons (for models without a finish sign)
+$("finishBtn").onclick=()=>finishSentence();
+$("clearSentenceBtn").onclick=()=>{ wordBuffer=[]; lastWords=[]; renderWordRow(); sentenceEl.textContent=""; resultEl.textContent="—"; };
+$("undoWordBtn").onclick=()=>{
+  if(!wordBuffer.length) return;
+  wordBuffer.pop(); renderWordRow();
+  sentenceEl.textContent = wordBuffer.length ? "กำลังสร้าง: "+wordBuffer.map(w=>w.sign).join(" ") : "";
+};
+
+// ---- word bubbles + face settings ----
+function faceTags(face){
+  if(face===null || face===undefined) return [];          // face reading was off for this word
+  if(!face.seen) return [{cls:"none", text:"ไม่เห็นหน้า"}];   // no usable face samples: say so, never guess
+  const t=[];
+  if(face.question) t.push({cls:"q", text:"ถาม"});
+  if(face.negative) t.push({cls:"neg", text:"ปฏิเสธ"});
+  if(face.nod) t.push({cls:"yes", text:"ยืนยัน"});
+  return t.length ? t : [{cls:"none", text:"ปกติ"}];
+}
+function renderWordRow(){
+  const old=!wordBuffer.length && lastWords.length;
+  const list=wordBuffer.length ? wordBuffer : lastWords;
+  if(!list.length){ $("wordRow").innerHTML='<span class="wrLabel">คำที่อ่านได้พร้อมสีหน้าจะขึ้นที่นี่</span>'; return; }
+  $("wordRow").innerHTML=(old?'<span class="wrLabel">ประโยคล่าสุด</span>':"")+list.map((w,i)=>{
+    const f=w.face, cls=(f&&f.negative?" neg":"")+(f&&f.question?" q":"")+(old?" old":"");
+    return `<span class="wordBubble${cls}"><span class="n">${i+1}</span><b>${w.sign}</b>${faceTags(f).map(t=>`<span class="tag ${t.cls}">${t.text}</span>`).join("")}</span>`;
+  }).join("");
+}
+function updateFaceChip(ts){
+  if(ts-lastChipMs<250) return;
+  lastChipMs=ts;
+  const chip=$("faceChip");
+  if(!toneOn || mode!=="test"){ chip.classList.add("hidden"); return; }
+  if(calibrating && ts>calibrating.until+1500){
+    calibrating=null; updateToneUI();
+    $("calibInfo").textContent="วัดไม่ได้เพราะไม่เห็นใบหน้า ลองใหม่"; $("calibInfo").classList.add("warn");
+  }
+  if(!liveTone || ts-lastToneMs>700){ chip.className="nofa"; chip.textContent="ไม่เห็นหน้า"; return; }
+  const q=liveTone.tone==="question", neg=liveTone.shake;
+  chip.className=(q?"q ":"")+(neg?"neg":"");
+  chip.textContent=(q?"ถาม":"ปกติ")+(neg?" | ส่ายหน้า":liveTone.nod?" | พยักหน้า":"")+(baselineSet?"":" (ยังไม่ตั้งค่านิ่ง)");
+}
+function rebuildFaceTracker(){
+  if(faceTracker && faceTracker.close){ try{ faceTracker.close(); }catch(e){ console.warn(e); } }
+  faceTracker=null; faceTrackerState="idle";
+  if(cameraStreamActive && (focusOn||toneOn)) ensureFaceTracker().then(applyHandSettings);
+}
+function updateToneUI(){
+  if(!toneRules) return;
+  const o=toneRules.o;
+  [["tRaise","tRaiseV","raiseThresh"],["tFurrow","tFurrowV","furrowThresh"],["tShake","tShakeV","shakeSwingDeg"],["tNod","tNodV","nodSwingDeg"]]
+    .forEach(([i,l,k])=>{ $(i).value=o[k]; $(l).textContent=o[k]; });
+  const ci=$("calibInfo");
+  if(calibrating){ ci.textContent="กำลังวัด นิ่งไว้..."; ci.classList.remove("warn"); }
+  else if(baselineSet){ ci.textContent=`ตั้งค่าแล้ว (คิ้วยก ${toneRules.base.browRaise.toFixed(2)}, คิ้วขมวด ${toneRules.base.browFurrow.toFixed(2)})`; ci.classList.remove("warn"); }
+  else { ci.textContent="ยังไม่ได้ตั้งค่าหน้านิ่ง"; ci.classList.add("warn"); }
+  $("toneToggle").checked=toneOn;
+}
+function saveToneSettings(){
+  const o=toneRules.o;
+  try{ localStorage.setItem(TONE_STORE, JSON.stringify({raiseThresh:o.raiseThresh, furrowThresh:o.furrowThresh, shakeSwingDeg:o.shakeSwingDeg, nodSwingDeg:o.nodSwingDeg})); }
+  catch(e){ console.warn("[face] could not save settings in this browser", e); }
+}
+if(toneRules){
+  for(const [id,key] of [["tRaise","raiseThresh"],["tFurrow","furrowThresh"],["tShake","shakeSwingDeg"],["tNod","nodSwingDeg"]]){
+    $(id).oninput=()=>{ toneRules.o[key]=Number($(id).value); updateToneUI(); saveToneSettings(); };
+  }
+  $("toneResetBtn").onclick=()=>{
+    const d=FaceTone.DEFAULTS;
+    Object.assign(toneRules.o, {raiseThresh:d.raiseThresh, furrowThresh:d.furrowThresh, shakeSwingDeg:d.shakeSwingDeg, nodSwingDeg:d.nodSwingDeg});
+    updateToneUI(); saveToneSettings();
+  };
+  $("calibBtn").onclick=()=>{
+    if(!toneOn) return;
+    toneRules.reset(); faceSamples=[]; calibrating={until:performance.now()+2000, rows:[]}; updateToneUI();
+  };
+  $("toneToggle").onchange=()=>{
+    toneOn=$("toneToggle").checked; faceSamples=[]; calibrating=null; liveTone=null;
+    if(!toneOn) $("faceChip").classList.add("hidden");
+    rebuildFaceTracker(); updateToneUI();
+  };
+  updateToneUI();
+} else { $("faceSettings").classList.add("hidden"); }
+renderWordRow();
+
+// ================= bridge UI layer: state banner, conversation, vocabulary, privacy and preferences =================
+// Nothing here changes how signs are read. It only shows state, keeps the conversation and holds the user's choices.
+const PREF_KEY="thsl_prefs_v1";
+const prefs=Object.assign({tts:true, ttsRemote:false, ai:true, overlay:true, diag:false, handFix:true, motionCut:false},
+  (()=>{ try{ return JSON.parse(localStorage.getItem(PREF_KEY)||"{}"); }catch{ return {}; } })());
+function savePrefs(){ try{ localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); }catch(e){ console.warn("[prefs] could not save in this browser", e); } }
+function useAi(){ return !!prefs.ai && !!window.TYPHOON_API_KEY; }   // the sentence service needs a key AND the user's yes
+function escHtml(s){ return String(s==null?"":s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function tagText(face){ const t=faceTags(face).filter(x=>x.cls!=="none").map(x=>x.text); return t.length ? " ("+t.join(", ")+")" : ""; }
+
+// state banner: one big, high-contrast place that says what the system is doing
+const BANNER_ICON={idle:ICONS.eye, loading:ICONS.loader, reading:ICONS.dots, listening:ICONS.mic, confirmed:ICONS.check, uncertain:ICONS.question, error:ICONS.warning};
+let bannerKind="", bannerHoldUntil=0;
+function setBanner(kind, big, small, opts){
+  const el=$("stateBanner");
+  if(kind!==bannerKind){ el.className="stateBanner st-"+kind; $("stIcon").innerHTML=BANNER_ICON[kind]||""; bannerKind=kind; }
+  if($("stBig").textContent!==big) $("stBig").textContent=big;
+  const sm=small||""; if($("stSmall").textContent!==sm) $("stSmall").textContent=sm;
+  const conf=(opts && typeof opts.conf==="number") ? Math.round(opts.conf*100) : null;
+  $("stMeterWrap").classList.toggle("hidden", conf===null);
+  if(conf!==null){ $("stMeterFill").style.width=conf+"%"; $("stMeter").setAttribute("aria-valuenow", String(conf)); $("stMeterNum").textContent=conf+"%"; }
+  if(opts && opts.hold) bannerHoldUntil=performance.now()+opts.hold;
+}
+// the camera loop writes plain status text; mirror it into the banner (a fresh result stays on screen for a moment)
+function mirrorStatus(text){
+  if(direction==="speech" && mode==="test") return;
+  const t=String(text||"");
+  if(/^(เปิดกล้องไม่ได้|โหลดโมเดลไม่สำเร็จ)/.test(t)){ setBanner("error", t, "Something went wrong"); return; }
+  if(performance.now()<bannerHoldUntil) return;
+  if(/^ยกมือให้กล้องเห็น/.test(t)) setBanner("idle","ยกมือให้กล้องเห็น","Show your hand to the camera");
+  else if(/^จับมือได้แล้ว/.test(t)) setBanner("reading","จับมือได้แล้ว","Hand found");
+  else if(/^กำลังอ่านท่า/.test(t)) setBanner("reading","กำลังอ่านท่า","Reading your sign");
+  else if(/^ลดมือลง/.test(t)) setBanner("idle","ลดมือลง หรือขยับมือ แล้วทำท่าถัดไป","Lower or move your hand, then sign the next word");
+  else if(/^พร้อม$/.test(t)) setBanner("idle","พร้อม ยกมือได้เลย","Ready");
+  else if(/^กำลังโหลด/.test(t)) setBanner("loading", t.replace(/\.+$/,""), "Loading");
+  else setBanner("idle", t, "");
+}
+new MutationObserver(()=>mirrorStatus(statusEl.textContent)).observe(statusEl, {childList:true, characterData:true, subtree:true});
+function uiAccepted(sign, conf, dup){ setBanner("confirmed", sign, dup ? "Same word again, not added" : "Confirmed", {conf, hold:2500}); }
+function uiUncertain(){ setBanner("uncertain","ไม่แน่ใจ กรุณาทำท่าอีกครั้ง","Not sure, please repeat", {hold:2500}); }
+
+// conversation: both people, one thread (kept in memory only)
+const convLog=[];
+function addConv(side, text, chips){ convLog.push({side, text, chips:chips||[], t:Date.now()}); renderConv(); }
+function renderConv(){
+  const box=$("convLog");
+  if(!convLog.length){
+    box.innerHTML='<div class="convEmpty">ยังไม่มีบทสนทนา<br>ผู้ใช้ภาษามือทำท่าแล้วจบประโยค หรือคนได้ยินพิมพ์หรือพูด ข้อความจะขึ้นที่นี่ทั้งสองฝั่ง</div>';
+    return;
+  }
+  box.innerHTML=convLog.map(m=>{
+    const who=m.side==="deaf" ? "ผู้ใช้ภาษามือ" : "คนได้ยิน";
+    const time=new Date(m.t).toLocaleTimeString("th-TH",{hour:"2-digit", minute:"2-digit"});
+    const chips=m.chips.length ? `<div class="msgChips">${m.chips.map(c=>`<span class="${c.ok?"chipOk":"chipNo"}">${escHtml(c.text)}</span>`).join("")}</div>` : "";
+    return `<div class="msg ${m.side}"><div class="msgWho">${who} ${time}</div><div class="msgBubble">${escHtml(m.text)}</div>${chips}</div>`;
+  }).join("");
+  box.scrollTop=box.scrollHeight;
+}
+$("convClear").onclick=()=>{ convLog.length=0; renderConv(); };
+
+// vocabulary: the 33 target words, with the ones the selected model can actually recognise marked
+const CLIP_INDEX=Object.fromEntries(GAME_WORDS.map((w,i)=>[w,i]));   // reference clips exist only for the original 10 words
+let vocabWords=GAME_WORDS.map(th=>({th, en:SIGN_GLOSS[th]||""})), lookup=null;
+function renderVocabPanel(){
+  const known=new Set(RECOGNIZERS[activeRec].classes);
+  const k=vocabWords.filter(w=>known.has(w.th)).length;
+  $("vocabScope").innerHTML=`คำศัพท์ที่ตั้งเป้าไว้ ${vocabWords.length} คำ โมเดลที่เลือกอยู่ตอนนี้ตรวจจับได้ <b>${k}</b> คำ (สีเขียว) คำอื่นยังไม่มีโมเดล แต่คนได้ยินพิมพ์เพื่อดูลิงก์ท่าอ้างอิงได้`;
+  $("vocabList").innerHTML=vocabWords.map(w=>{ const ok=known.has(w.th); return `<span class="vchip${ok?" ok":""}">${escHtml(w.th)}${ok?"<small>ตรวจจับได้</small>":""}</span>`; }).join("");
+}
+async function loadVocab(){
+  try{
+    const r=await fetch("vocab.json"); if(!r.ok) throw new Error("HTTP "+r.status);
+    vocabWords=(await r.json()).words;
+  }catch(e){ console.warn("[vocab] vocab.json not loaded, using the built-in 10 words", e); }
+  if(window.BridgeUtils) lookup=BridgeUtils.createLookup(vocabWords);
+  renderVocabPanel();
+}
+
+// typed input, preferences, privacy dialog, keyboard access
+$("speakForm").onsubmit=e=>{ e.preventDefault(); const v=$("speakText").value; if(!v.trim()) return; handleHearingInput(v); $("speakText").value=""; $("speakText").focus(); };
+$("overlayToggle").checked=prefs.overlay;
+$("overlayToggle").onchange=()=>{ prefs.overlay=$("overlayToggle").checked; savePrefs(); if(!prefs.overlay) ctx.clearRect(0,0,overlay.width,overlay.height); };
+document.body.classList.toggle("diag", !!prefs.diag);
+$("diagToggle").checked=!!prefs.diag;
+$("diagToggle").onchange=()=>{ prefs.diag=$("diagToggle").checked; savePrefs(); document.body.classList.toggle("diag", prefs.diag); };
+$("handFixToggle").checked=!!prefs.handFix;
+$("handFixToggle").onchange=()=>{ prefs.handFix=$("handFixToggle").checked; savePrefs(); };
+$("motionCutToggle").checked=!!prefs.motionCut; $("motionCutToggle").disabled=!captureRule;
+$("motionCutToggle").onchange=()=>{ prefs.motionCut=$("motionCutToggle").checked; savePrefs(); if(captureRule) captureRule.reset(); state="IDLE"; collected=[]; prevKp=null; idleStart=null; rearm=false; };
+$("ttsToggle").checked=prefs.tts;
+$("ttsToggle").onchange=()=>{ prefs.tts=$("ttsToggle").checked; savePrefs(); if(!prefs.tts){ setTtsNote(""); try{ window.speechSynthesis && speechSynthesis.cancel(); }catch(e){} } };
+$("ttsRemoteToggle").checked=prefs.ttsRemote;
+$("ttsRemoteToggle").onchange=()=>{ prefs.ttsRemote=$("ttsRemoteToggle").checked; savePrefs(); updateVoiceInfo(); };
+if(!window.TYPHOON_API_KEY){
+  $("aiToggle").checked=false; $("aiToggle").disabled=true;
+  $("aiToggle").parentElement.append(" (ปิดอยู่ เพราะเครื่องนี้ไม่ได้ตั้งค่ากุญแจ)");
+} else { $("aiToggle").checked=!!prefs.ai; }
+$("aiToggle").onchange=()=>{ prefs.ai=$("aiToggle").checked; savePrefs(); };
+$("privacyBtn").onclick=()=>{ const d=$("privacyDialog"); updateVoiceInfo(); if(d.showModal) d.showModal(); else d.setAttribute("open",""); };
+for(const id of ["cardGame","cardCompare","cardStudy"]){
+  $(id).addEventListener("keydown", e=>{ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); $(id).click(); } });
+}
+if(window.speechSynthesis){ refreshVoices(); try{ speechSynthesis.addEventListener("voiceschanged", refreshVoices); }catch(e){ /* older browsers */ } } else updateVoiceInfo();
+renderConv();
+loadVocab();
+
+// ---- initial screen ----
+goTranslate();
 </script>
 </body>
 </html>
